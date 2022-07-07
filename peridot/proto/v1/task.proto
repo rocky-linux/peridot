@@ -1,0 +1,241 @@
+syntax = "proto3";
+
+package resf.peridot.v1;
+
+import "google/protobuf/descriptor.proto";
+import "google/protobuf/any.proto";
+import "google/protobuf/wrappers.proto";
+import "google/protobuf/timestamp.proto";
+import "google/api/httpbody.proto";
+import "google/rpc/error_details.proto";
+import "validate/validate.proto";
+import "google/api/annotations.proto";
+
+option go_package = "peridot.resf.org/peridot/pb;peridotpb";
+
+extend google.protobuf.MethodOptions {
+  TaskInfo task_info = 9991;
+}
+
+service TaskService {
+  // ListTasks returns a list of tasks from all projects
+  // List mode won't return task responses. The reason being
+  // responses being able to reach huge sizes.
+  // To get the response for a specific task, you can use GetTask,
+  // either on the specific subtask or the parent task.
+  rpc ListTasks(ListTasksRequest) returns (ListTasksResponse) {
+    option (google.api.http) = {
+      get: "/v1/projects/{project_id=*}/tasks"
+    };
+  }
+
+  // GetTask returns a specific task with the given ID
+  rpc GetTask(GetTaskRequest) returns (GetTaskResponse) {
+    option (google.api.http) = {
+      get: "/v1/projects/{project_id=*}/tasks/{id=*}"
+    };
+  }
+
+  // StreamTaskLogs streams the logs of a specific task with the given ID
+  rpc StreamTaskLogs(StreamTaskLogsRequest) returns (stream google.api.HttpBody) {
+    option (google.api.http) = {
+      get: "/v1/projects/{project_id=*}/tasks/{id=*}/logs"
+    };
+  }
+
+  // CancelTask cancels a task with the given ID.
+  // Only parent tasks can be cancelled and if they're in the PENDING or RUNNING state.
+  rpc CancelTask(CancelTaskRequest) returns (CancelTaskResponse) {
+    option (google.api.http) = {
+      post: "/v1/projects/{project_id=*}/tasks/{id=*}/cancel"
+    };
+  }
+}
+
+enum TaskType {
+  TASK_TYPE_UNSPECIFIED = 0;
+  TASK_TYPE_IMPORT = 1;
+  TASK_TYPE_IMPORT_SRC_GIT = 2;
+  TASK_TYPE_IMPORT_SRC_GIT_TO_DIST_GIT = 3;
+  TASK_TYPE_IMPORT_DOWNSTREAM = 4;
+  TASK_TYPE_IMPORT_UPSTREAM = 5;
+  TASK_TYPE_BUILD = 6;
+  TASK_TYPE_BUILD_SRPM = 7;
+  TASK_TYPE_BUILD_ARCH = 8;
+  TASK_TYPE_BUILD_SRPM_UPLOAD = 9;
+  TASK_TYPE_BUILD_ARCH_UPLOAD = 10;
+  TASK_TYPE_WORKER_PROVISION = 11;
+  TASK_TYPE_WORKER_DESTROY = 12;
+  TASK_TYPE_YUMREPOFS_UPDATE = 13;
+  TASK_TYPE_KEYKEEPER_SIGN_ARTIFACT = 14;
+  TASK_TYPE_SYNC_CATALOG = 15;
+  TASK_TYPE_RPM_IMPORT = 16;
+  TASK_TYPE_CREATE_HASHED_REPOSITORIES = 17;
+}
+
+enum TaskStatus {
+  TASK_STATUS_UNSPECIFIED = 0;
+  TASK_STATUS_PENDING = 1;
+  TASK_STATUS_RUNNING = 2;
+  TASK_STATUS_SUCCEEDED = 3;
+  TASK_STATUS_FAILED = 4;
+  TASK_STATUS_CANCELED = 5;
+}
+
+// Subtask is a singular subunit of an AsyncTask.
+// This represents a single sub-action of a wider
+// system of AsyncTasks
+message Subtask {
+  // Architecture this task was executed in
+  string arch = 1;
+
+  // The type of task that is being executed
+  TaskType type = 2;
+
+  // Response of the task
+  google.protobuf.Any response = 3;
+
+  // Any metadata for the task
+  // If failed, should contain TaskErrorDetails
+  google.protobuf.Any metadata = 4;
+
+  // Status of the task
+  TaskStatus status = 5;
+
+  // The parent task (which usually is the primary)
+  google.protobuf.StringValue parent_task_id = 6;
+
+  // Unique identifier of the task
+  string id = 7;
+
+  // ID of submitter
+  google.protobuf.StringValue submitter_id = 8;
+
+  // Display name of submitter
+  google.protobuf.StringValue submitter_display_name = 9;
+
+  // Email of submitter
+  google.protobuf.StringValue submitter_email = 10;
+
+  // Finished time of the task
+  google.protobuf.Timestamp finished_at = 11;
+
+  // Created time of the task
+  google.protobuf.Timestamp created_at = 12;
+}
+
+message TaskArtifact {
+  // The task ID this artifact belongs to
+  string task_id = 1;
+
+  // Name of artifact (this refers to object name).
+  // To retrieve the file name, filepath.Base should
+  // always be applied to this property.
+  string name = 2;
+
+  // SHA-256 hash of the artifact
+  string hash_sha256 = 3;
+
+  // Architecture of artifact
+  string arch = 4;
+
+  // Any extra metadata this artifact has
+  google.protobuf.Any metadata = 5;
+}
+
+// AsyncTask represents a collection of subunits of tasks that wholly
+// works towards a specific goal.
+message AsyncTask {
+  string task_id = 1;
+  // Subtasks contains all subtasks for a given task
+  // Usually the requested task itself is represented as a subtask.
+  // The primary subtask is always the first in order
+  repeated Subtask subtasks = 2;
+  bool done = 3;
+}
+
+message GetTaskRequest {
+  string id = 1 [(validate.rules).string.uuid = true];
+  google.protobuf.StringValue project_id = 2 [(validate.rules).message.required = true];
+}
+
+message GetTaskResponse {
+  AsyncTask task = 1;
+}
+
+message ListTasksRequest {
+  google.protobuf.StringValue project_id = 1 [(validate.rules).message.required = true];
+
+  // The page to request
+  int32 page = 2;
+
+  // Maximum amount of results to return
+  // Minimum: 1
+  // Maximum: 100
+  int32 limit = 3 [(validate.rules).int32.lte = 100];
+}
+
+message ListTasksResponse {
+  repeated AsyncTask tasks = 1;
+
+  // Total packages from server
+  int64 total = 2;
+
+  // Limit from request
+  int32 size = 3;
+
+  // Current page
+  int32 page = 4;
+}
+
+message StreamTaskLogsRequest {
+  string project_id = 1;
+  string id = 2;
+  bool parent = 3;
+}
+
+message CancelTaskRequest {
+  string project_id = 1;
+  string id = 2;
+}
+
+message CancelTaskResponse {}
+
+message TaskCancelledDetails {
+  string code = 1;
+  string cause = 2;
+  google.protobuf.Any extra = 3;
+}
+
+message ProvisionWorkerMetadata {
+  string name = 1;
+  string purpose = 2;
+  string task_id = 3;
+}
+
+message TaskErrorDetails {
+  google.rpc.ErrorInfo error_info = 1;
+
+  oneof error_type {
+    google.rpc.RetryInfo retry_info = 2;
+    google.rpc.DebugInfo debug_info = 3;
+    google.rpc.QuotaFailure quota_failure = 4;
+    google.rpc.PreconditionFailure precondition_failure = 5;
+    google.rpc.BadRequest bad_request = 6;
+    google.rpc.Help help = 7;
+    google.rpc.LocalizedMessage localized_message = 8;
+  }
+}
+
+// TaskInfo is a option tag to supply information about an async task.
+// This is currently ignored silently, but all clients are encouraged
+// to implement this.
+message TaskInfo {
+  // Response type is the data format that the parent task stores
+  // about the response for the specific async/long running task.
+  string response_type = 1;
+
+  // Metadata type is the data format that the parent task stores
+  // about the metadatra for the specific async/long running task.
+  string metadata_type = 2;
+}

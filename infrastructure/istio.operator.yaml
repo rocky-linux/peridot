@@ -1,0 +1,33 @@
+apiVersion: install.istio.io/v1alpha1
+kind: IstioOperator
+metadata:
+  name: istio-control-plane
+  namespace: istio-system
+spec:
+  profile: default
+  components:
+    ingressGateways:
+      - name: istio-ingressgateway
+        enabled: true
+        label:
+          istio: ingressgateway
+        k8s:
+          serviceAnnotations:
+            service.beta.kubernetes.io/aws-load-balancer-ip-address-type: dualstack
+            service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: ip
+            service.beta.kubernetes.io/aws-load-balancer-scheme: internet-facing
+            service.beta.kubernetes.io/aws-load-balancer-type: external
+      - name: istio-ingressgateway-internal
+        enabled: true
+        label:
+          istio: ingressgateway-internal
+        k8s:
+          serviceAnnotations:
+            service.beta.kubernetes.io/aws-load-balancer-ip-address-type: dualstack
+            service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: ip
+            service.beta.kubernetes.io/aws-load-balancer-scheme: internal
+            service.beta.kubernetes.io/aws-load-balancer-type: external
+  values:
+    global:
+      proxy:
+        excludeIPRanges: '0.0.0.0/0'

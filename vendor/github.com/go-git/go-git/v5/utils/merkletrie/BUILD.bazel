@@ -1,0 +1,19 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "merkletrie",
+    srcs = [
+        "change.go",
+        "difftree.go",
+        "doc.go",
+        "doubleiter.go",
+        "iter.go",
+    ],
+    importmap = "peridot.resf.org/vendor/github.com/go-git/go-git/v5/utils/merkletrie",
+    importpath = "github.com/go-git/go-git/v5/utils/merkletrie",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/go-git/go-git/v5/utils/merkletrie/internal/frame",
+        "//vendor/github.com/go-git/go-git/v5/utils/merkletrie/noder",
+    ],
+)

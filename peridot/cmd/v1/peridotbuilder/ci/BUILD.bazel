@@ -1,0 +1,45 @@
+load("//rules_byc:defs.bzl", "BYCDEPLOY_OUTS_CUSTOM", "container")
+
+container(
+    architecture = "amd64",
+    base = "//bases/build:build_amd64",
+    disable_conditional = True,
+    files = [
+        "//peridot/cmd/v1/peridotbuilder:fork-exec.py",
+        "//peridot/cmd/v1/peridotbuilder:peridotbuilder_amd64",
+    ],
+    image_name = "peridotbuilder_amd64",
+)
+
+container(
+    architecture = "arm64",
+    base = "//bases/build:build_arm64",
+    disable_conditional = True,
+    files = [
+        "//peridot/cmd/v1/peridotbuilder:fork-exec.py",
+        "//peridot/cmd/v1/peridotbuilder:peridotbuilder_arm64",
+    ],
+    image_name = "peridotbuilder_arm64",
+)
+
+container(
+    architecture = "s390x",
+    base = "//bases/build:build_s390x",
+    disable_conditional = True,
+    files = [
+        "//peridot/cmd/v1/peridotbuilder:fork-exec.py",
+        "//peridot/cmd/v1/peridotbuilder:peridotbuilder_s390x",
+    ],
+    image_name = "peridotbuilder_s390x",
+)
+
+container(
+    architecture = "ppc64le",
+    base = "//bases/build:build_ppc64le",
+    disable_conditional = True,
+    files = [
+        "//peridot/cmd/v1/peridotbuilder:fork-exec.py",
+        "//peridot/cmd/v1/peridotbuilder:peridotbuilder_ppc64le",
+    ],
+    image_name = "peridotbuilder_ppc64le",
+)

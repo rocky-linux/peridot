@@ -1,0 +1,33 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "middleware",
+    srcs = [
+        "basic_auth.go",
+        "compress.go",
+        "content_charset.go",
+        "content_encoding.go",
+        "content_type.go",
+        "get_head.go",
+        "heartbeat.go",
+        "logger.go",
+        "middleware.go",
+        "nocache.go",
+        "profiler.go",
+        "realip.go",
+        "recoverer.go",
+        "request_id.go",
+        "route_headers.go",
+        "strip.go",
+        "terminal.go",
+        "throttle.go",
+        "timeout.go",
+        "url_format.go",
+        "value.go",
+        "wrap_writer.go",
+    ],
+    importmap = "peridot.resf.org/vendor/github.com/go-chi/chi/middleware",
+    importpath = "github.com/go-chi/chi/middleware",
+    visibility = ["//visibility:public"],
+    deps = ["//vendor/github.com/go-chi/chi"],
+)

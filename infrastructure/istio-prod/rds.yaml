@@ -1,0 +1,14 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: ServiceEntry
+metadata:
+  name: rds
+  namespace: istio-system
+spec:
+  hosts:
+    - resf-peridot-dev.ctxqgglmfofx.us-east-2.rds.amazonaws.com
+  ports:
+    - number: 5432
+      name: postgres
+      protocol: TCP
+  resolution: DNS
+  location: MESH_EXTERNAL

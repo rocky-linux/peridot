@@ -1,0 +1,9 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "warnings_v0",
+    srcs = ["warnings.go"],
+    importmap = "peridot.resf.org/vendor/gopkg.in/warnings.v0",
+    importpath = "gopkg.in/warnings.v0",
+    visibility = ["//visibility:public"],
+)

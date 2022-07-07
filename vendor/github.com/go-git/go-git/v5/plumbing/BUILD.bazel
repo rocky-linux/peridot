@@ -1,0 +1,16 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "plumbing",
+    srcs = [
+        "error.go",
+        "hash.go",
+        "memory.go",
+        "object.go",
+        "reference.go",
+        "revision.go",
+    ],
+    importmap = "peridot.resf.org/vendor/github.com/go-git/go-git/v5/plumbing",
+    importpath = "github.com/go-git/go-git/v5/plumbing",
+    visibility = ["//visibility:public"],
+)

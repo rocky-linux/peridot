@@ -1,0 +1,87 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "osfs",
+    srcs = [
+        "os.go",
+        "os_js.go",
+        "os_plan9.go",
+        "os_posix.go",
+        "os_windows.go",
+    ],
+    importmap = "peridot.resf.org/vendor/github.com/go-git/go-billy/v5/osfs",
+    importpath = "github.com/go-git/go-billy/v5/osfs",
+    visibility = ["//visibility:public"],
+    deps = select({
+        "@io_bazel_rules_go//go/platform:aix": [
+            "//vendor/github.com/go-git/go-billy/v5:go-billy",
+            "//vendor/github.com/go-git/go-billy/v5/helper/chroot",
+            "//vendor/golang.org/x/sys/unix",
+        ],
+        "@io_bazel_rules_go//go/platform:android": [
+            "//vendor/github.com/go-git/go-billy/v5:go-billy",
+            "//vendor/github.com/go-git/go-billy/v5/helper/chroot",
+            "//vendor/golang.org/x/sys/unix",
+        ],
+        "@io_bazel_rules_go//go/platform:darwin": [
+            "//vendor/github.com/go-git/go-billy/v5:go-billy",
+            "//vendor/github.com/go-git/go-billy/v5/helper/chroot",
+            "//vendor/golang.org/x/sys/unix",
+        ],
+        "@io_bazel_rules_go//go/platform:dragonfly": [
+            "//vendor/github.com/go-git/go-billy/v5:go-billy",
+            "//vendor/github.com/go-git/go-billy/v5/helper/chroot",
+            "//vendor/golang.org/x/sys/unix",
+        ],
+        "@io_bazel_rules_go//go/platform:freebsd": [
+            "//vendor/github.com/go-git/go-billy/v5:go-billy",
+            "//vendor/github.com/go-git/go-billy/v5/helper/chroot",
+            "//vendor/golang.org/x/sys/unix",
+        ],
+        "@io_bazel_rules_go//go/platform:illumos": [
+            "//vendor/github.com/go-git/go-billy/v5:go-billy",
+            "//vendor/github.com/go-git/go-billy/v5/helper/chroot",
+            "//vendor/golang.org/x/sys/unix",
+        ],
+        "@io_bazel_rules_go//go/platform:ios": [
+            "//vendor/github.com/go-git/go-billy/v5:go-billy",
+            "//vendor/github.com/go-git/go-billy/v5/helper/chroot",
+            "//vendor/golang.org/x/sys/unix",
+        ],
+        "@io_bazel_rules_go//go/platform:js": [
+            "//vendor/github.com/go-git/go-billy/v5:go-billy",
+            "//vendor/github.com/go-git/go-billy/v5/helper/chroot",
+            "//vendor/github.com/go-git/go-billy/v5/memfs",
+        ],
+        "@io_bazel_rules_go//go/platform:linux": [
+            "//vendor/github.com/go-git/go-billy/v5:go-billy",
+            "//vendor/github.com/go-git/go-billy/v5/helper/chroot",
+            "//vendor/golang.org/x/sys/unix",
+        ],
+        "@io_bazel_rules_go//go/platform:netbsd": [
+            "//vendor/github.com/go-git/go-billy/v5:go-billy",
+            "//vendor/github.com/go-git/go-billy/v5/helper/chroot",
+            "//vendor/golang.org/x/sys/unix",
+        ],
+        "@io_bazel_rules_go//go/platform:openbsd": [
+            "//vendor/github.com/go-git/go-billy/v5:go-billy",
+            "//vendor/github.com/go-git/go-billy/v5/helper/chroot",
+            "//vendor/golang.org/x/sys/unix",
+        ],
+        "@io_bazel_rules_go//go/platform:plan9": [
+            "//vendor/github.com/go-git/go-billy/v5:go-billy",
+            "//vendor/github.com/go-git/go-billy/v5/helper/chroot",
+        ],
+        "@io_bazel_rules_go//go/platform:solaris": [
+            "//vendor/github.com/go-git/go-billy/v5:go-billy",
+            "//vendor/github.com/go-git/go-billy/v5/helper/chroot",
+            "//vendor/golang.org/x/sys/unix",
+        ],
+        "@io_bazel_rules_go//go/platform:windows": [
+            "//vendor/github.com/go-git/go-billy/v5:go-billy",
+            "//vendor/github.com/go-git/go-billy/v5/helper/chroot",
+            "//vendor/golang.org/x/sys/windows",
+        ],
+        "//conditions:default": [],
+    }),
+)

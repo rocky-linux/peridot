@@ -1,0 +1,17 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "activity",
+    srcs = [
+        "activity.go",
+        "doc.go",
+    ],
+    importmap = "peridot.resf.org/vendor/go.temporal.io/sdk/activity",
+    importpath = "go.temporal.io/sdk/activity",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/go.temporal.io/sdk/internal",
+        "//vendor/go.temporal.io/sdk/internal/common/metrics",
+        "//vendor/go.temporal.io/sdk/log",
+    ],
+)

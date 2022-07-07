@@ -1,0 +1,15 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "db",
+    srcs = ["db.go"],
+    importpath = "peridot.resf.org/peridot/db",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//peridot/db/models",
+        "//peridot/proto/v1:pb",
+        "//utils",
+        "//vendor/github.com/lib/pq",
+        "@org_golang_google_protobuf//types/known/anypb:go_default_library",
+    ],
+)

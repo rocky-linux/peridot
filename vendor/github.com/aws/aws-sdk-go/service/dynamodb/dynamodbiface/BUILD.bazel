@@ -1,0 +1,14 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "dynamodbiface",
+    srcs = ["interface.go"],
+    importmap = "peridot.resf.org/vendor/github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface",
+    importpath = "github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/aws/aws-sdk-go/aws",
+        "//vendor/github.com/aws/aws-sdk-go/aws/request",
+        "//vendor/github.com/aws/aws-sdk-go/service/dynamodb",
+    ],
+)

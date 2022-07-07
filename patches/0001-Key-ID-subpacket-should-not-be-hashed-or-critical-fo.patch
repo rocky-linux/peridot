@@ -1,0 +1,26 @@
+From 64b6c41c3b8c94d6949cb6038b8e2d60c433e0e7 Mon Sep 17 00:00:00 2001
+From: Mustafa Gezen <mustafa@ctrliq.com>
+Date: Sat, 7 May 2022 17:30:43 +0200
+Subject: [PATCH] Key ID subpacket should not be hashed or critical for RPM
+ purposes
+
+---
+ openpgp/packet/signature.go | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/openpgp/packet/signature.go b/openpgp/packet/signature.go
+index 86602d0..c7682de 100644
+--- a/openpgp/packet/signature.go
++++ b/openpgp/packet/signature.go
+@@ -858,7 +858,7 @@ func (sig *Signature) buildSubpackets(issuer PublicKey) (subpackets []outputSubp
+ 	if sig.IssuerKeyId != nil && sig.Version == 4 {
+ 		keyId := make([]byte, 8)
+ 		binary.BigEndian.PutUint64(keyId, *sig.IssuerKeyId)
+-		subpackets = append(subpackets, outputSubpacket{true, issuerSubpacket, true, keyId})
++		subpackets = append(subpackets, outputSubpacket{false, issuerSubpacket, false, keyId})
+ 	}
+ 	if sig.IssuerFingerprint != nil {
+ 		contents := append([]uint8{uint8(issuer.Version)}, sig.IssuerFingerprint...)
+--
+2.32.0 (Apple Git-132)
+

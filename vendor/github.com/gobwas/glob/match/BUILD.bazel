@@ -1,0 +1,35 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "match",
+    srcs = [
+        "any.go",
+        "any_of.go",
+        "btree.go",
+        "contains.go",
+        "every_of.go",
+        "list.go",
+        "match.go",
+        "max.go",
+        "min.go",
+        "nothing.go",
+        "prefix.go",
+        "prefix_any.go",
+        "prefix_suffix.go",
+        "range.go",
+        "row.go",
+        "segments.go",
+        "single.go",
+        "suffix.go",
+        "suffix_any.go",
+        "super.go",
+        "text.go",
+    ],
+    importmap = "peridot.resf.org/vendor/github.com/gobwas/glob/match",
+    importpath = "github.com/gobwas/glob/match",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/gobwas/glob/util/runes",
+        "//vendor/github.com/gobwas/glob/util/strings",
+    ],
+)

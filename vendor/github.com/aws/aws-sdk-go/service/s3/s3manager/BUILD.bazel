@@ -1,0 +1,36 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "s3manager",
+    srcs = [
+        "batch.go",
+        "bucket_region.go",
+        "buffered_read_seeker.go",
+        "default_read_seeker_write_to.go",
+        "default_read_seeker_write_to_windows.go",
+        "default_writer_read_from.go",
+        "default_writer_read_from_windows.go",
+        "doc.go",
+        "download.go",
+        "pool.go",
+        "read_seeker_write_to.go",
+        "upload.go",
+        "upload_input.go",
+        "writer_read_from.go",
+    ],
+    importmap = "peridot.resf.org/vendor/github.com/aws/aws-sdk-go/service/s3/s3manager",
+    importpath = "github.com/aws/aws-sdk-go/service/s3/s3manager",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/aws/aws-sdk-go/aws",
+        "//vendor/github.com/aws/aws-sdk-go/aws/awserr",
+        "//vendor/github.com/aws/aws-sdk-go/aws/awsutil",
+        "//vendor/github.com/aws/aws-sdk-go/aws/client",
+        "//vendor/github.com/aws/aws-sdk-go/aws/corehandlers",
+        "//vendor/github.com/aws/aws-sdk-go/aws/credentials",
+        "//vendor/github.com/aws/aws-sdk-go/aws/request",
+        "//vendor/github.com/aws/aws-sdk-go/internal/sdkio",
+        "//vendor/github.com/aws/aws-sdk-go/service/s3",
+        "//vendor/github.com/aws/aws-sdk-go/service/s3/s3iface",
+    ],
+)

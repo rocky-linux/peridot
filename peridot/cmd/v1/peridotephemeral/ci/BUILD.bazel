@@ -1,0 +1,35 @@
+load("//rules_byc:defs.bzl", "BYCDEPLOY_OUTS_MIGRATE_CUSTOM", "container", "peridot_k8s")
+
+container(
+    base = "//bases/bazel/go",
+    files = [
+        "//peridot/cmd/v1/peridotephemeral",
+    ],
+    image_name = "peridotephemeral",
+)
+
+peridot_k8s(
+    name = "peridotephemeral",
+    src = "deploy.jsonnet",
+    outs = BYCDEPLOY_OUTS_MIGRATE_CUSTOM,
+    dependent_push = select({
+        "//platforms:x86_64": [
+            "//peridot/cmd/v1/peridotbuilder/ci:peridotbuilder_amd64_container",
+            "//peridot/cmd/v1/peridotbuilder/ci:peridotbuilder_arm64_container",
+            "//peridot/cmd/v1/peridotbuilder/ci:peridotbuilder_s390x_container",
+            "//peridot/cmd/v1/peridotbuilder/ci:peridotbuilder_ppc64le_container",
+        ],
+        "//platforms:arm64": [
+            "//peridot/cmd/v1/peridotbuilder/ci:peridotbuilder_arm64_container",
+        ],
+        "//platforms:s390x": [
+            "//peridot/cmd/v1/peridotbuilder/ci:peridotbuilder_s390x_container",
+        ],
+        "//platforms:ppc64le": [
+            "//peridot/cmd/v1/peridotbuilder/ci:peridotbuilder_ppc64le_container",
+        ],
+    }),
+    deps = [
+        "//ci",
+    ],
+)

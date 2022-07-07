@@ -1,0 +1,9 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "strconv",
+    srcs = ["quote.go"],
+    importmap = "peridot.resf.org/vendor/github.com/hashicorp/hcl/hcl/strconv",
+    importpath = "github.com/hashicorp/hcl/hcl/strconv",
+    visibility = ["//visibility:public"],
+)

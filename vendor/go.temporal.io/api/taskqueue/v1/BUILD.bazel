@@ -1,0 +1,15 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "taskqueue",
+    srcs = ["message.pb.go"],
+    importmap = "peridot.resf.org/vendor/go.temporal.io/api/taskqueue/v1",
+    importpath = "go.temporal.io/api/taskqueue/v1",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/gogo/protobuf/gogoproto",
+        "//vendor/github.com/gogo/protobuf/proto",
+        "//vendor/github.com/gogo/protobuf/types",
+        "//vendor/go.temporal.io/api/enums/v1:enums",
+    ],
+)

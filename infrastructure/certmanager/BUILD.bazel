@@ -1,0 +1,10 @@
+load("//rules_byc:defs.bzl", "k8s_apply")
+
+k8s_apply(
+    name = "certmanager",
+    srcs = [
+        "certs.yaml",
+        "issuer.yaml",
+    ],
+    visibility = ["//visibility:public"],
+)

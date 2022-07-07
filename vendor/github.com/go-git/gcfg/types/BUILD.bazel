@@ -1,0 +1,15 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "types",
+    srcs = [
+        "bool.go",
+        "doc.go",
+        "enum.go",
+        "int.go",
+        "scan.go",
+    ],
+    importmap = "peridot.resf.org/vendor/github.com/go-git/gcfg/types",
+    importpath = "github.com/go-git/gcfg/types",
+    visibility = ["//visibility:public"],
+)

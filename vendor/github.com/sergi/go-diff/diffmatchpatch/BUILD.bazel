@@ -1,0 +1,17 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "diffmatchpatch",
+    srcs = [
+        "diff.go",
+        "diffmatchpatch.go",
+        "match.go",
+        "mathutil.go",
+        "operation_string.go",
+        "patch.go",
+        "stringutil.go",
+    ],
+    importmap = "peridot.resf.org/vendor/github.com/sergi/go-diff/diffmatchpatch",
+    importpath = "github.com/sergi/go-diff/diffmatchpatch",
+    visibility = ["//visibility:public"],
+)

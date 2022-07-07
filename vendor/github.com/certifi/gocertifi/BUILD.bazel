@@ -1,0 +1,9 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "gocertifi",
+    srcs = ["certifi.go"],
+    importmap = "peridot.resf.org/vendor/github.com/certifi/gocertifi",
+    importpath = "github.com/certifi/gocertifi",
+    visibility = ["//visibility:public"],
+)

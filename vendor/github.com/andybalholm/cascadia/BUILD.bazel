@@ -1,0 +1,15 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "cascadia",
+    srcs = [
+        "parser.go",
+        "selector.go",
+        "serialize.go",
+        "specificity.go",
+    ],
+    importmap = "peridot.resf.org/vendor/github.com/andybalholm/cascadia",
+    importpath = "github.com/andybalholm/cascadia",
+    visibility = ["//visibility:public"],
+    deps = ["@org_golang_x_net//html"],
+)

@@ -1,0 +1,16 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "client",
+    srcs = ["client.go"],
+    importmap = "peridot.resf.org/vendor/github.com/go-git/go-git/v5/plumbing/transport/client",
+    importpath = "github.com/go-git/go-git/v5/plumbing/transport/client",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/go-git/go-git/v5/plumbing/transport",
+        "//vendor/github.com/go-git/go-git/v5/plumbing/transport/file",
+        "//vendor/github.com/go-git/go-git/v5/plumbing/transport/git",
+        "//vendor/github.com/go-git/go-git/v5/plumbing/transport/http",
+        "//vendor/github.com/go-git/go-git/v5/plumbing/transport/ssh",
+    ],
+)

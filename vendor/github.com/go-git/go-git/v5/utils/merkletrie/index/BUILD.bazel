@@ -1,0 +1,13 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "index",
+    srcs = ["node.go"],
+    importmap = "peridot.resf.org/vendor/github.com/go-git/go-git/v5/utils/merkletrie/index",
+    importpath = "github.com/go-git/go-git/v5/utils/merkletrie/index",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/go-git/go-git/v5/plumbing/format/index",
+        "//vendor/github.com/go-git/go-git/v5/utils/merkletrie/noder",
+    ],
+)

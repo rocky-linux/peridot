@@ -1,0 +1,18 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "oidc",
+    srcs = [
+        "jose.go",
+        "jwks.go",
+        "oidc.go",
+        "verify.go",
+    ],
+    importmap = "peridot.resf.org/vendor/github.com/coreos/go-oidc/v3/oidc",
+    importpath = "github.com/coreos/go-oidc/v3/oidc",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/golang.org/x/oauth2",
+        "//vendor/gopkg.in/square/go-jose.v2:go-jose_v2",
+    ],
+)

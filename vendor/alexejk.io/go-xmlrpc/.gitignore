@@ -1,0 +1,53 @@
+build/
+vendor/
+
+config.yaml
+
+### Go
+*.test
+*.out
+
+### Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+### macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Icon must end with two \r
+Icon
+
+._*
+
+### Eclipse
+.metadata
+*.tmp
+*.bak
+*.swp
+*~.nib
+local.properties
+.settings/
+.project
+.classpath
+
+### Windows
+Thumbs.db
+Thumbs.db:encryptable
+[Dd]esktop.ini
+$RECYCLE.BIN/
+
+### JetBrains
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+
+### VisualStudioCode
+.vscode
+*.code-workspace

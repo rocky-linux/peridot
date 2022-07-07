@@ -1,0 +1,13 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "debug",
+    srcs = [
+        "debug.go",
+        "logdebugger.go",
+        "webdebugger.go",
+    ],
+    importmap = "peridot.resf.org/vendor/github.com/gocolly/colly/v2/debug",
+    importpath = "github.com/gocolly/colly/v2/debug",
+    visibility = ["//visibility:public"],
+)

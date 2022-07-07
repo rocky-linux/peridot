@@ -1,0 +1,23 @@
+# Stamp script
+build --workspace_status_command=tools/status.sh
+run --workspace_status_command=tools/status.sh
+
+# Just build tests when testing
+test --build_tests_only
+
+build --incompatible_strict_action_env=true
+
+# Minimize what is downloaded
+build:inmemory --experimental_inmemory_jdeps_files
+build:inmemory --experimental_inmemory_dotd_files
+
+# Minimize what is downloaded
+build:toplevel --config=inmemory
+build:toplevel --experimental_remote_download_outputs=toplevel
+
+build:remote --config=toplevel
+build:remote --google_credentials=/tmp/credentials.json
+build:remote --remote_cache=https://storage.googleapis.com/resf-temporary-bazel-cache
+run:remote --experimental_remote_download_outputs=all --noexperimental_inmemory_jdeps_files --noexperimental_inmemory_dotd_files
+
+build --stamp=true

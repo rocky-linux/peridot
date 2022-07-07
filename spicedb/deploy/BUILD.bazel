@@ -1,0 +1,20 @@
+load("@io_bazel_rules_jsonnet//jsonnet:jsonnet.bzl", "jsonnet_library")
+load("//rules_byc:defs.bzl", "BYCDEPLOY_OUTS_MIGRATE", "peridot_k8s")
+
+jsonnet_library(
+    name = "common",
+    srcs = ["common.jsonnet"],
+    visibility = ["//spicedb/deploy:__subpackages__"],
+    deps = ["//ci"],
+)
+
+peridot_k8s(
+    name = "spicedb",
+    src = "deploy.jsonnet",
+    outs = BYCDEPLOY_OUTS_MIGRATE,
+    force_normal_tags = True,
+    deps = [
+        ":common",
+        "//ci",
+    ],
+)

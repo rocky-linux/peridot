@@ -1,0 +1,58 @@
+syntax = "proto3";
+
+package resf.secparse;
+
+import "google/api/annotations.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
+
+import "proto/common.proto";
+import "secparse/proto/v1/advisory.proto";
+
+option go_package = "peridot.resf.org/secparse/proto/v1;secparsepb";
+
+option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
+  host: "errata.rockylinux.org"
+  info: {
+    title: "Secparse Errata API"
+    version: "1.0"
+    contact: {
+      name: "Mustafa Gezen"
+      email: "mustafa@ctrliq.com"
+    }
+  }
+  schemes: HTTPS
+  consumes: "application/json"
+  produces: "application/json"
+};
+
+service Secparse {
+  // ListAdvisories
+  //
+  // Return a list of advisories by given filters.
+  // No filters returns all advisories
+  // This method is paginated
+  rpc ListAdvisories (ListAdvisoriesRequest) returns (ListAdvisoriesResponse) {
+    option (google.api.http) = {
+      get: "/advisories"
+    };
+  }
+
+  // GetAdvisory
+  //
+  // Returns an advisory with given ID if found, else returns NotFound
+  rpc GetAdvisory (GetAdvisoryRequest) returns (GetAdvisoryResponse) {
+    option (google.api.http) = {
+      get: "/advisories/{id=*}"
+    };
+  }
+
+  // HealthCheck
+  //
+  // Endpoint to see if the service is in good health
+  rpc HealthCheck (resf.orgmon.HealthCheckRequest) returns (resf.orgmon.HealthCheckResponse) {
+    option (google.api.http) = {
+      get: "/healthz"
+    };
+  }
+}
+

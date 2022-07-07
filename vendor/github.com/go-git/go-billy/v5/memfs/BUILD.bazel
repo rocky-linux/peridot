@@ -1,0 +1,17 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "memfs",
+    srcs = [
+        "memory.go",
+        "storage.go",
+    ],
+    importmap = "peridot.resf.org/vendor/github.com/go-git/go-billy/v5/memfs",
+    importpath = "github.com/go-git/go-billy/v5/memfs",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/go-git/go-billy/v5:go-billy",
+        "//vendor/github.com/go-git/go-billy/v5/helper/chroot",
+        "//vendor/github.com/go-git/go-billy/v5/util",
+    ],
+)

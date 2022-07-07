@@ -1,0 +1,14 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "workflowservicemock",
+    srcs = ["service.pb.mock.go"],
+    importmap = "peridot.resf.org/vendor/go.temporal.io/api/workflowservicemock/v1",
+    importpath = "go.temporal.io/api/workflowservicemock/v1",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/golang/mock/gomock",
+        "//vendor/go.temporal.io/api/workflowservice/v1:workflowservice",
+        "@org_golang_google_grpc//:go_default_library",
+    ],
+)

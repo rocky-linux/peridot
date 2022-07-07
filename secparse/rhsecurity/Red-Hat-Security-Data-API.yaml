@@ -1,0 +1,425 @@
+openapi: 3.0.0
+info:
+  title: Red Hat Security Data API
+  version: '1.0'
+  description: Unofficial OpenAPI definitions for Red Hat Security Data API
+  contact:
+    name: Mustafa Gezen
+    email: mustafa@ctrliq.com
+servers:
+  - url: 'https://access.redhat.com/hydra/rest/securitydata'
+paths:
+  /cve.json:
+    get:
+      summary: Get CVEs
+      tags: []
+      operationId: get-cves
+      parameters:
+        - schema:
+            type: string
+            format: date
+          in: query
+          name: before
+          description: 'CVEs before the query date. [ISO 8601 is the expected format]'
+        - schema:
+            type: string
+            format: date
+          in: query
+          name: after
+          description: 'CVEs after the query date. [ISO 8601 is the expected format]'
+        - schema:
+            type: string
+          in: query
+          name: ids
+          description: CVEs for Ids separated by comma
+        - schema:
+            type: string
+          in: query
+          name: bug
+          description: CVEs for Bugzilla Ids
+        - schema:
+            type: string
+          in: query
+          name: advisory
+          description: CVEs for advisory
+        - schema:
+            type: string
+          in: query
+          name: severity
+          description: CVEs for severity
+        - schema:
+            type: string
+          in: query
+          name: package
+          description: CVEs which affect the package
+        - schema:
+            type: string
+          in: query
+          name: product
+          description: CVEs which affect the product. The parameter supports Perl compatible regular expressions.
+        - schema:
+            type: string
+          in: query
+          name: cwe
+          description: CVEs with CWE
+        - schema:
+            type: string
+          in: query
+          name: cvss_score
+          description: CVEs with CVSS score greater than or equal to this value
+        - schema:
+            type: string
+          in: query
+          name: cvss3_score
+          description: CVEs with CVSSv3 score greater than or equal to this value
+        - schema:
+            type: number
+          in: query
+          name: page
+          description: CVEs for page number
+        - schema:
+            type: number
+          in: query
+          name: per_page
+          description: Number of CVEs to return per page
+        - schema:
+            type: number
+          in: query
+          name: created_days_ago
+          description: Index of CVEs definitions created days ago
+      description: List all the recent CVEs when no parameter is passed. Returns a convenience object as response with very minimum attributes.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CVE'
+    parameters: []
+  '/cve/{CVE}.json':
+    parameters:
+      - schema:
+          type: string
+        name: CVE
+        in: path
+        required: true
+    get:
+      summary: Get specific CVE
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CVEDetailed'
+      operationId: get-cve
+      description: Retrieve full CVE details
+components:
+  schemas:
+    CVE:
+      description: CVE model used in listing
+      type: object
+      x-examples:
+        example-1:
+          CVE: CVE-2020-24489
+          severity: important
+          public_date: '2021-06-08T17:00:00Z'
+          advisories:
+            - 'RHSA-2021:2307'
+            - 'RHSA-2021:2306'
+            - 'RHSA-2021:2305'
+            - 'RHSA-2021:2304'
+            - 'RHSA-2021:2519'
+            - 'RHSA-2021:2308'
+            - 'RHSA-2021:2299'
+            - 'RHSA-2021:2303'
+            - 'RHSA-2021:2302'
+            - 'RHSA-2021:2522'
+            - 'RHSA-2021:2301'
+            - 'RHSA-2021:2300'
+          bugzilla: '1962650'
+          bugzilla_description: 'CVE-2020-24489 hw: vt-d related privilege escalation'
+          cvss_score: null
+          cvss_scoring_vector: null
+          CWE: CWE-459
+          affected_packages:
+            - 'microcode_ctl-4:20191115-4.20210525.1.el8_2'
+            - 'microcode_ctl-2:2.1-12.37.el7_2'
+            - 'redhat-virtualization-host-0:4.3.16-20210615.0.el7_9'
+            - 'microcode_ctl-2:2.1-53.16.el7_7'
+            - 'microcode_ctl-4:20210216-1.20210525.1.el8_4'
+            - 'microcode_ctl-2:2.1-16.40.el7_3'
+            - 'microcode_ctl-2:1.17-33.33.el6_10'
+            - 'microcode_ctl-4:20190618-1.20210525.1.el8_1'
+            - 'microcode_ctl-2:2.1-22.39.el7_4'
+            - 'microcode_ctl-2:2.1-73.9.el7_9'
+            - 'microcode_ctl-2:2.1-47.21.el7_6'
+          resource_url: 'https://access.redhat.com/hydra/rest/securitydata/cve/CVE-2020-24489.json'
+          cvss3_scoring_vector: 'CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:C/C:H/I:H/A:H'
+          cvss3_score: '8.8'
+      properties:
+        CVE:
+          type: string
+          minLength: 1
+        severity:
+          type: string
+          minLength: 1
+        public_date:
+          type: string
+          minLength: 1
+        advisories:
+          type: array
+          items:
+            type: string
+        bugzilla:
+          type: string
+          minLength: 1
+        bugzilla_description:
+          type: string
+          minLength: 1
+        cvss_score:
+          type: string
+        cvss_scoring_vector:
+          type: string
+        CWE:
+          type: string
+          minLength: 1
+        affected_packages:
+          type: array
+          items:
+            type: string
+        resource_url:
+          type: string
+          minLength: 1
+        cvss3_scoring_vector:
+          type: string
+          minLength: 1
+        cvss3_score:
+          type: string
+          minLength: 1
+      required:
+        - CVE
+        - severity
+        - public_date
+        - advisories
+        - bugzilla
+        - bugzilla_description
+        - CWE
+        - affected_packages
+        - resource_url
+        - cvss3_scoring_vector
+        - cvss3_score
+    CVEDetailed:
+      description: CVE model used when retrieving a specific CVE
+      type: object
+      x-examples:
+        example-1:
+          threat_severity: Important
+          public_date: '2021-06-08T17:00:00Z'
+          bugzilla:
+            description: 'CVE-2020-24489 hw: vt-d related privilege escalation'
+            id: '1962650'
+            url: 'https://bugzilla.redhat.com/show_bug.cgi?id=1962650'
+          cvss3:
+            cvss3_base_score: '8.8'
+            cvss3_scoring_vector: 'CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:C/C:H/I:H/A:H'
+            status: verified
+          cwe: CWE-459
+          details:
+            - Incomplete cleanup in some Intel(R) VT-d products may allow an authenticated user to potentially enable escalation of privilege via local access.
+            - A flaw was found in Intel® VT-d products. Entries from the context cache on some types of context cache invalidations may not be properly invalidated which may allow an authenticated user to potentially enable escalation of privilege via local access. The highest threat from this vulnerability is to data confidentiality and integrity as well as system availability.
+          acknowledgement: Red Hat would like to thank Intel for reporting this issue.
+          affected_release:
+            - product_name: Red Hat Enterprise Linux 6 Extended Lifecycle Support
+              release_date: '2021-06-09T00:00:00Z'
+              advisory: 'RHSA-2021:2299'
+              cpe: 'cpe:/o:redhat:rhel_els:6'
+              package: 'microcode_ctl-2:1.17-33.33.el6_10'
+            - product_name: Red Hat Enterprise Linux 7
+              release_date: '2021-06-09T00:00:00Z'
+              advisory: 'RHSA-2021:2305'
+              cpe: 'cpe:/o:redhat:enterprise_linux:7'
+              package: 'microcode_ctl-2:2.1-73.9.el7_9'
+            - product_name: Red Hat Enterprise Linux 7.2 Advanced Update Support
+              release_date: '2021-06-09T00:00:00Z'
+              advisory: 'RHSA-2021:2300'
+              cpe: 'cpe:/o:redhat:rhel_aus:7.2'
+              package: 'microcode_ctl-2:2.1-12.37.el7_2'
+            - product_name: Red Hat Enterprise Linux 7.3 Advanced Update Support
+              release_date: '2021-06-09T00:00:00Z'
+              advisory: 'RHSA-2021:2302'
+              cpe: 'cpe:/o:redhat:rhel_aus:7.3'
+              package: 'microcode_ctl-2:2.1-16.40.el7_3'
+            - product_name: Red Hat Enterprise Linux 7.4 Advanced Update Support
+              release_date: '2021-06-09T00:00:00Z'
+              advisory: 'RHSA-2021:2301'
+              cpe: 'cpe:/o:redhat:rhel_aus:7.4'
+              package: 'microcode_ctl-2:2.1-22.39.el7_4'
+            - product_name: Red Hat Enterprise Linux 7.4 Telco Extended Update Support
+              release_date: '2021-06-09T00:00:00Z'
+              advisory: 'RHSA-2021:2301'
+              cpe: 'cpe:/o:redhat:rhel_tus:7.4'
+              package: 'microcode_ctl-2:2.1-22.39.el7_4'
+            - product_name: Red Hat Enterprise Linux 7.4 Update Services for SAP Solutions
+              release_date: '2021-06-09T00:00:00Z'
+              advisory: 'RHSA-2021:2301'
+              cpe: 'cpe:/o:redhat:rhel_e4s:7.4'
+              package: 'microcode_ctl-2:2.1-22.39.el7_4'
+            - product_name: Red Hat Enterprise Linux 7.6 Advanced Update Support
+              release_date: '2021-06-09T00:00:00Z'
+              advisory: 'RHSA-2021:2303'
+              cpe: 'cpe:/o:redhat:rhel_aus:7.6'
+              package: 'microcode_ctl-2:2.1-47.21.el7_6'
+            - product_name: Red Hat Enterprise Linux 7.6 Telco Extended Update Support
+              release_date: '2021-06-09T00:00:00Z'
+              advisory: 'RHSA-2021:2303'
+              cpe: 'cpe:/o:redhat:rhel_tus:7.6'
+              package: 'microcode_ctl-2:2.1-47.21.el7_6'
+            - product_name: Red Hat Enterprise Linux 7.6 Update Services for SAP Solutions
+              release_date: '2021-06-09T00:00:00Z'
+              advisory: 'RHSA-2021:2303'
+              cpe: 'cpe:/o:redhat:rhel_e4s:7.6'
+              package: 'microcode_ctl-2:2.1-47.21.el7_6'
+            - product_name: Red Hat Enterprise Linux 7.7 Extended Update Support
+              release_date: '2021-06-09T00:00:00Z'
+              advisory: 'RHSA-2021:2304'
+              cpe: 'cpe:/o:redhat:rhel_eus:7.7'
+              package: 'microcode_ctl-2:2.1-53.16.el7_7'
+            - product_name: Red Hat Enterprise Linux 8
+              release_date: '2021-06-09T00:00:00Z'
+              advisory: 'RHSA-2021:2308'
+              cpe: 'cpe:/o:redhat:enterprise_linux:8'
+              package: 'microcode_ctl-4:20210216-1.20210525.1.el8_4'
+            - product_name: Red Hat Enterprise Linux 8.1 Extended Update Support
+              release_date: '2021-06-09T00:00:00Z'
+              advisory: 'RHSA-2021:2306'
+              cpe: 'cpe:/o:redhat:rhel_eus:8.1'
+              package: 'microcode_ctl-4:20190618-1.20210525.1.el8_1'
+            - product_name: Red Hat Enterprise Linux 8.2 Extended Update Support
+              release_date: '2021-06-09T00:00:00Z'
+              advisory: 'RHSA-2021:2307'
+              cpe: 'cpe:/o:redhat:rhel_eus:8.2'
+              package: 'microcode_ctl-4:20191115-4.20210525.1.el8_2'
+            - product_name: Red Hat Virtualization 4 for Red Hat Enterprise Linux 7
+              release_date: '2021-06-22T00:00:00Z'
+              advisory: 'RHSA-2021:2519'
+              cpe: 'cpe:/o:redhat:enterprise_linux:7::hypervisor'
+              package: 'redhat-virtualization-host-0:4.3.16-20210615.0.el7_9'
+            - product_name: Red Hat Virtualization 4 for Red Hat Enterprise Linux 8
+              release_date: '2021-06-22T00:00:00Z'
+              advisory: 'RHSA-2021:2522'
+              cpe: 'cpe:/o:redhat:enterprise_linux:8::hypervisor'
+          name: CVE-2020-24489
+          csaw: false
+      properties:
+        threat_severity:
+          type: string
+          minLength: 1
+        public_date:
+          type: string
+          minLength: 1
+        bugzilla:
+          type: object
+          required:
+            - description
+            - id
+            - url
+          properties:
+            description:
+              type: string
+              minLength: 1
+            id:
+              type: string
+              minLength: 1
+            url:
+              type: string
+              minLength: 1
+        cvss3:
+          type: object
+          required:
+            - cvss3_base_score
+            - cvss3_scoring_vector
+            - status
+          properties:
+            cvss3_base_score:
+              type: string
+              minLength: 1
+            cvss3_scoring_vector:
+              type: string
+              minLength: 1
+            status:
+              type: string
+              minLength: 1
+        cwe:
+          type: string
+          minLength: 1
+        details:
+          type: array
+          items:
+            type: string
+        acknowledgement:
+          type: string
+          minLength: 1
+        affected_release:
+          type: array
+          uniqueItems: true
+          minItems: 1
+          items:
+            type: object
+            properties:
+              product_name:
+                type: string
+                minLength: 1
+              release_date:
+                type: string
+                minLength: 1
+              advisory:
+                type: string
+                minLength: 1
+              cpe:
+                type: string
+                minLength: 1
+              package:
+                type: string
+                minLength: 1
+            required:
+              - product_name
+              - release_date
+              - advisory
+              - cpe
+        name:
+          type: string
+          minLength: 1
+        csaw:
+          type: boolean
+        package_state:
+          type: array
+          items:
+            type: object
+            properties:
+              product_name:
+                type: string
+              fix_state:
+                type: string
+              package_name:
+                type: string
+              cpe:
+                type: string
+            required:
+              - product_name
+              - fix_state
+              - package_name
+              - cpe
+      required:
+        - threat_severity
+        - public_date
+        - bugzilla
+        - cvss3
+        - cwe
+        - details
+        - acknowledgement
+        - name
+        - csaw

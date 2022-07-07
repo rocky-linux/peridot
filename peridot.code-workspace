@@ -1,0 +1,20 @@
+{
+	"folders": [
+		{
+			"path": "ui"
+		},
+        {
+            "path": "common"
+        },
+        {
+            "path": "dotui"
+        },
+		{
+			"path": "bazel-bin"
+		},
+		{
+			"path": "views"
+		}
+	],
+	"settings": {}
+}

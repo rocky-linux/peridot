@@ -1,0 +1,27 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "ochttp",
+    srcs = [
+        "client.go",
+        "client_stats.go",
+        "doc.go",
+        "route.go",
+        "server.go",
+        "span_annotating_client_trace.go",
+        "stats.go",
+        "trace.go",
+        "wrapped_body.go",
+    ],
+    importmap = "peridot.resf.org/vendor/go.opencensus.io/plugin/ochttp",
+    importpath = "go.opencensus.io/plugin/ochttp",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/go.opencensus.io/plugin/ochttp/propagation/b3",
+        "//vendor/go.opencensus.io/stats",
+        "//vendor/go.opencensus.io/stats/view",
+        "//vendor/go.opencensus.io/tag",
+        "//vendor/go.opencensus.io/trace",
+        "//vendor/go.opencensus.io/trace/propagation",
+    ],
+)

@@ -1,0 +1,293 @@
+syntax = "proto3";
+
+package resf.peridot.v1;
+
+import "validate/validate.proto";
+import "google/protobuf/wrappers.proto";
+import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
+import "peridot/proto/v1/task.proto";
+
+option go_package = "peridot.resf.org/peridot/pb;peridotpb";
+
+service ProjectService {
+  rpc CreateProject(CreateProjectRequest) returns (CreateProjectResponse) {
+    option (google.api.http) = {
+      post: "/v1/projects"
+      body: "*"
+    };
+  }
+
+  rpc UpdateProject(UpdateProjectRequest) returns (UpdateProjectResponse) {
+    option (google.api.http) = {
+      put: "/v1/projects/{project_id=*}"
+      body: "*"
+    };
+  }
+
+  rpc ListProjects(ListProjectsRequest) returns (ListProjectsResponse) {
+    option (google.api.http) = {
+      get: "/v1/projects"
+    };
+  }
+
+  rpc GetProject(GetProjectRequest) returns (GetProjectResponse) {
+    option (google.api.http) = {
+      get: "/v1/projects/{id=*}"
+    };
+  }
+
+  rpc ListRepositories(ListRepositoriesRequest) returns (ListRepositoriesResponse) {
+    option (google.api.http) = {
+      get: "/v1/projects/{project_id=*}/repositories"
+    };
+  }
+
+  rpc GetRepository(GetRepositoryRequest) returns (GetRepositoryResponse) {
+    option (google.api.http) = {
+      get: "/v1/projects/{project_id=*}/repositories/{id=*}"
+    };
+  }
+
+  rpc GetProjectCredentials(GetProjectCredentialsRequest) returns (GetProjectCredentialsResponse) {
+    option (google.api.http) = {
+      get: "/v1/projects/{project_id=*}/credentials"
+    };
+  }
+
+  rpc SetProjectCredentials(SetProjectCredentialsRequest) returns (SetProjectCredentialsResponse) {
+    option (google.api.http) = {
+      post: "/v1/projects/{project_id=*}/credentials"
+      body: "*"
+    };
+  }
+
+  rpc SyncCatalog(SyncCatalogRequest) returns (resf.peridot.v1.AsyncTask) {
+    option (google.api.http) = {
+      post: "/v1/projects/{project_id=*}/catalogsync"
+      body: "*"
+    };
+  }
+
+  rpc CreateHashedRepositories(CreateHashedRepositoriesRequest) returns (resf.peridot.v1.AsyncTask) {
+    option (google.api.http) = {
+      post: "/v1/projects/{project_id=*}/repositories/hashed"
+      body: "*"
+    };
+  }
+}
+
+// Project is a contained RPM distribution
+// Packages, builds, imports and tasks are assigned to projects (multi-projects possible)
+// All actions currently has to belong to a project and currently all operational
+// metadata is kept within a project. Such as source scm and target scm.
+// Think of projects as each their own software collection
+message Project {
+  // Unique identifier of format UUID v4
+  string id = 1;
+
+  // When project was created
+  google.protobuf.Timestamp created_at = 2;
+
+  // When project was last updated
+  google.protobuf.Timestamp updated_at = 3;
+
+  // Name of project, must be unique
+  google.protobuf.StringValue name = 4 [(validate.rules).message.required = true];
+
+  // Major version of project (e.g. 8 for EL8 and 1800 for openSUSE 18)
+  google.protobuf.Int32Value major_version = 5 [(validate.rules).message.required = true];
+
+  // Architectures supported by this project
+  repeated string archs = 6 [(validate.rules).repeated = {min_items: 1, unique: true, items: {string: {in: ["i686", "x86_64", "aarch64", "armhfp", "ppc64le", "s390x"]}}}];
+
+  // Dist tag that this project will supply for builds
+  google.protobuf.StringValue dist_tag = 7 [(validate.rules).message.required = true];
+
+  // Target gitlab host
+  google.protobuf.StringValue target_gitlab_host = 8 [(validate.rules).message.required = true];
+
+  // Target prefix
+  google.protobuf.StringValue target_prefix = 9 [(validate.rules).message.required = true];
+
+  // Target branch prefix
+  google.protobuf.StringValue target_branch_prefix = 10 [(validate.rules).message.required = true];
+
+  // Source git host
+  google.protobuf.StringValue source_git_host = 11;
+
+  // Source prefix
+  google.protobuf.StringValue source_prefix = 12;
+
+  // Source branch prefix
+  google.protobuf.StringValue source_branch_prefix = 13;
+
+  // URL to blob storage
+  google.protobuf.StringValue cdn_url = 14;
+
+  // Whether to fetch Stream packages
+  bool stream_mode = 15;
+
+  // Target vendor
+  string target_vendor = 16 [(validate.rules).string = {in: ["redhat", "suse"]}];
+
+  // Target additional vendor
+  google.protobuf.StringValue additional_vendor = 17 [(validate.rules).message.required = true];
+
+  // Whether the builds should forcefully use import dist tag
+  bool follow_import_dist = 18;
+
+  // Branch suffix
+  google.protobuf.StringValue branch_suffix = 19;
+
+  // Whether to make the resulting import repositories public
+  bool git_make_public = 20;
+
+  // Vendor macro is what gets inserted as the vendor in the RPM
+  google.protobuf.StringValue vendor_macro = 21;
+
+  // Packager macro is what gets inserted as the packager in the RPM
+  google.protobuf.StringValue packager_macro = 22;
+}
+
+// A repository is a yum repository that yumrepofs maintains
+// for this specific project
+// Repositories hold packages. All projects have a repository named "all"
+message Repository {
+  // Unique identifier of format UUID v4
+  string id = 1;
+
+  // When project was created
+  google.protobuf.Timestamp created_at = 2;
+
+  google.protobuf.StringValue name = 3 [(validate.rules).message.required = true];
+  google.protobuf.StringValue project_id = 4 [(validate.rules).message.required = true];
+
+  repeated string packages = 5 [(validate.rules).repeated = {unique: true}];
+
+  // Whether an RPM from a package should be excluded from the repository
+  // Format: {name}.{arch}
+  repeated string exclude_filter = 6 [(validate.rules).repeated = {unique: true}];
+
+  // Whether an RPM from a package should be included in the repository
+  // If list contains a NA that is in exclude_list as well, then it will
+  // be excluded.
+  repeated string include_list = 7 [(validate.rules).repeated = {unique: true}];
+
+  // Force multilib on non-prepopulated, non-devel and non-runtime package
+  // Only accepts complete RPM name (e.g. valgrind)
+  repeated string additional_multilib = 8 [(validate.rules).repeated = {unique: true}];
+
+  // Exclude multilib even if devel or runtime
+  // Accepts glob (e.g. valgrind*)
+  repeated string exclude_multilib_filter = 9 [(validate.rules).repeated = {unique: true}];
+
+  // Architectures that should be multilib enabled
+  repeated string multilib = 10 [(validate.rules).repeated = {unique: true}];
+
+  // Exclude filter that supports globs
+  repeated string glob_include_filter = 11 [(validate.rules).repeated = {unique: true}];
+}
+
+message CreateProjectRequest {
+  // Project to create
+  Project project = 1 [(validate.rules).message.required = true];
+}
+
+message CreateProjectResponse {
+  // Created project
+  Project project = 1;
+}
+
+message UpdateProjectRequest {
+  string project_id = 1;
+
+  // Project to update
+  Project project = 2 [(validate.rules).message.required = true];
+}
+
+message UpdateProjectResponse {
+  // Updated project
+  Project project = 1;
+}
+
+message ProjectFilters {
+  google.protobuf.StringValue id = 1;
+  google.protobuf.StringValue name = 2;
+  repeated string ids = 3;
+}
+
+message ListProjectsRequest {
+  // The page to request
+  int64 page = 1;
+
+  // Maximum amount of results to return
+  // Minimum: 1
+  // Maximum: 100
+  int32 limit = 2;
+}
+
+message ListProjectsResponse {
+  repeated Project projects = 1;
+  int64 total = 2;
+  int64 current = 3;
+  int64 page = 4;
+}
+
+message GetProjectRequest {
+  google.protobuf.StringValue id = 1 [(validate.rules).message.required = true];
+}
+
+message GetProjectResponse {
+  Project project = 1;
+}
+
+message ListRepositoriesRequest {
+  google.protobuf.StringValue project_id = 1 [(validate.rules).message.required = true];
+}
+
+message ListRepositoriesResponse {
+  repeated Repository repositories = 1;
+}
+
+message GetRepositoryRequest {
+  google.protobuf.StringValue project_id = 1 [(validate.rules).message.required = true];
+  google.protobuf.StringValue id = 2 [(validate.rules).message.required = true];
+}
+
+message GetRepositoryResponse {
+  Repository repository = 1;
+}
+
+message GetProjectCredentialsRequest {
+  google.protobuf.StringValue project_id = 1 [(validate.rules).message.required = true];
+}
+
+message GetProjectCredentialsResponse {
+  google.protobuf.StringValue gitlab_username = 1;
+}
+
+message SetProjectCredentialsRequest {
+  google.protobuf.StringValue project_id = 1 [(validate.rules).message.required = true];
+  google.protobuf.StringValue gitlab_username = 2 [(validate.rules).message.required = true];
+  google.protobuf.StringValue gitlab_password = 3 [(validate.rules).message.required = true];
+}
+
+message SetProjectCredentialsResponse {
+  google.protobuf.StringValue gitlab_username = 1;
+}
+
+message SyncCatalogRequest {
+  google.protobuf.StringValue project_id = 1 [(validate.rules).message.required = true];
+  google.protobuf.StringValue scm_url = 2 [(validate.rules).message.required = true];
+  google.protobuf.StringValue branch = 3 [(validate.rules).message.required = true];
+}
+
+message CreateHashedRepositoriesRequest {
+  google.protobuf.StringValue project_id = 1 [(validate.rules).message.required = true];
+  repeated string repositories = 2 [(validate.rules).repeated = {unique: true}];
+}
+
+message CreateHashedRepositoriesTask {
+  repeated string repo_revisions = 1;
+}

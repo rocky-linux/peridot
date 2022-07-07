@@ -1,0 +1,109 @@
+syntax = "proto3";
+
+package resf.obsidian.v1;
+
+import "google/api/annotations.proto";
+import "validate/validate.proto";
+
+option go_package = "peridot.resf.org/obsidian/pb;obsidianpb";
+
+// ObsidianService is a Hydra-based authentication and authorization service.
+// todo(mustafa): Currently only supports Social/OAuth2 sign-in
+service ObsidianService {
+  rpc SessionStatus (SessionStatusRequest) returns (SessionStatusResponse) {
+    option (google.api.http) = {
+      post: "/v1/users/sessions:status"
+      body: "*"
+    };
+  }
+
+  rpc ConsentDecision (ConsentDecisionRequest) returns (ConsentDecisionResponse) {
+    option (google.api.http) = {
+      post: "/v1/users:consent"
+      body: "*"
+    };
+  }
+
+  rpc GetOAuth2Providers (GetOAuth2ProvidersRequest) returns (GetOAuth2ProvidersResponse) {
+    option (google.api.http) = {
+      get: "/v1/oauth2/providers"
+    };
+  }
+
+  rpc InitiateOAuth2Session (InitiateOAuth2SessionRequest) returns (InitiateOAuth2SessionResponse) {
+    option (google.api.http) = {
+      get: "/v1/oauth2/initiate_session"
+    };
+  }
+
+  rpc ConfirmOAuth2Session (ConfirmOAuth2SessionRequest) returns (ConfirmOAuth2SessionResponse) {
+    option (google.api.http) = {
+      get: "/v1/oauth2/providers/{provider_id=*}/callback"
+    };
+  }
+
+  rpc LogoutDecision (LogoutDecisionRequest) returns (LogoutDecisionResponse) {
+    option (google.api.http) = {
+      post: "/v1/users:logout"
+      body: "*"
+    };
+  }
+}
+
+message OAuth2Provider {
+  string id = 1;
+  string name = 2;
+  string provider = 3;
+}
+
+message ConsentDecisionRequest {
+  string challenge = 1;
+  bool allow = 2;
+}
+
+message ConsentDecisionResponse {
+  string redirect_url = 1;
+}
+
+message GetOAuth2ProvidersRequest {}
+
+message GetOAuth2ProvidersResponse {
+  repeated OAuth2Provider providers = 1;
+}
+
+message InitiateOAuth2SessionRequest {
+  string challenge = 1;
+  string provider_id = 2;
+}
+
+message InitiateOAuth2SessionResponse {}
+
+message ConfirmOAuth2SessionRequest {
+  string provider_id = 1;
+  string code = 2;
+  string scope = 3;
+  string state = 4;
+}
+
+message ConfirmOAuth2SessionResponse {}
+
+message SessionStatusRequest {
+  string challenge = 1;
+  string check_type = 2;
+}
+
+message SessionStatusResponse {
+  bool valid = 1;
+  string redirect_url = 2;
+  string client_name = 3;
+  repeated string scopes = 4;
+}
+
+message LogoutDecisionRequest {
+  string challenge = 1;
+  bool accept = 2;
+}
+
+message LogoutDecisionResponse {
+  string redirect_url = 1;
+}

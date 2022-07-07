@@ -1,0 +1,20 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "auth",
+    srcs = [
+        "auth.go",
+        "doc.go",
+        "metadata.go",
+    ],
+    importmap = "peridot.resf.org/vendor/github.com/grpc-ecosystem/go-grpc-middleware/auth",
+    importpath = "github.com/grpc-ecosystem/go-grpc-middleware/auth",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/grpc-ecosystem/go-grpc-middleware",
+        "//vendor/github.com/grpc-ecosystem/go-grpc-middleware/util/metautils",
+        "@org_golang_google_grpc//:go_default_library",
+        "@org_golang_google_grpc//codes",
+        "@org_golang_google_grpc//status",
+    ],
+)

@@ -1,0 +1,18 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "rpc",
+    srcs = [
+        "code.pb.go",
+        "error_details.pb.go",
+        "status.pb.go",
+    ],
+    importmap = "peridot.resf.org/vendor/github.com/gogo/googleapis/google/rpc",
+    importpath = "github.com/gogo/googleapis/google/rpc",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/gogo/protobuf/proto",
+        "//vendor/github.com/gogo/protobuf/sortkeys",
+        "//vendor/github.com/gogo/protobuf/types",
+    ],
+)

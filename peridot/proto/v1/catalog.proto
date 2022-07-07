@@ -1,0 +1,78 @@
+syntax = "proto3";
+
+package resf.peridot.v1;
+
+import "google/protobuf/wrappers.proto";
+import "google/protobuf/timestamp.proto";
+import "validate/validate.proto";
+import "google/api/annotations.proto";
+import "peridot/proto/v1/task.proto";
+import "peridot/proto/v1/package.proto";
+
+option go_package = "peridot.resf.org/peridot/pb;peridotpb";
+
+message CatalogSyncRepository {
+  string name = 1;
+  repeated string include_filter = 2;
+  repeated string multilib = 3;
+}
+
+message CatalogSyncPackage {
+  string name = 1 [(validate.rules).string.min_bytes = 1];
+  resf.peridot.v1.PackageType type = 2;
+  repeated string module_component = 3;
+  repeated CatalogSyncRepository repository = 4;
+}
+
+message GlobArch {
+  // Regex pattern to match the architecture.
+  // Can also be set to "*" to match all architectures.
+  string key = 1;
+
+  // Glob to match the package in the repository.
+  repeated string glob_match = 2;
+}
+
+message GlobFilter {
+  // Regex pattern to match.
+  // Can also be set to "*" to match all strings.
+  string repo_match = 1;
+
+  repeated GlobArch arch = 2;
+}
+
+message CatalogSync {
+  repeated CatalogSyncPackage package = 1;
+  repeated string additional_multilib = 2;
+  repeated string exclude_multilib_filter = 3;
+  repeated GlobFilter exclude_filter = 4;
+  repeated GlobFilter include_filter = 5;
+}
+
+message CatalogExtraPackageOptions {
+  string name = 1 [(validate.rules).string.min_bytes = 1];
+  repeated string with = 2 [(validate.rules).repeated = {unique: true}];
+  repeated string without = 3 [(validate.rules).repeated = {unique: true}];
+}
+
+message CatalogExtraOptions {
+  repeated CatalogExtraPackageOptions package_options = 1;
+}
+
+message KindCatalogSync {
+  repeated string new_packages = 1;
+  repeated string modified_packages = 4;
+  repeated string new_repositories = 2;
+  repeated string modified_repositories = 3;
+  repeated string additional_nvr_globs = 5;
+}
+
+message KindCatalogExtraOptions {
+  repeated string modified_packages = 1;
+}
+
+message SyncCatalogTask {
+  KindCatalogSync catalog_sync = 1;
+  KindCatalogExtraOptions extra_options = 2;
+  repeated string reprocess_build_ids = 3;
+}

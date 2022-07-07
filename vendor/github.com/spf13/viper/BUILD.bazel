@@ -1,0 +1,28 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "viper",
+    srcs = [
+        "flags.go",
+        "util.go",
+        "viper.go",
+    ],
+    importmap = "peridot.resf.org/vendor/github.com/spf13/viper",
+    importpath = "github.com/spf13/viper",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/fsnotify/fsnotify",
+        "//vendor/github.com/hashicorp/hcl",
+        "//vendor/github.com/hashicorp/hcl/hcl/printer",
+        "//vendor/github.com/magiconair/properties",
+        "//vendor/github.com/mitchellh/mapstructure",
+        "//vendor/github.com/pelletier/go-toml",
+        "//vendor/github.com/spf13/afero",
+        "//vendor/github.com/spf13/cast",
+        "//vendor/github.com/spf13/jwalterweatherman",
+        "//vendor/github.com/spf13/pflag",
+        "//vendor/github.com/subosito/gotenv",
+        "//vendor/gopkg.in/ini.v1:ini_v1",
+        "//vendor/gopkg.in/yaml.v2:yaml_v2",
+    ],
+)

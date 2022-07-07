@@ -1,0 +1,34 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "public",
+    srcs = [
+        "disconnect_user_parameters.go",
+        "disconnect_user_responses.go",
+        "discover_open_id_configuration_parameters.go",
+        "discover_open_id_configuration_responses.go",
+        "is_instance_ready_parameters.go",
+        "is_instance_ready_responses.go",
+        "oauth2_token_parameters.go",
+        "oauth2_token_responses.go",
+        "oauth_auth_parameters.go",
+        "oauth_auth_responses.go",
+        "public_client.go",
+        "revoke_o_auth2_token_parameters.go",
+        "revoke_o_auth2_token_responses.go",
+        "userinfo_parameters.go",
+        "userinfo_responses.go",
+        "well_known_parameters.go",
+        "well_known_responses.go",
+    ],
+    importmap = "peridot.resf.org/vendor/github.com/ory/hydra-client-go/client/public",
+    importpath = "github.com/ory/hydra-client-go/client/public",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/go-openapi/errors",
+        "//vendor/github.com/go-openapi/runtime",
+        "//vendor/github.com/go-openapi/runtime/client",
+        "//vendor/github.com/go-openapi/strfmt",
+        "//vendor/github.com/ory/hydra-client-go/models",
+    ],
+)

@@ -1,0 +1,127 @@
+syntax = "proto3";
+
+package resf.peridot.yumrepofs.v1;
+
+import "google/api/annotations.proto";
+import "google/api/httpbody.proto";
+import "validate/validate.proto";
+
+option go_package = "peridot.resf.org/peridot/yumrepofs/pb;yumrepofspb";
+
+service YumrepofsService {
+  rpc GetRpm(GetRpmRequest) returns (GetRpmResponse) {
+    option (google.api.http) = {
+      get: "/v1/projects/{project_id=*}/repo/{repo_name=*}/{arch=*}/Packages/{parent_task_id=*}/{file_name=**}"
+    };
+  }
+
+  rpc GetBlob(GetBlobRequest) returns (google.api.HttpBody) {
+    option (google.api.http) = {
+      get: "/v1/projects/{project_id=*}/repo/{repo_name=*}/{arch=*}/repodata/{blob=*}"
+    };
+  }
+
+  rpc GetRepoMd(GetRepoMdRequest) returns (google.api.HttpBody) {
+    option (google.api.http) = {
+      get: "/v1/projects/{project_id=*}/repo/{repo_name=*}/{arch=*}/repodata/repomd.xml"
+    };
+  }
+
+  rpc GetRepoMdSignature(GetRepoMdRequest) returns (google.api.HttpBody) {
+    option (google.api.http) = {
+      get: "/v1/projects/{project_id=*}/repo/{repo_name=*}/{arch=*}/repodata/repomd.xml.asc"
+    };
+  }
+
+  rpc GetPublicUrl(GetPublicUrlRequest) returns (GetPublicUrlResponse) {
+    option (google.api.http) = {
+      get: "/v1/public_url"
+    };
+  }
+
+  rpc GetPublicKey(GetPublicKeyRequest) returns (google.api.HttpBody) {
+    option (google.api.http) = {
+      get: "/v1/projects/{project_id=*}/repo/{repo_name=*}/{arch=*}/RPM-GPG-KEY"
+    };
+  }
+
+  rpc GetUrlMappings(GetUrlMappingsRequest) returns (GetUrlMappingsResponse) {
+    option (google.api.http) = {
+      get: "/v1/projects/{project_id=*}/repo/{repo_name=*}/{arch=*}/url_mappings"
+    };
+  }
+}
+
+message GetRpmRequest {
+  string project_id = 1;
+  string repo_name = 2;
+  string arch = 3;
+  string parent_task_id = 4;
+  string file_name = 5;
+}
+
+message GetRpmResponse {
+  string redirect_url = 1;
+}
+
+message GetRepoMdRequest {
+  string project_id = 1;
+  string repo_name = 2;
+  string arch = 3;
+}
+
+message GetBlobRequest {
+  string project_id = 1;
+  string repo_name = 2;
+  string arch = 3;
+
+  string blob = 4;
+}
+
+message GetPublicUrlRequest {}
+message GetPublicUrlResponse {
+  string public_url = 1;
+}
+
+message RepositoryChange {
+  // Name of the repository
+  string name = 1;
+
+  // Added packages
+  repeated string added_packages = 2;
+
+  // Modified packages
+  repeated string modified_packages = 3;
+
+  // Removed packages
+  repeated string removed_packages = 4;
+
+  // Added modules
+  repeated string added_modules = 5;
+
+  // Modified modules
+  repeated string modified_modules = 6;
+
+  // Removed modules
+  repeated string removed_modules = 7;
+}
+
+message UpdateRepoTask {
+  // List of repo changes
+  repeated RepositoryChange changes = 1;
+}
+
+message GetPublicKeyRequest {
+  string project_id = 1;
+  string repo_name = 2;
+  string arch = 3;
+}
+
+message GetUrlMappingsRequest {
+  string project_id = 1;
+  string repo_name = 2;
+  string arch = 3;
+}
+message GetUrlMappingsResponse {
+  map<string, string> url_mappings = 1;
+}

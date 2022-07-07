@@ -1,0 +1,67 @@
+syntax = "proto3";
+
+package resf.secparse.admin;
+
+import "google/api/annotations.proto";
+import "proto/common.proto";
+import "secparse/admin/proto/v1/short_code.proto";
+import "secparse/admin/proto/v1/cve.proto";
+
+option go_package = "peridot.resf.org/secparse/admin/proto/v1;secparseadminpb";
+
+service SecparseAdmin {
+  // ListShortCodes
+  //
+  // List all short codes
+  rpc ListShortCodes (ListShortCodesRequest) returns (ListShortCodesResponse) {
+    option (google.api.http) = {
+      get: "/short_codes"
+    };
+  }
+
+  // GetShortCode
+  //
+  // Get short code entry by code
+  rpc GetShortCode (GetShortCodeRequest) returns (GetShortCodeResponse) {
+    option (google.api.http) = {
+      get: "/short_codes/{code=*}"
+    };
+  }
+
+  // CreateShortCode
+  //
+  // Create a new short code / prefix to publish errata with
+  rpc CreateShortCode (CreateShortCodeRequest) returns (CreateShortCodeResponse) {
+    option (google.api.http) = {
+      post: "/short_codes"
+      body: "*"
+    };
+  }
+
+  // ListUnresolvedCVEs
+  //
+  // List all unresolved CVEs
+  rpc ListUnresolvedCVEs (ListUnresolvedCVEsRequest) returns (ListUnresolvedCVEsResponse) {
+    option (google.api.http) = {
+      get: "/cves/unresolved"
+    };
+  }
+
+  // ListFixedCVEs
+  //
+  // List all CVEs either fixed upstream or downstream
+  rpc ListFixedCVEs (ListFixedCVEsRequest) returns (ListFixedCVEsResponse) {
+    option (google.api.http) = {
+      get: "/cves/fixed"
+    };
+  }
+
+  // HealthCheck
+  //
+  // Endpoint to see if the service is in good health
+  rpc HealthCheck (resf.orgmon.HealthCheckRequest) returns (resf.orgmon.HealthCheckResponse) {
+    option (google.api.http) = {
+      get: "/healthz"
+    };
+  }
+}

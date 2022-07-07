@@ -1,0 +1,17 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "printer",
+    srcs = [
+        "nodes.go",
+        "printer.go",
+    ],
+    importmap = "peridot.resf.org/vendor/github.com/hashicorp/hcl/hcl/printer",
+    importpath = "github.com/hashicorp/hcl/hcl/printer",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/hashicorp/hcl/hcl/ast",
+        "//vendor/github.com/hashicorp/hcl/hcl/parser",
+        "//vendor/github.com/hashicorp/hcl/hcl/token",
+    ],
+)

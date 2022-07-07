@@ -1,0 +1,25 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "workflow",
+    srcs = [
+        "activity_options.go",
+        "context.go",
+        "context_propagator.go",
+        "deterministic_wrappers.go",
+        "doc.go",
+        "session.go",
+        "workflow.go",
+        "workflow_options.go",
+    ],
+    importmap = "peridot.resf.org/vendor/go.temporal.io/sdk/workflow",
+    importpath = "go.temporal.io/sdk/workflow",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/go.temporal.io/sdk/converter",
+        "//vendor/go.temporal.io/sdk/internal",
+        "//vendor/go.temporal.io/sdk/internal/common/metrics",
+        "//vendor/go.temporal.io/sdk/log",
+        "//vendor/go.temporal.io/sdk/temporal",
+    ],
+)

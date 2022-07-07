@@ -1,0 +1,35 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "pq",
+    srcs = [
+        "array.go",
+        "buf.go",
+        "conn.go",
+        "conn_go18.go",
+        "connector.go",
+        "copy.go",
+        "doc.go",
+        "encode.go",
+        "error.go",
+        "krb.go",
+        "notice.go",
+        "notify.go",
+        "rows.go",
+        "ssl.go",
+        "ssl_permissions.go",
+        "ssl_windows.go",
+        "url.go",
+        "user_other.go",
+        "user_posix.go",
+        "user_windows.go",
+        "uuid.go",
+    ],
+    importmap = "peridot.resf.org/vendor/github.com/lib/pq",
+    importpath = "github.com/lib/pq",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/lib/pq/oid",
+        "//vendor/github.com/lib/pq/scram",
+    ],
+)

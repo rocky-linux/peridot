@@ -1,0 +1,19 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "binaryheap",
+    srcs = [
+        "binaryheap.go",
+        "iterator.go",
+        "serialization.go",
+    ],
+    importmap = "peridot.resf.org/vendor/github.com/emirpasic/gods/trees/binaryheap",
+    importpath = "github.com/emirpasic/gods/trees/binaryheap",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/emirpasic/gods/containers",
+        "//vendor/github.com/emirpasic/gods/lists/arraylist",
+        "//vendor/github.com/emirpasic/gods/trees",
+        "//vendor/github.com/emirpasic/gods/utils",
+    ],
+)

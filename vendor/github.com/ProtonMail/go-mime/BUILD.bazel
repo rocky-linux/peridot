@@ -1,0 +1,19 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go-mime",
+    srcs = [
+        "encoding.go",
+        "parser.go",
+        "utf7Decoder.go",
+    ],
+    importmap = "peridot.resf.org/vendor/github.com/ProtonMail/go-mime",
+    importpath = "github.com/ProtonMail/go-mime",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/sirupsen/logrus",
+        "//vendor/golang.org/x/text/encoding",
+        "//vendor/golang.org/x/text/encoding/htmlindex",
+        "//vendor/golang.org/x/text/transform",
+    ],
+)

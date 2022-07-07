@@ -1,0 +1,33 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "yumrepofs",
+    srcs = [
+        "blob.go",
+        "metadata.go",
+        "rpm.go",
+        "server.go",
+    ],
+    importpath = "peridot.resf.org/peridot/yumrepofs/v1",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//peridot/db",
+        "//peridot/lookaside",
+        "//peridot/lookaside/s3",
+        "//peridot/proto/v1/yumrepofs:pb",
+        "//proto:common",
+        "//utils",
+        "//vendor/github.com/aws/aws-sdk-go/aws",
+        "//vendor/github.com/aws/aws-sdk-go/aws/credentials/stscreds",
+        "//vendor/github.com/aws/aws-sdk-go/aws/session",
+        "//vendor/github.com/aws/aws-sdk-go/service/s3",
+        "//vendor/github.com/go-git/go-billy/v5/osfs",
+        "//vendor/github.com/sirupsen/logrus",
+        "//vendor/github.com/spf13/viper",
+        "@go_googleapis//google/api:httpbody_go_proto",
+        "@org_golang_google_grpc//:go_default_library",
+        "@org_golang_google_grpc//codes",
+        "@org_golang_google_grpc//metadata",
+        "@org_golang_google_grpc//status",
+    ],
+)

@@ -1,0 +1,124 @@
+load("@bazel_gazelle//:def.bzl", "gazelle")
+load("@io_bazel_rules_go//proto:compiler.bzl", "go_proto_compiler")
+load("@io_bazel_rules_go//go:def.bzl", "nogo")
+
+exports_files([
+    "BUILD",
+    "WORKSPACE",
+])
+
+# gazelle:prefix peridot.resf.org
+# gazelle:exclude google
+# gazelle:exclude vendor/peridot.resf.org
+# gazelle:exclude vendor/google.golang.org
+# gazelle:exclude vendor/github.com/golang/protobuf
+# gazelle:exclude vendor/golang.org/x/net
+# gazelle:exclude vendor/github.com/ProtonMail/go-crypto
+# gazelle:go_grpc_compilers //:go_apiv2,//:go_grpc,//:go_validate,@com_github_grpc_ecosystem_grpc_gateway_v2//protoc-gen-grpc-gateway:go_gen_grpc_gateway
+# gazelle:resolve go github.com/grpc-ecosystem/grpc-gateway/v2/runtime @com_github_grpc_ecosystem_grpc_gateway_v2//runtime:go_default_library
+# gazelle:resolve go github.com/grpc-ecosystem/grpc-gateway/v2/utilities @com_github_grpc_ecosystem_grpc_gateway_v2//utilities:go_default_library
+# gazelle:resolve go github.com/envoyproxy/protoc-gen-validate/validate @com_envoyproxy_protoc_gen_validate//validate:validate_go_proto
+# gazelle:resolve go github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2/options @com_github_grpc_ecosystem_grpc_gateway_v2//protoc-gen-openapiv2/options:options_go_proto
+# gazelle:resolve proto validate/validate.proto @com_envoyproxy_protoc_gen_validate//validate:validate_proto
+# gazelle:resolve proto go validate/validate.proto @com_envoyproxy_protoc_gen_validate//validate:validate_go_proto
+# gazelle:resolve proto protoc-gen-openapiv2/options/annotations.proto @com_github_grpc_ecosystem_grpc_gateway_v2//protoc-gen-openapiv2/options:options_proto
+# gazelle:resolve proto go protoc-gen-openapiv2/options/annotations.proto @com_github_grpc_ecosystem_grpc_gateway_v2//protoc-gen-openapiv2/options:options_go_proto
+# gazelle:resolve proto protoc-gen-openapiv2/options/openapiv2.proto @com_github_grpc_ecosystem_grpc_gateway_v2//protoc-gen-openapiv2/options:options_proto
+# gazelle:resolve proto go protoc-gen-openapiv2/options/openapiv2.proto @com_github_grpc_ecosystem_grpc_gateway_v2//protoc-gen-openapiv2/options:options_go_proto
+gazelle(
+    name = "gazelle",
+)
+
+nogo(
+    name = "nogo",
+    config = "nogo.json",
+    vet = True,
+    visibility = ["//visibility:public"],
+    deps = [
+        "@org_golang_x_tools//go/analysis/passes/asmdecl",
+        "@org_golang_x_tools//go/analysis/passes/assign",
+        "@org_golang_x_tools//go/analysis/passes/composite",
+        "@org_golang_x_tools//go/analysis/passes/copylock",
+        "@org_golang_x_tools//go/analysis/passes/httpresponse",
+        "@org_golang_x_tools//go/analysis/passes/loopclosure",
+        "@org_golang_x_tools//go/analysis/passes/lostcancel",
+        "@org_golang_x_tools//go/analysis/passes/shift",
+        "@org_golang_x_tools//go/analysis/passes/stdmethods",
+        "@org_golang_x_tools//go/analysis/passes/structtag",
+        "@org_golang_x_tools//go/analysis/passes/tests",
+        "@org_golang_x_tools//go/analysis/passes/unreachable",
+        "@org_golang_x_tools//go/analysis/passes/unsafeptr",
+        "@org_golang_x_tools//go/analysis/passes/unusedresult",
+    ],
+)
+
+go_proto_compiler(
+    name = "go_apiv2",
+    options = [
+        "paths=source_relative",
+    ],
+    plugin = "@org_golang_google_protobuf//cmd/protoc-gen-go",
+    suffix = ".pb.go",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_golang_protobuf//proto:go_default_library",
+        "@io_bazel_rules_go//proto/wkt:any_go_proto",
+        "@io_bazel_rules_go//proto/wkt:api_go_proto",
+        "@io_bazel_rules_go//proto/wkt:compiler_plugin_go_proto",
+        "@io_bazel_rules_go//proto/wkt:descriptor_go_proto",
+        "@io_bazel_rules_go//proto/wkt:duration_go_proto",
+        "@io_bazel_rules_go//proto/wkt:empty_go_proto",
+        "@io_bazel_rules_go//proto/wkt:field_mask_go_proto",
+        "@io_bazel_rules_go//proto/wkt:source_context_go_proto",
+        "@io_bazel_rules_go//proto/wkt:struct_go_proto",
+        "@io_bazel_rules_go//proto/wkt:timestamp_go_proto",
+        "@io_bazel_rules_go//proto/wkt:type_go_proto",
+        "@io_bazel_rules_go//proto/wkt:wrappers_go_proto",
+        "@org_golang_google_protobuf//reflect/protoreflect:go_default_library",
+        "@org_golang_google_protobuf//runtime/protoimpl:go_default_library",
+        "@org_golang_google_protobuf//types/descriptorpb:go_default_library",
+        "@org_golang_google_protobuf//types/known/timestamppb:go_default_library",
+        "@org_golang_google_protobuf//types/known/wrapperspb:go_default_library",
+    ],
+)
+
+go_proto_compiler(
+    name = "go_grpc",
+    options = [
+        "paths=source_relative",
+    ],
+    plugin = "@org_golang_google_grpc_cmd_protoc_gen_go_grpc//:protoc-gen-go-grpc",
+    suffix = "_grpc.pb.go",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@io_bazel_rules_go//proto/wkt:any_go_proto",
+        "@io_bazel_rules_go//proto/wkt:api_go_proto",
+        "@io_bazel_rules_go//proto/wkt:compiler_plugin_go_proto",
+        "@io_bazel_rules_go//proto/wkt:descriptor_go_proto",
+        "@io_bazel_rules_go//proto/wkt:duration_go_proto",
+        "@io_bazel_rules_go//proto/wkt:empty_go_proto",
+        "@io_bazel_rules_go//proto/wkt:field_mask_go_proto",
+        "@io_bazel_rules_go//proto/wkt:source_context_go_proto",
+        "@io_bazel_rules_go//proto/wkt:struct_go_proto",
+        "@io_bazel_rules_go//proto/wkt:timestamp_go_proto",
+        "@io_bazel_rules_go//proto/wkt:type_go_proto",
+        "@io_bazel_rules_go//proto/wkt:wrappers_go_proto",
+        "@org_golang_google_grpc//:go_default_library",
+        "@org_golang_google_grpc//codes:go_default_library",
+        "@org_golang_google_grpc//status:go_default_library",
+    ],
+)
+
+go_proto_compiler(
+    name = "go_validate",
+    options = [
+        "lang=go",
+    ],
+    plugin = "@com_envoyproxy_protoc_gen_validate//:protoc-gen-validate",
+    suffix = ".pb.validate.go",
+    valid_archive = False,
+    visibility = ["//visibility:public"],
+    deps = [
+        "@org_golang_google_protobuf//types/known/anypb",
+    ],
+)

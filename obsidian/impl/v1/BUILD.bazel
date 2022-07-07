@@ -1,0 +1,34 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "impl",
+    srcs = [
+        "oauth2.go",
+        "server.go",
+        "user.go",
+        "utils.go",
+    ],
+    importpath = "peridot.resf.org/obsidian/impl/v1",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//obsidian/db",
+        "//obsidian/db/models",
+        "//obsidian/proto/v1:pb",
+        "//proto:common",
+        "//servicecatalog",
+        "//utils",
+        "//vendor/github.com/coreos/go-oidc/v3/oidc",
+        "//vendor/github.com/gogo/status",
+        "//vendor/github.com/ory/hydra-client-go/client",
+        "//vendor/github.com/ory/hydra-client-go/client/admin",
+        "//vendor/github.com/ory/hydra-client-go/models",
+        "//vendor/github.com/sirupsen/logrus",
+        "//vendor/golang.org/x/oauth2",
+        "//vendor/golang.org/x/oauth2/google",
+        "@org_golang_google_grpc//:go_default_library",
+        "@org_golang_google_grpc//codes",
+        "@org_golang_google_grpc//metadata",
+        "@org_golang_google_grpc//status",
+        "@org_golang_google_protobuf//proto:go_default_library",
+    ],
+)

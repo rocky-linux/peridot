@@ -1,0 +1,13 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "constants",
+    srcs = [
+        "armor.go",
+        "cipher.go",
+        "version.go",
+    ],
+    importmap = "peridot.resf.org/vendor/github.com/ProtonMail/gopenpgp/v2/constants",
+    importpath = "github.com/ProtonMail/gopenpgp/v2/constants",
+    visibility = ["//visibility:public"],
+)

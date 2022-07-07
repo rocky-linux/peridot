@@ -1,0 +1,30 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "rherrata",
+    srcs = [
+        "api.go",
+        "compact_errata.go",
+        "errata.go",
+        "mock.go",
+    ],
+    importpath = "peridot.resf.org/secparse/rherrata",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//secparse/proto/v1:proto",
+        "//vendor/github.com/PuerkitoBio/goquery",
+        "//vendor/github.com/go-chi/chi",
+        "//vendor/github.com/gocolly/colly/v2:colly",
+    ],
+)
+
+go_test(
+    name = "rherrata_test",
+    srcs = ["errata_test.go"],
+    data = glob(["testdata/**"]),
+    embed = [":rherrata"],
+    deps = [
+        "//secparse/proto/v1:proto",
+        "//vendor/github.com/stretchr/testify/require",
+    ],
+)

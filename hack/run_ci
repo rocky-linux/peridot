@@ -1,0 +1,69 @@
+#!/usr/bin/env bash
+#
+# Copyright (c) All respective contributors to the Peridot Project. All rights reserved.
+# Copyright (c) 2021-2022 Rocky Enterprise Software Foundation, Inc. All rights reserved.
+# Copyright (c) 2021-2022 Ctrl IQ, Inc. All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice,
+# this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+# this list of conditions and the following disclaimer in the documentation
+# and/or other materials provided with the distribution.
+#
+# 3. Neither the name of the copyright holder nor the names of its contributors
+# may be used to endorse or promote products derived from this software without
+# specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+
+CI=${CI:-}
+FLAGS="--show_progress_rate_limit=5 --curses=yes --color=yes --terminal_columns=143 --show_timestamps --verbose_failures --jobs=30 --announce_rc --experimental_repository_cache_hardlinks --experimental_guard_against_concurrent_changes --repository_cache=ci_repo_output"
+REMOTE_DEF=${REMOTE_DEF:-}
+
+if [[ -n ${CI} ]]; then
+  FLAGS="--config=remote $FLAGS"
+fi
+
+BAZEL_B="bazel $SOPTIONS build $FLAGS --remote_default_exec_properties=$REMOTE_DEF"
+BAZEL_R="bazel $SOPTIONS run $FLAGS --remote_default_exec_properties=$REMOTE_DEF"
+BAZEL_T="bazel $SOPTIONS test $FLAGS --remote_default_exec_properties=$REMOTE_DEF --test_arg=-test.v --flaky_test_attempts=3 --build_tests_only --local_test_jobs=30"
+BAZEL_QR="bazel $SOPTIONS query --keep_going --noshow_progress"
+
+ACTION="$1"
+if [[ -z "$ACTION" ]]; then
+  echo "specify action (build, lint, test)"
+  exit 1
+fi
+
+if [[ "$ACTION" == "build" ]]; then
+  # shellcheck disable=SC2046
+  $BAZEL_B $($BAZEL_QR 'kind(.*_binary, //... except //vendor/...) except attr("tags", "manual", //... except //vendor/...)')
+fi
+
+if [[ "$ACTION" == "lint" ]]; then
+  # Ensure go_sdk exists first
+  $BAZEL_B @go_sdk//:go_sdk
+
+  # Run gofmt on go files
+  gofmt="$(bazel info output_base)/external/go_sdk/bin/gofmt"
+  find . -path ./vendor -prune -false -o -name '*.go' -exec "$gofmt" -l -e {} \;
+fi
+
+if [[ "$ACTION" == "test" ]]; then
+  $BAZEL_T //...
+fi

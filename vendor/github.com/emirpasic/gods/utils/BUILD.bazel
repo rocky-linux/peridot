@@ -1,0 +1,13 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "utils",
+    srcs = [
+        "comparator.go",
+        "sort.go",
+        "utils.go",
+    ],
+    importmap = "peridot.resf.org/vendor/github.com/emirpasic/gods/utils",
+    importpath = "github.com/emirpasic/gods/utils",
+    visibility = ["//visibility:public"],
+)

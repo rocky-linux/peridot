@@ -1,0 +1,18 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "xpath",
+    srcs = [
+        "build.go",
+        "func.go",
+        "func_go110.go",
+        "func_pre_go110.go",
+        "operator.go",
+        "parse.go",
+        "query.go",
+        "xpath.go",
+    ],
+    importmap = "peridot.resf.org/vendor/github.com/antchfx/xpath",
+    importpath = "github.com/antchfx/xpath",
+    visibility = ["//visibility:public"],
+)

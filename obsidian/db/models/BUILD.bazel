@@ -1,0 +1,16 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "models",
+    srcs = [
+        "oauth2_provider.go",
+        "user.go",
+    ],
+    importpath = "peridot.resf.org/obsidian/db/models",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//obsidian/proto/v1:pb",
+        "//vendor/github.com/google/uuid",
+        "//vendor/github.com/jmoiron/sqlx/types",
+    ],
+)

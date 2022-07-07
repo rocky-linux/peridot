@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+package resf.secparse.admin;
+
+import "google/protobuf/wrappers.proto";
+
+option go_package = "peridot.resf.org/secparse/admin/proto/v1;secparseadminpb";
+
+enum AffectedProductState {
+  UnknownProductState = 0;
+  // CVE only affects downstream
+  UnderInvestigationDownstream = 1;
+  // CVE affecting upstream and a fix still hasn't been issued
+  UnderInvestigationUpstream = 2;
+  // CVE has been fixed upstream
+  FixedUpstream = 3;
+  // CVE has been fixed downstream
+  // At this stage the CVE can be included in errata
+  FixedDownstream = 4;
+  // CVE will NOT be fixed upstream
+  WillNotFixUpstream = 5;
+  // CVE will NOT be fixed downstream
+  // This will probably never happen with Core, but may happen for SIGs
+  WillNotFixDownstream = 6;
+  // CVE is out of support scope
+  OutOfSupportScope = 7;
+  // CVE affects product and upstream is working on a fix
+  AffectedUpstream = 8;
+  // CVE affects product and a fix is being worked out
+  AffectedDownstream = 9;
+}
+
+message AffectedProduct {
+  int64 product_id = 1;
+  google.protobuf.StringValue cve_id = 2;
+  string version = 3;
+  AffectedProductState state = 4;
+  string package = 5;
+  google.protobuf.StringValue advisory = 6;
+}

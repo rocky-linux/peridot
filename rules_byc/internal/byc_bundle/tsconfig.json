@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    "jsx": "react",
+    "allowUnreachableCode": false,
+    "allowUnusedLabels": false,
+    "forceConsistentCasingInFileNames": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitReturns": true,
+    "pretty": true,
+    "sourceMap": true,
+    "strict": true,
+    "moduleResolution": "node",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "importHelpers": true,
+    "lib": ["es2016", "es2018", "dom"],
+    "target": "ES2020",
+    "allowSyntheticDefaultImports": true,
+    "preserveSymlinks": true,
+    "esModuleInterop": true,
+    "baseUrl": ".",
+    "module": "ES2020",
+    "paths": {
+      "*": ["*"],
+      "bazel-bin/*": ["bazel-bin/*"]
+    }
+  },
+  "exclude": ["node_modules", "bazel-peridot", "bazel-bin", "bazel-out", "bazel-testlogs"]
+}

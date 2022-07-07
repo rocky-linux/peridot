@@ -1,0 +1,207 @@
+syntax = "proto3";
+
+package resf.peridot.v1;
+
+import "google/protobuf/any.proto";
+import "google/protobuf/wrappers.proto";
+import "google/protobuf/timestamp.proto";
+import "peridot/proto/v1/import.proto";
+import "peridot/proto/v1/task.proto";
+import "validate/validate.proto";
+import "google/api/annotations.proto";
+
+option go_package = "peridot.resf.org/peridot/pb;peridotpb";
+
+// PackageService provides methods to list, search and edit packages in a project
+service PackageService {
+  // ListPackages returns all packages with filters applied
+  rpc ListPackages(ListPackagesRequest) returns (ListPackagesResponse) {
+    option (google.api.http) = {
+      get: "/v1/projects/{project_id=*}/packages"
+    };
+  }
+
+  // GetPackage returns a package by its id or name
+  rpc GetPackage(GetPackageRequest) returns (GetPackageResponse) {
+    option (google.api.http) = {
+      get: "/v1/projects/{project_id=*}/packages/{field=*}/{value=*}"
+    };
+  }
+}
+
+// PackageType helps determine what method of import/build should be used
+// for a specific package
+enum PackageType {
+  // Unknown value. Should never be used
+  PACKAGE_TYPE_UNSPECIFIED = 0;
+
+  // Normal packages from downstream dist-git
+  // The repos are imported as-is
+  // This will never be used as PACKAGE_TYPE_NORMAL_FORK
+  // accomplishes the same task without duplicate work
+  PACKAGE_TYPE_NORMAL = 1;
+
+  // Normal packages from upstream dist-git
+  // The repos are first imported into target dist-git using srpmproc (with eventual patches)
+  // and then imported as-is into Peridot
+  PACKAGE_TYPE_NORMAL_FORK = 2;
+
+  // Source packages from downstream src-git
+  // The sources are packaged into tarballs and uploaded into lookaside,
+  // and the repo with sources removed is then pushed into dist-git with a
+  // following metadata file.
+  // This package type enables an automatic src-git packaging workflow, but
+  // a manual workflow may be adapted as well with manual packaging.
+  // The package should then be set to PACKAGE_TYPE_NORMAL if manual packaging
+  // is desired.
+  PACKAGE_TYPE_NORMAL_SRC = 3;
+
+  // todo(mustafa): Document rest
+  // PACKAGE_TYPE_MODULE = 4;
+  // PACKAGE_TYPE_MODULE_COMPONENT = 5;
+  PACKAGE_TYPE_MODULE_FORK = 6;
+  PACKAGE_TYPE_MODULE_FORK_COMPONENT = 7;
+
+  // A package may be both a normally forked package and a module
+  // So we need to differentiate between the two
+  PACKAGE_TYPE_NORMAL_FORK_MODULE = 8;
+
+  // A package may also be a module component and a normal package
+  // So we need to differentiate between the two
+  PACKAGE_TYPE_NORMAL_FORK_MODULE_COMPONENT = 9;
+
+  // A package may be both a module and a module component
+  PACKAGE_TYPE_MODULE_FORK_MODULE_COMPONENT = 10;
+}
+
+// Package is an importable, buildable and publishable RPM package
+// Packages are globally scoped but interaction with package related actions
+// are done within project scoped methods.
+// A global scope ensures that builds and imports can be freely shared between
+// projects and makes it easier to freeze, clone and develop projects.
+// Going from a minor release to the next should be easier
+// Maintaining beta releases and backporting them after release is also a huge plus
+message Package {
+  // Unique identifier of type UUID v4
+  string id = 1;
+
+  // Name of package
+  // Does not have to be unique (globally scoped)
+  string name = 2;
+
+  // Since names does not have to be unique (in the case of multi-version, cross-project packages)
+  // a distinction must be added to each package.
+  // For example when moving a point release to extended support mode, the package will be cloned
+  // but will be recognized by this distinction
+  // string distinction = 3;
+  // todo(mustafa): May re-add later but packages can have multiple versions used in different projects now
+  // todo(mustafa): so removing this for now
+  reserved 3;
+
+  // Type of package. Fork/dist/src types are all scoped by package and not project.
+  // This means that a project may contain both forked and original packages
+  PackageType type = 4;
+
+  // Last time the package was imported (for the active version in project)
+  google.protobuf.Timestamp last_import_at = 5;
+
+  // Last time the package was built (for the active version in project)
+  google.protobuf.Timestamp last_build_at = 6;
+}
+
+// PackageVersion is a collection of metadata on import and package versions within
+// a project. Also indicates whether the version is active or not for a given project
+message PackageVersion {
+  ImportRevision import_revision = 1;
+  repeated Subtask import_tasks = 2;
+
+  // Whether this is the active package version for the project
+  bool active = 3;
+
+  // Whether this is the version active in yumrepofs, not necessarily
+  // the active version. As there is a transition workflow of
+  //   import -> active (in project) -> build (while older version is active in REPO) -> active (in project and repo)
+  bool active_in_repo = 4;
+}
+
+// DetailedPackage includes extra details that a broad list/search of
+// Packages do not include. Useful for single package queries
+message DetailedPackage {
+  Package package = 1;
+  PackageVersion active_version = 2;
+}
+
+// PackageFilters is values the requester can use to narrow
+// down on list/search results for Package queries
+message PackageFilters {
+  google.protobuf.StringValue id = 1;
+  google.protobuf.StringValue name = 2;
+
+  // When true, modular packages will be returned
+  google.protobuf.BoolValue modular = 3;
+
+  // Only matches exact name
+  google.protobuf.StringValue name_exact = 4;
+
+  // Matches if no imports are present
+  google.protobuf.BoolValue no_imports = 5;
+
+  // Matches if no builds for latest import
+  google.protobuf.BoolValue no_builds = 6;
+}
+
+// ListPackagesRequest is the request message for PackageService.ListPackages
+message ListPackagesRequest {
+  // The page to request
+  int32 page = 1;
+
+  // Maximum amount of results to return
+  // Minimum: 1
+  // Maximum: 100
+  int32 limit = 2 [(validate.rules).int32.lte = 100];
+
+  // Project ID that should be queried
+  string project_id = 3 [(validate.rules).string.uuid = true];
+
+  // Filters to narrow down on results
+  PackageFilters filters = 4;
+}
+
+// ListPackagesResponse is the response message for PackageService.ListPackages
+message ListPackagesResponse {
+  // Packages returned from server
+  repeated Package packages = 1;
+
+  // Total packages from server
+  int64 total = 2;
+
+  // Limit from request
+  int32 size = 3;
+
+  // Current page
+  int32 page = 4;
+}
+
+message PackageOperationMetadata {
+  // Name of the package
+  string package_name = 1;
+
+  // Whether the package is modular
+  bool modular = 2;
+
+  // Calling task type
+  TaskType task_type = 3;
+
+  // Extra information about the task
+  google.protobuf.Any task_metadata = 4;
+}
+
+message GetPackageRequest {
+  string project_id = 1;
+  string field = 2 [(validate.rules).string = {in: ["id", "name"]}];
+  string value = 3;
+}
+
+message GetPackageResponse {
+  Package package = 1;
+}

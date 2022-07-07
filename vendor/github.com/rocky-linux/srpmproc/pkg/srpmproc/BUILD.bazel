@@ -1,0 +1,38 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "srpmproc",
+    srcs = [
+        "fetch.go",
+        "patch.go",
+        "process.go",
+    ],
+    importmap = "peridot.resf.org/vendor/github.com/rocky-linux/srpmproc/pkg/srpmproc",
+    importpath = "github.com/rocky-linux/srpmproc/pkg/srpmproc",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/go-git/go-billy/v5:go-billy",
+        "//vendor/github.com/go-git/go-billy/v5/memfs",
+        "//vendor/github.com/go-git/go-billy/v5/osfs",
+        "//vendor/github.com/go-git/go-git/v5:go-git",
+        "//vendor/github.com/go-git/go-git/v5/config",
+        "//vendor/github.com/go-git/go-git/v5/plumbing",
+        "//vendor/github.com/go-git/go-git/v5/plumbing/object",
+        "//vendor/github.com/go-git/go-git/v5/plumbing/transport",
+        "//vendor/github.com/go-git/go-git/v5/plumbing/transport/http",
+        "//vendor/github.com/go-git/go-git/v5/plumbing/transport/ssh",
+        "//vendor/github.com/go-git/go-git/v5/storage/memory",
+        "//vendor/github.com/rocky-linux/srpmproc/modulemd",
+        "//vendor/github.com/rocky-linux/srpmproc/pb",
+        "//vendor/github.com/rocky-linux/srpmproc/pkg/blob",
+        "//vendor/github.com/rocky-linux/srpmproc/pkg/blob/file",
+        "//vendor/github.com/rocky-linux/srpmproc/pkg/blob/gcs",
+        "//vendor/github.com/rocky-linux/srpmproc/pkg/blob/s3",
+        "//vendor/github.com/rocky-linux/srpmproc/pkg/data",
+        "//vendor/github.com/rocky-linux/srpmproc/pkg/directives",
+        "//vendor/github.com/rocky-linux/srpmproc/pkg/misc",
+        "//vendor/github.com/rocky-linux/srpmproc/pkg/modes",
+        "//vendor/github.com/rocky-linux/srpmproc/pkg/rpmutils",
+        "@org_golang_google_protobuf//encoding/prototext:go_default_library",
+    ],
+)

@@ -1,0 +1,9 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "ewma",
+    srcs = ["ewma.go"],
+    importmap = "peridot.resf.org/vendor/github.com/VividCortex/ewma",
+    importpath = "github.com/VividCortex/ewma",
+    visibility = ["//visibility:public"],
+)

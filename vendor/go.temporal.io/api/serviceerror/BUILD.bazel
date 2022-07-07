@@ -1,0 +1,34 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "serviceerror",
+    srcs = [
+        "canceled.go",
+        "cancellationAlreadyRequested.go",
+        "clientVersionNotSupported.go",
+        "convert.go",
+        "dataLoss.go",
+        "deadlineExceeded.go",
+        "internal.go",
+        "invalidArgument.go",
+        "namespaceAlreadyExists.go",
+        "namespaceNotActive.go",
+        "notFound.go",
+        "permissionDenied.go",
+        "queryFailed.go",
+        "resourceExhausted.go",
+        "serverVersionNotSupported.go",
+        "serviceerror.go",
+        "unavailable.go",
+        "unimplemented.go",
+        "workflowExecutionAlreadyStarted.go",
+    ],
+    importmap = "peridot.resf.org/vendor/go.temporal.io/api/serviceerror",
+    importpath = "go.temporal.io/api/serviceerror",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/gogo/status",
+        "//vendor/go.temporal.io/api/errordetails/v1:errordetails",
+        "@org_golang_google_grpc//codes",
+    ],
+)

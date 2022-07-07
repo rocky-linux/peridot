@@ -1,0 +1,15 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "containers",
+    srcs = [
+        "containers.go",
+        "enumerable.go",
+        "iterator.go",
+        "serialization.go",
+    ],
+    importmap = "peridot.resf.org/vendor/github.com/emirpasic/gods/containers",
+    importpath = "github.com/emirpasic/gods/containers",
+    visibility = ["//visibility:public"],
+    deps = ["//vendor/github.com/emirpasic/gods/utils"],
+)

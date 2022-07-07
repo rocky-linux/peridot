@@ -1,0 +1,17 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "client",
+    srcs = ["client.go"],
+    importmap = "peridot.resf.org/vendor/go.temporal.io/sdk/client",
+    importpath = "go.temporal.io/sdk/client",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/go.temporal.io/api/common/v1:common",
+        "//vendor/go.temporal.io/api/enums/v1:enums",
+        "//vendor/go.temporal.io/api/workflowservice/v1:workflowservice",
+        "//vendor/go.temporal.io/sdk/converter",
+        "//vendor/go.temporal.io/sdk/internal",
+        "//vendor/go.temporal.io/sdk/internal/common/metrics",
+    ],
+)

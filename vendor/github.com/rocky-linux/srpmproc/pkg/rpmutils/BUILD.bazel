@@ -1,0 +1,9 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "rpmutils",
+    srcs = ["regex.go"],
+    importmap = "peridot.resf.org/vendor/github.com/rocky-linux/srpmproc/pkg/rpmutils",
+    importpath = "github.com/rocky-linux/srpmproc/pkg/rpmutils",
+    visibility = ["//visibility:public"],
+)

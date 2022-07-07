@@ -1,0 +1,9 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "stringz",
+    srcs = ["stringz.go"],
+    importmap = "peridot.resf.org/vendor/github.com/jzelinskie/stringz",
+    importpath = "github.com/jzelinskie/stringz",
+    visibility = ["//visibility:public"],
+)

@@ -1,0 +1,23 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "retry",
+    srcs = [
+        "backoff.go",
+        "doc.go",
+        "options.go",
+        "retry.go",
+    ],
+    importmap = "peridot.resf.org/vendor/github.com/grpc-ecosystem/go-grpc-middleware/retry",
+    importpath = "github.com/grpc-ecosystem/go-grpc-middleware/retry",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/grpc-ecosystem/go-grpc-middleware/util/backoffutils",
+        "//vendor/github.com/grpc-ecosystem/go-grpc-middleware/util/metautils",
+        "@org_golang_google_grpc//:go_default_library",
+        "@org_golang_google_grpc//codes",
+        "@org_golang_google_grpc//metadata",
+        "@org_golang_google_grpc//status",
+        "@org_golang_x_net//trace",
+    ],
+)

@@ -1,0 +1,14 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "yummeta",
+    srcs = [
+        "filelists.go",
+        "other.go",
+        "primary.go",
+        "repomd.go",
+        "updateinfo.go",
+    ],
+    importpath = "peridot.resf.org/peridot/yummeta",
+    visibility = ["//visibility:public"],
+)

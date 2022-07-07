@@ -1,0 +1,36 @@
+definition user {}
+
+definition usergroup {
+    relation manager: user | usergroup#member | usergroup#manager
+    relation direct_member: user | usergroup#member | usergroup#manager
+
+    permission member = direct_member + manager
+}
+
+definition organization {
+    relation group: usergroup
+    relation administrator: user | usergroup#member | usergroup#manager
+    relation direct_member: user
+
+    permission admin = administrator
+    permission member = direct_member + administrator + group->member
+}
+
+definition global {
+  relation admin: user | usergroup#member | usergroup#manager
+
+  permission manage = admin
+}
+
+definition peridot/project {
+  relation parent: peridot/project | peridot/project#parent
+
+  relation manager: user | usergroup#member | usergroup#manager
+  relation builder: user | usergroup#member | usergroup#manager
+  relation member: user | usergroup#member | usergroup#manager
+  relation guest: user
+
+  permission manage = manager
+  permission build = builder + manager
+  permission view = member + builder + manager + guest
+}

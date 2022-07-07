@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package resf.peridot.v1;
+
+import "peridot/proto/v1/task.proto";
+
+option go_package = "peridot.resf.org/peridot/pb;peridotpb";
+
+message BatchFilter {
+  TaskStatus status = 1;
+}

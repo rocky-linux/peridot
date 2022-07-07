@@ -1,0 +1,18 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go-xmlrpc",
+    srcs = [
+        "client.go",
+        "codec.go",
+        "decode.go",
+        "decode_response.go",
+        "doc.go",
+        "encode.go",
+        "fault.go",
+        "options.go",
+    ],
+    importmap = "peridot.resf.org/vendor/alexejk.io/go-xmlrpc",
+    importpath = "alexejk.io/go-xmlrpc",
+    visibility = ["//visibility:public"],
+)

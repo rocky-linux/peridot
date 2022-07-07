@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+stages:
+  - bazel
+
+variables:
+  SILO_KEY: rocky84-gitlabcom-ci-1
+  REMOTE_DEF: cache-silo-key=$SILO_KEY
+  REPO_OUTPUT_DIR: ci_repo_output
+
+.bazelbase:
+  image: quay.io/peridot/ci:v0.2.5
+  before_script:
+    - mv $google_credentials /tmp/credentials.json
+  cache:
+    key: $SILO_KEY
+    paths:
+      - $REPO_OUTPUT_DIR
+
+bazel-build:
+  extends: .bazelbase
+  stage: bazel
+  script:
+    - bash hack/run_ci build
+
+bazel-lint:
+  extends: .bazelbase
+  stage: bazel
+  script:
+    - bash hack/run_ci lint
+
+bazel-test:
+  extends: .bazelbase
+  stage: bazel
+  script:
+    - bash hack/run_ci test
+  artifacts:
+    when: always
+    reports:
+      junit: bazel-out/*-fastbuild/testlogs/**/*.xml

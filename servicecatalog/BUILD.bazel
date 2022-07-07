@@ -1,0 +1,18 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "servicecatalog",
+    srcs = [
+        "common.go",
+        "hydra.go",
+        "keykeeper.go",
+        "spicedb.go",
+        "yumrepofs.go",
+    ],
+    importpath = "peridot.resf.org/servicecatalog",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/authzed/grpcutil",
+        "@org_golang_google_grpc//:go_default_library",
+    ],
+)

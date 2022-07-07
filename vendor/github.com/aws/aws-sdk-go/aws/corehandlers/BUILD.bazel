@@ -1,0 +1,19 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "corehandlers",
+    srcs = [
+        "handlers.go",
+        "param_validator.go",
+        "user_agent.go",
+    ],
+    importmap = "peridot.resf.org/vendor/github.com/aws/aws-sdk-go/aws/corehandlers",
+    importpath = "github.com/aws/aws-sdk-go/aws/corehandlers",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/aws/aws-sdk-go/aws",
+        "//vendor/github.com/aws/aws-sdk-go/aws/awserr",
+        "//vendor/github.com/aws/aws-sdk-go/aws/credentials",
+        "//vendor/github.com/aws/aws-sdk-go/aws/request",
+    ],
+)

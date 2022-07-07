@@ -1,0 +1,30 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "grpcutil",
+    srcs = [
+        "dial_opts.go",
+        "middleware.go",
+        "reflection.go",
+        "test.go",
+        "x509util.go",
+    ],
+    importmap = "peridot.resf.org/vendor/github.com/authzed/grpcutil",
+    importpath = "github.com/authzed/grpcutil",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/certifi/gocertifi",
+        "//vendor/github.com/grpc-ecosystem/go-grpc-middleware",
+        "//vendor/github.com/grpc-ecosystem/go-grpc-middleware/auth",
+        "//vendor/github.com/grpc-ecosystem/go-grpc-middleware/validator",
+        "//vendor/github.com/stretchr/testify/require",
+        "@org_golang_google_grpc//:go_default_library",
+        "@org_golang_google_grpc//codes",
+        "@org_golang_google_grpc//credentials",
+        "@org_golang_google_grpc//health",
+        "@org_golang_google_grpc//health/grpc_health_v1",
+        "@org_golang_google_grpc//reflection",
+        "@org_golang_google_grpc//reflection/grpc_reflection_v1alpha",
+        "@org_golang_google_grpc//status",
+    ],
+)

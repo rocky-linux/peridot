@@ -1,0 +1,26 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "rpm",
+    srcs = [
+        "dependency.go",
+        "doc.go",
+        "fileinfo.go",
+        "header.go",
+        "lead.go",
+        "package.go",
+        "signature.go",
+        "tag.go",
+        "util.go",
+        "version.go",
+    ],
+    importmap = "peridot.resf.org/vendor/github.com/cavaliergopher/rpm",
+    importpath = "github.com/cavaliergopher/rpm",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/golang.org/x/crypto/openpgp",
+        "//vendor/golang.org/x/crypto/openpgp/armor",
+        "//vendor/golang.org/x/crypto/openpgp/errors",
+        "//vendor/golang.org/x/crypto/openpgp/packet",
+    ],
+)

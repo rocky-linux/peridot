@@ -1,0 +1,33 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "colly",
+    srcs = [
+        "colly.go",
+        "context.go",
+        "htmlelement.go",
+        "http_backend.go",
+        "http_trace.go",
+        "request.go",
+        "response.go",
+        "unmarshal.go",
+        "xmlelement.go",
+    ],
+    importmap = "peridot.resf.org/vendor/github.com/gocolly/colly/v2",
+    importpath = "github.com/gocolly/colly/v2",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/PuerkitoBio/goquery",
+        "//vendor/github.com/antchfx/htmlquery",
+        "//vendor/github.com/antchfx/xmlquery",
+        "//vendor/github.com/gobwas/glob",
+        "//vendor/github.com/gocolly/colly/v2/debug",
+        "//vendor/github.com/gocolly/colly/v2/storage",
+        "//vendor/github.com/kennygrant/sanitize",
+        "//vendor/github.com/saintfish/chardet",
+        "//vendor/github.com/temoto/robotstxt",
+        "@org_golang_google_appengine//urlfetch:go_default_library",
+        "@org_golang_x_net//html",
+        "@org_golang_x_net//html/charset",
+    ],
+)

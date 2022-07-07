@@ -1,0 +1,55 @@
+# distro-tools
+Cloud-native build and release tools tailored to building, releasing and maintaining Linux distributions and forks
+
+## Structure
+__Other components pending__
+
+* publisher - `Composer for Peridot (currently only includes legacy mode)`
+* peridot - `Modern build system`
+* secparse - `Errata mirroring and publishing platform`
+  * ui - `Product Errata UI`
+* utils - `Common utilities`
+* modulemd - `Modulemd parser in Go`
+
+
+## Development
+Before the setup install `jq`, `bazelisk`, `docker` and `kubectl`.
+A local Kubernetes cluster is also required. Docker Desktop is a good solution.
+
+
+#### Initial setup (will soon be replaced by one command dev cluster)
+```bash
+# In the directory where you downloaded istio
+bin/istioctl install --set profile=default --set hub=docker.io/querycapistio --set tag=1.12.1 -y
+# On aarch64 (ex. M1 Mac) only and add arm64 to list of preferred schedule archs
+# Run this while install is running
+kubectl -n istio-system edit deployment istio-ingressgateway
+sudo hack/deploy_dev_registry
+hack/setup_external_dev_services
+# Run `kubectl get svc` and add the port of postgres-postgresql to your rc file
+# Example:
+# postgres-postgresql          NodePort    10.102.68.75     <none>        5432:32442/TCP                  3m32s
+# export POSTGRES_PORT="32442"
+hack/setup_k8s_dev_env
+git clone https://github.com/temporalio/temporal /tmp/temporal && pushd /tmp/temporal && make temporal-sql-tool && popd && hack/setup_dev_temporal /tmp/temporal
+# Sometimes the namespace registration may fail because
+# Temporal tools CrashLooped before we could run the migrations.
+# Run `kubectl delete pods -l "app.kubernetes.io/name=temporal"` and then re-run
+# `kubectl exec -it services/temporal-admintools -- tctl --namespace default namespace re`
+hack/setup_base_internal_services
+# For the cert, mkcert is recommended (mkcert.dev)
+# Add default cert using `kubectl -n istio-system create secret tls default-cert --cert=cert.pem --key=cert.key`
+# Create the Istio gateway
+bazel run //infrastructure/istio-dev
+```
+Running `./hack/govendor` should create the necessary structure for development
+
+For best experience use IntelliJ+Bazel but `govendor` creates structure that is compatible with all other Go tools
+#### Auto generate (only) BUILD files for Go
+`bazel run //:gazelle`
+#### Vendor Go dependencies
+`./hack/govendor`
+#### Run UI in development mode
+`ibazel run //TARGET:TARGET.server` - example: `ibazel run //secparse/ui:secparse.server`
+#### Find UI server targets
+`bazel query 'attr(tags, "byc_frontend_server", //...)'`

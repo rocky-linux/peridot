@@ -1,0 +1,20 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "net",
+    srcs = [
+        "http.go",
+        "interface.go",
+        "port_range.go",
+        "port_split.go",
+        "util.go",
+    ],
+    importmap = "peridot.resf.org/vendor/k8s.io/apimachinery/pkg/util/net",
+    importpath = "k8s.io/apimachinery/pkg/util/net",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/k8s.io/apimachinery/pkg/util/sets",
+        "//vendor/k8s.io/klog/v2:klog",
+        "@org_golang_x_net//http2",
+    ],
+)

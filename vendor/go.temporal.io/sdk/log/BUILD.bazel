@@ -1,0 +1,12 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "log",
+    srcs = [
+        "logger.go",
+        "with_logger.go",
+    ],
+    importmap = "peridot.resf.org/vendor/go.temporal.io/sdk/log",
+    importpath = "go.temporal.io/sdk/log",
+    visibility = ["//visibility:public"],
+)

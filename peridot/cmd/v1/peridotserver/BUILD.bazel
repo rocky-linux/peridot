@@ -1,0 +1,23 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "peridotserver_lib",
+    srcs = ["main.go"],
+    importpath = "peridot.resf.org/peridot/cmd/v1/peridotserver",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//peridot/db/connector",
+        "//peridot/impl/v1:impl",
+        "//temporalutils",
+        "//utils",
+        "//vendor/github.com/sirupsen/logrus",
+        "//vendor/github.com/spf13/cobra",
+        "//vendor/go.temporal.io/sdk/client",
+    ],
+)
+
+go_binary(
+    name = "peridotserver",
+    embed = [":peridotserver_lib"],
+    visibility = ["//visibility:public"],
+)

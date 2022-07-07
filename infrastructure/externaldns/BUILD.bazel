@@ -1,0 +1,9 @@
+load("//rules_byc:defs.bzl", "k8s_apply")
+
+k8s_apply(
+    name = "externaldns",
+    srcs = [
+        "externaldns.yaml",
+    ],
+    visibility = ["//visibility:public"],
+)

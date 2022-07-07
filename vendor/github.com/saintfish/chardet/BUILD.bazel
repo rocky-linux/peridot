@@ -1,0 +1,17 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "chardet",
+    srcs = [
+        "2022.go",
+        "detector.go",
+        "multi_byte.go",
+        "recognizer.go",
+        "single_byte.go",
+        "unicode.go",
+        "utf8.go",
+    ],
+    importmap = "peridot.resf.org/vendor/github.com/saintfish/chardet",
+    importpath = "github.com/saintfish/chardet",
+    visibility = ["//visibility:public"],
+)

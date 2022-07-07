@@ -1,0 +1,23 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "dynamodbattribute",
+    srcs = [
+        "converter.go",
+        "decode.go",
+        "doc.go",
+        "encode.go",
+        "field.go",
+        "fields_go1.9.go",
+        "fields_go_old.go",
+        "tag.go",
+    ],
+    importmap = "peridot.resf.org/vendor/github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute",
+    importpath = "github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/aws/aws-sdk-go/aws",
+        "//vendor/github.com/aws/aws-sdk-go/aws/awserr",
+        "//vendor/github.com/aws/aws-sdk-go/service/dynamodb",
+    ],
+)

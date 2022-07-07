@@ -1,0 +1,14 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "arn",
+    srcs = [
+        "accesspoint_arn.go",
+        "arn.go",
+        "outpost_arn.go",
+    ],
+    importmap = "peridot.resf.org/vendor/github.com/aws/aws-sdk-go/internal/s3shared/arn",
+    importpath = "github.com/aws/aws-sdk-go/internal/s3shared/arn",
+    visibility = ["//vendor/github.com/aws/aws-sdk-go:__subpackages__"],
+    deps = ["//vendor/github.com/aws/aws-sdk-go/aws/arn"],
+)

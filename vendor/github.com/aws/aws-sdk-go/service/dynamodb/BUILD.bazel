@@ -1,0 +1,29 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "dynamodb",
+    srcs = [
+        "api.go",
+        "customizations.go",
+        "doc.go",
+        "doc_custom.go",
+        "errors.go",
+        "service.go",
+        "waiters.go",
+    ],
+    importmap = "peridot.resf.org/vendor/github.com/aws/aws-sdk-go/service/dynamodb",
+    importpath = "github.com/aws/aws-sdk-go/service/dynamodb",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/aws/aws-sdk-go/aws",
+        "//vendor/github.com/aws/aws-sdk-go/aws/awserr",
+        "//vendor/github.com/aws/aws-sdk-go/aws/awsutil",
+        "//vendor/github.com/aws/aws-sdk-go/aws/client",
+        "//vendor/github.com/aws/aws-sdk-go/aws/client/metadata",
+        "//vendor/github.com/aws/aws-sdk-go/aws/crr",
+        "//vendor/github.com/aws/aws-sdk-go/aws/request",
+        "//vendor/github.com/aws/aws-sdk-go/aws/signer/v4:signer",
+        "//vendor/github.com/aws/aws-sdk-go/private/protocol",
+        "//vendor/github.com/aws/aws-sdk-go/private/protocol/jsonrpc",
+    ],
+)

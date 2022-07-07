@@ -1,0 +1,118 @@
+syntax = "proto3";
+
+package resf.peridot.keykeeper.v1;
+
+import "peridot/proto/v1/task.proto";
+import "google/api/annotations.proto";
+import "validate/validate.proto";
+
+option go_package = "peridot.resf.org/peridot/keykeeper/pb;keykeeperpb";
+
+service KeykeeperService {
+  // GenerateKey generates a new key pair and attaches the key to the given project.
+  // todo(mustafa): Evaluate if we need to convert this to AsyncTask.
+  // todo(mustafa): Since this call may be long running (we're talking about 30-60 seconds),
+  rpc GenerateKey(GenerateKeyRequest) returns (GenerateKeyResponse) {
+    option (google.api.http) = {
+      post: "/v1/generate-key"
+      body: "*"
+    };
+  }
+
+  // GetPublicKey returns the public key of the given key id
+  rpc GetPublicKey(GetPublicKeyRequest) returns (GetPublicKeyResponse) {
+    option (google.api.http) = {
+      get: "/v1/keys/{key_name=*}/public-key"
+    };
+  }
+
+  // ImportKey imports a key pair and attaches it to the given project.
+  // todo(mustafa): Currently unimplmented.
+  rpc ImportKey(ImportKeyRequest) returns (ImportKeyResponse) {
+    option (google.api.http) = {
+      post: "/v1/import-key"
+      body: "*"
+    };
+  }
+
+  rpc SignArtifacts(SignArtifactsRequest) returns (resf.peridot.v1.AsyncTask) {
+    option (google.api.http) = {
+      post: "/v1/sign-artifacts"
+      body: "*"
+    };
+    option (resf.peridot.v1.task_info) = {
+      response_type: "SignArtifactsTask"
+      metadata_type: "SignArtifactsRequest"
+    };
+  }
+
+  rpc SignText(SignTextRequest) returns (SignTextResponse) {
+    option (google.api.http) = {
+      post: "/v1/sign-text"
+      body: "*"
+    };
+  }
+}
+
+message GenerateKeyRequest {
+  // Project that the key will be attached to.
+  string project_id = 1;
+
+  // Name of the key to generate.
+  string name = 2;
+
+  // Email to associate with the generated key.
+  string email = 3;
+}
+
+message GenerateKeyResponse {
+  string name = 1;
+  string email = 2;
+  string fingerprint = 3;
+}
+
+message GetPublicKeyRequest {
+  string key_name = 1;
+}
+
+message GetPublicKeyResponse {
+  string public_key = 1;
+}
+
+// todo(mustafa): Implement
+message ImportKeyRequest {}
+message ImportKeyResponse {}
+
+message SignedArtifact {
+  string path = 1;
+  string hash_sha256 = 2;
+}
+
+message SignArtifactsRequest {
+  // Build ID of the artifacts to sign.
+  // The artifacts has to be attached to the given build.
+  string build_id = 1;
+
+  // Key name is the key that the artifacts is signed with.
+  string key_name = 2;
+}
+
+message SignArtifactsTask {
+  repeated SignedArtifact signed_artifacts = 1;
+}
+
+message BatchSignArtifactsTask {
+  repeated SignArtifactsTask tasks = 1;
+}
+
+message SignTextRequest {
+  // Text to sign.
+  string text = 1;
+
+  // Key name is the key that the artifacts is signed with.
+  string key_name = 2;
+}
+
+message SignTextResponse {
+  string signature = 1;
+}

@@ -1,0 +1,117 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: extarch-gateway
+  namespace: istio-system
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+    - port:
+        number: 443
+        name: https
+        protocol: HTTPS
+      tls:
+        mode: PASSTHROUGH
+      hosts:
+        - kubeaccess-proxy-s390x.build.resf.org
+        - kubeaccess-proxy-ppc64le.build.resf.org
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: ServiceEntry
+metadata:
+  name: ext-arch-s390x
+  namespace: istio-system
+spec:
+  hosts:
+    - s390x-kube.kube001internal.resf.org
+  ports:
+    - number: 443
+      name: https
+      protocol: TCP
+  resolution: STATIC
+  location: MESH_EXTERNAL
+  endpoints:
+    - address: "10.35.68.122"
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: ServiceEntry
+metadata:
+  name: ext-arch-ppc64le
+  namespace: istio-system
+spec:
+  hosts:
+    - ppc64le-kube.kube001internal.resf.org
+  ports:
+    - number: 443
+      name: https
+      protocol: TCP
+  resolution: STATIC
+  location: MESH_EXTERNAL
+  endpoints:
+    - address: "10.52.100.100"
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: ext-arch-s390x
+  namespace: istio-system
+  annotations:
+    external-dns.alpha.kubernetes.io/target: ingress.build.resf.org
+spec:
+  hosts:
+    - kubeaccess-proxy-s390x.build.resf.org
+  gateways:
+    - istio-system/extarch-gateway
+  tls:
+    - match:
+        - port: 443
+          sniHosts:
+            - kubeaccess-proxy-s390x.build.resf.org
+      route:
+        - destination:
+            host: s390x-kube.kube001internal.resf.org
+            port:
+              number: 443
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: ext-arch-ppc64le
+  namespace: istio-system
+  annotations:
+    external-dns.alpha.kubernetes.io/target: ingress.build.resf.org
+spec:
+  hosts:
+    - kubeaccess-proxy-ppc64le.build.resf.org
+  gateways:
+    - istio-system/extarch-gateway
+  tls:
+    - match:
+        - port: 443
+          sniHosts:
+            - kubeaccess-proxy-ppc64le.build.resf.org
+      route:
+        - destination:
+            host: ppc64le-kube.kube001internal.resf.org
+            port:
+              number: 443
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: temporal
+  namespace: istio-system
+  annotations:
+    external-dns.alpha.kubernetes.io/target: ingress-internal.build.resf.org
+spec:
+  hosts:
+    - temporal.corp.build.resf.org
+  gateways:
+    - istio-system/base-gateway-confidential
+  http:
+    - route:
+        - destination:
+            host: workflow-temporal-frontend.workflow.svc.cluster.local
+            port:
+              number: 7233

@@ -1,0 +1,13 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "scanner",
+    srcs = [
+        "errors.go",
+        "scanner.go",
+    ],
+    importmap = "peridot.resf.org/vendor/github.com/go-git/gcfg/scanner",
+    importpath = "github.com/go-git/gcfg/scanner",
+    visibility = ["//visibility:public"],
+    deps = ["//vendor/github.com/go-git/gcfg/token"],
+)

@@ -1,0 +1,9 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "runes",
+    srcs = ["runes.go"],
+    importmap = "peridot.resf.org/vendor/github.com/gobwas/glob/util/runes",
+    importpath = "github.com/gobwas/glob/util/runes",
+    visibility = ["//visibility:public"],
+)

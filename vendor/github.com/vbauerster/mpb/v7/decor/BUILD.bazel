@@ -1,0 +1,32 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "decor",
+    srcs = [
+        "any.go",
+        "counters.go",
+        "decorator.go",
+        "doc.go",
+        "elapsed.go",
+        "eta.go",
+        "merge.go",
+        "moving_average.go",
+        "name.go",
+        "on_complete.go",
+        "percentage.go",
+        "size_type.go",
+        "sizeb1000_string.go",
+        "sizeb1024_string.go",
+        "speed.go",
+        "spinner.go",
+    ],
+    importmap = "peridot.resf.org/vendor/github.com/vbauerster/mpb/v7/decor",
+    importpath = "github.com/vbauerster/mpb/v7/decor",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/VividCortex/ewma",
+        "//vendor/github.com/acarl005/stripansi",
+        "//vendor/github.com/mattn/go-runewidth",
+        "//vendor/github.com/vbauerster/mpb/v7/internal",
+    ],
+)

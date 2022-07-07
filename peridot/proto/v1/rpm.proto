@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package resf.peridot.v1;
+
+option go_package = "peridot.resf.org/peridot/pb;peridotpb";
+
+message RpmArtifactMetadata {
+  bytes primary = 1;
+  bytes filelists = 2;
+  bytes other = 3;
+  bytes updateinfo = 4;
+  repeated string exclude_arch = 5;
+  repeated string exclusive_arch = 6;
+  repeated string build_arch = 7;
+}
+
+message RpmRepoMetadata {
+  // Repositories mapped to architecture
+  map<string, RpmArtifactMetadata> repositories = 1;
+}

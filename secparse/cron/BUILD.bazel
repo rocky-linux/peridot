@@ -1,0 +1,50 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "cron",
+    srcs = [
+        "autocreate_advisory.go",
+        "cron.go",
+        "cve_resolved_downstream.go",
+        "poll_redhat_for_cves.go",
+        "scan_redhat_errata.go",
+        "update_cve_state.go",
+    ],
+    importpath = "peridot.resf.org/secparse/cron",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//koji",
+        "//secparse/admin/proto/v1:proto",
+        "//secparse/db",
+        "//secparse/rherrata",
+        "//secparse/rhsecurity",
+        "//secparse/rpmutils",
+        "//utils",
+        "//vendor/github.com/gobwas/glob",
+        "//vendor/github.com/sirupsen/logrus",
+        "//vendor/github.com/spf13/viper",
+    ],
+)
+
+go_test(
+    name = "cron_test",
+    srcs = [
+        "cve_resolved_downstream_test.go",
+        "main_test.go",
+        "poll_redhat_for_cves_test.go",
+        "scan_redhat_errata_test.go",
+        "update_cve_state_test.go",
+    ],
+    data = glob(["testdata/**"]),
+    embed = [":cron"],
+    deps = [
+        "//koji",
+        "//secparse/admin/proto/v1:proto",
+        "//secparse/db",
+        "//secparse/db/mock",
+        "//secparse/rherrata",
+        "//secparse/rhsecurity",
+        "//secparse/rhsecuritymock",
+        "//vendor/github.com/stretchr/testify/require",
+    ],
+)

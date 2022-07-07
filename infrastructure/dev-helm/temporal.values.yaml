@@ -1,0 +1,55 @@
+server:
+  replicaCount: 1
+  config:
+    persistence:
+      default:
+        driver: sql
+
+        sql:
+          driver: postgres
+          host: postgres-postgresql.default.svc.cluster.local
+          port: 5432
+          database: temporal
+          user: postgres
+          password: postgres
+          maxConns: 20
+          maxConnLifetime: 1h
+
+      visibility:
+        driver: sql
+
+        sql:
+          driver: postgres
+          host: postgres-postgresql.default.svc.cluster.local
+          port: 5432
+          database: temporal_visibility
+          user: postgres
+          password: postgres
+          maxConns: 20
+          maxConnLifetime: 1h
+
+cassandra:
+  enabled: false
+  persistence:
+    enabled: false
+
+mysql:
+  enabled: false
+
+postgresql:
+  enabled: true
+
+schema:
+  setup:
+    enabled: false
+  update:
+    enabled: false
+
+prometheus:
+  enabled: false
+
+grafana:
+  enabled: false
+
+elasticsearch:
+  enabled: false

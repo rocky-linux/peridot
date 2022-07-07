@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+package resf.secparse.admin;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+
+option go_package = "peridot.resf.org/secparse/admin/proto/v1;secparseadminpb";
+
+enum CVEState {
+  UnknownCVEState = 0;
+  // New CVE acknowledged by upstream
+  NewFromUpstream = 1;
+  // New issue, original (not from upstream)
+  NewOriginal = 2;
+  // Upstream has fixed the issue, downstream can now merge
+  ResolvedUpstream = 3;
+  // A fix has been merged from upstream or a fix has been pushed for an original package, awaiting release
+  ResolvedDownstream = 4;
+  // CVE has been included in an advisory (advisory may be unpublished)
+  IncludedInAdvisory = 5;
+  // CVE affects products that's not supported
+  NoSupportedProducts = 6;
+  // CVE is resolved but no advisory is required
+  ResolvedNoAdvisory = 7;
+}
+
+message CVE {
+  string name = 1;
+  CVEState state = 2;
+  google.protobuf.StringValue source_by = 3;
+  google.protobuf.StringValue source_link = 4;
+}
+
+message ListUnresolvedCVEsRequest {}
+message ListUnresolvedCVEsResponse {
+  repeated CVE cves = 1;
+}
+
+message ListFixedCVEsRequest {}
+message ListFixedCVEsResponse {
+  repeated CVE cves = 1;
+}

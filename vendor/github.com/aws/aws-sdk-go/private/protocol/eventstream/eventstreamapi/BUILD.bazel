@@ -1,0 +1,21 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "eventstreamapi",
+    srcs = [
+        "error.go",
+        "reader.go",
+        "shared.go",
+        "signer.go",
+        "stream_writer.go",
+        "writer.go",
+    ],
+    importmap = "peridot.resf.org/vendor/github.com/aws/aws-sdk-go/private/protocol/eventstream/eventstreamapi",
+    importpath = "github.com/aws/aws-sdk-go/private/protocol/eventstream/eventstreamapi",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/aws/aws-sdk-go/aws",
+        "//vendor/github.com/aws/aws-sdk-go/private/protocol",
+        "//vendor/github.com/aws/aws-sdk-go/private/protocol/eventstream",
+    ],
+)

@@ -1,0 +1,8 @@
+load("@io_bazel_rules_jsonnet//jsonnet:jsonnet.bzl", "jsonnet_library")
+
+jsonnet_library(
+    name = "common",
+    srcs = ["common.jsonnet"],
+    visibility = ["//hydra/deploy:__subpackages__"],
+    deps = ["//ci"],
+)

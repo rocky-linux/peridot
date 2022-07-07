@@ -1,0 +1,14 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "awssm",
+    srcs = ["awssm.go"],
+    importpath = "peridot.resf.org/peridot/keykeeper/v1/store/awssm",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//utils",
+        "//vendor/github.com/aws/aws-sdk-go/aws",
+        "//vendor/github.com/aws/aws-sdk-go/service/secretsmanager",
+        "//vendor/github.com/spf13/viper",
+    ],
+)

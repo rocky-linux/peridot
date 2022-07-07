@@ -1,0 +1,116 @@
+# Ignore all bazel-* symlinks. There is no full list since this can change
+# based on the name of the directory bazel is cloned into.
+/bazel-*
+
+### Java template
+# Compiled class file
+*.class
+
+# Log file
+*.log
+
+# BlueJ files
+*.ctxt
+
+# Mobile Tools for Java (J2ME)
+.mtj.tmp/
+
+# Package Files #
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
+hs_err_pid*
+
+node_modules
+yarn-error.log
+.local
+
+vendor/peridot.resf.org
+*_secret_mock.sql
+
+*.iml
+
+# User-specific stuff
+.ijwb/.idea/**/workspace.xml
+.ijwb/.idea/**/tasks.xml
+.ijwb/.idea/**/usage.statistics.xml
+.ijwb/.idea/**/dictionaries
+.ijwb/.idea/**/shelf
+
+# AWS User-specific
+.ijwb/.idea/**/aws.xml
+
+# Generated files
+.ijwb/.idea/**/contentModel.xml
+
+# Sensitive or high-churn files
+.ijwb/.idea/**/dataSources/
+.ijwb/.idea/**/dataSources.ids
+.ijwb/.idea/**/dataSources.local.xml
+.ijwb/.idea/**/sqlDataSources.xml
+.ijwb/.idea/**/dynamic.xml
+.ijwb/.idea/**/uiDesigner.xml
+.ijwb/.idea/**/dbnavigator.xml
+
+# Gradle
+.ijwb/.idea/**/gradle.xml
+.ijwb/.idea/**/libraries
+
+# Gradle and Maven with auto-import
+# When using Gradle or Maven with auto-import, you should exclude module files,
+# since they will be recreated, and may cause churn.  Uncomment if using
+# auto-import.
+# .idea/artifacts
+# .idea/compiler.xml
+# .idea/jarRepositories.xml
+# .idea/modules.xml
+# .idea/*.iml
+# .idea/modules
+# *.iml
+# *.ipr
+
+# CMake
+cmake-build-*/
+
+# Mongo Explorer plugin
+.ijwb/.idea/**/mongoSettings.xml
+
+# File-based project format
+*.iws
+
+# IntelliJ
+out/
+
+# mpeltonen/sbt-idea plugin
+.ijwb/.idea_modules/
+
+# JIRA plugin
+atlassian-ide-plugin.xml
+
+# Cursive Clojure plugin
+.ijwb/.idea/replstate.xml
+
+# SonarLint plugin
+.ijwb/.idea/sonarlint/
+
+# Crashlytics plugin (for Android Studio and IntelliJ)
+com_crashlytics_export_strings.xml
+crashlytics.properties
+crashlytics-build.properties
+fabric.properties
+
+# Editor-based Rest Client
+.ijwb/.idea/httpRequests
+
+# Android studio 3.1+ serialized cache file
+.ijwb/.idea/caches/build_file_checksums.ser
+
+.ijwb/.idea/runConfigurations.xml
+.ijwb/.idea/google-java-format.xml
+.ijwb/.idea/dataSources.xml

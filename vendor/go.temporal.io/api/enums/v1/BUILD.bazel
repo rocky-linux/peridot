@@ -1,0 +1,20 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "enums",
+    srcs = [
+        "command_type.pb.go",
+        "common.pb.go",
+        "event_type.pb.go",
+        "failed_cause.pb.go",
+        "namespace.pb.go",
+        "query.pb.go",
+        "reset.pb.go",
+        "task_queue.pb.go",
+        "workflow.pb.go",
+    ],
+    importmap = "peridot.resf.org/vendor/go.temporal.io/api/enums/v1",
+    importpath = "go.temporal.io/api/enums/v1",
+    visibility = ["//visibility:public"],
+    deps = ["//vendor/github.com/gogo/protobuf/proto"],
+)

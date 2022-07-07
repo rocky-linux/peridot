@@ -1,0 +1,15 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "transport",
+    srcs = ["common.go"],
+    importmap = "peridot.resf.org/vendor/github.com/go-git/go-git/v5/plumbing/transport",
+    importpath = "github.com/go-git/go-git/v5/plumbing/transport",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/go-git/go-git/v5/internal/url",
+        "//vendor/github.com/go-git/go-git/v5/plumbing",
+        "//vendor/github.com/go-git/go-git/v5/plumbing/protocol/packp",
+        "//vendor/github.com/go-git/go-git/v5/plumbing/protocol/packp/capability",
+    ],
+)

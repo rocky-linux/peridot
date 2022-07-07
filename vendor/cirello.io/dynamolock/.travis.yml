@@ -1,0 +1,25 @@
+language: go
+sudo: required
+go_import_path: cirello.io/dynamolock
+go:
+  - "1.12.6"
+
+env:
+  - GO111MODULE=on AWS_ACCESS_KEY_ID=AKID AWS_SECRET_ACCESS_KEY=SECRET
+
+services:
+  - docker
+
+before_install:
+  - go get github.com/mattn/goveralls
+  - go mod download
+
+install: true
+
+script:
+  - docker run --name dynamodb-local -d -p 8000:8000 amazon/dynamodb-local
+  - go test -race ./...
+  - docker rm -f dynamodb-local
+  - docker run --name dynamodb-local -d -p 8000:8000 amazon/dynamodb-local
+  - go test -covermode=count -coverprofile=profile.cov -v ./...
+  - $GOPATH/bin/goveralls -coverprofile=profile.cov -service=travis-ci

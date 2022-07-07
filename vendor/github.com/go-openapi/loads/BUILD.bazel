@@ -1,0 +1,19 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "loads",
+    srcs = [
+        "doc.go",
+        "loaders.go",
+        "options.go",
+        "spec.go",
+    ],
+    importmap = "peridot.resf.org/vendor/github.com/go-openapi/loads",
+    importpath = "github.com/go-openapi/loads",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/go-openapi/analysis",
+        "//vendor/github.com/go-openapi/spec",
+        "//vendor/github.com/go-openapi/swag",
+    ],
+)

@@ -1,0 +1,13 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "b3",
+    srcs = ["b3.go"],
+    importmap = "peridot.resf.org/vendor/go.opencensus.io/plugin/ochttp/propagation/b3",
+    importpath = "go.opencensus.io/plugin/ochttp/propagation/b3",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/go.opencensus.io/trace",
+        "//vendor/go.opencensus.io/trace/propagation",
+    ],
+)

@@ -1,0 +1,16 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "legacy",
+    srcs = ["legacy.go"],
+    importpath = "peridot.resf.org/publisher/updateinfo/legacy",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//publisher/updateinfo",
+        "//secparse/db",
+        "//secparse/proto/v1:proto",
+        "//secparse/rpmutils",
+        "//vendor/github.com/go-git/go-billy/v5:go-billy",
+        "//vendor/github.com/sirupsen/logrus",
+    ],
+)

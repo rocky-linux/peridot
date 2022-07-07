@@ -1,0 +1,17 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "composetools",
+    srcs = [
+        "arch.go",
+        "rpm.go",
+    ],
+    importpath = "peridot.resf.org/peridot/composetools",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//peridot/yummeta",
+        "//secparse/rpmutils",
+        "//utils",
+        "//vendor/github.com/gobwas/glob",
+    ],
+)

@@ -1,0 +1,14 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "connector",
+    srcs = ["connector.go"],
+    importpath = "peridot.resf.org/secparse/db/connector",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//secparse/db",
+        "//secparse/db/psql",
+        "//utils",
+        "//vendor/github.com/sirupsen/logrus",
+    ],
+)

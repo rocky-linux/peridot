@@ -1,0 +1,13 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "yamlpc",
+    srcs = ["yaml.go"],
+    importmap = "peridot.resf.org/vendor/github.com/go-openapi/runtime/yamlpc",
+    importpath = "github.com/go-openapi/runtime/yamlpc",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/go-openapi/runtime",
+        "//vendor/gopkg.in/yaml.v2:yaml_v2",
+    ],
+)

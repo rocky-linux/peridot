@@ -1,0 +1,20 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "helper",
+    srcs = [
+        "cleartext.go",
+        "helper.go",
+        "key.go",
+        "mobile.go",
+        "mobile_stream.go",
+        "sign_detached.go",
+    ],
+    importmap = "peridot.resf.org/vendor/github.com/ProtonMail/gopenpgp/v2/helper",
+    importpath = "github.com/ProtonMail/gopenpgp/v2/helper",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/ProtonMail/gopenpgp/v2/crypto",
+        "//vendor/github.com/pkg/errors",
+    ],
+)

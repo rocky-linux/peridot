@@ -1,0 +1,13 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "internal",
+    srcs = [
+        "percentage.go",
+        "predicate.go",
+        "width.go",
+    ],
+    importmap = "peridot.resf.org/vendor/github.com/vbauerster/mpb/v7/internal",
+    importpath = "github.com/vbauerster/mpb/v7/internal",
+    visibility = ["//vendor/github.com/vbauerster/mpb/v7:__subpackages__"],
+)

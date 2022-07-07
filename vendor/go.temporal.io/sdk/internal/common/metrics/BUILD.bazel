@@ -1,0 +1,16 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "metrics",
+    srcs = [
+        "capturing_handler.go",
+        "constants.go",
+        "grpc.go",
+        "handler.go",
+        "tags.go",
+    ],
+    importmap = "peridot.resf.org/vendor/go.temporal.io/sdk/internal/common/metrics",
+    importpath = "go.temporal.io/sdk/internal/common/metrics",
+    visibility = ["//vendor/go.temporal.io/sdk:__subpackages__"],
+    deps = ["@org_golang_google_grpc//:go_default_library"],
+)

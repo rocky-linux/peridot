@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en" class="min-h-screen">
+  <head>
+    <meta charset="utf-8" />
+
+    <title><%= title %></title>
+
+    <% if(style) { %>
+    <link rel="stylesheet" href="<%= style %>" />
+    <% } %> <% if(typekit) { %>
+    <link rel="stylesheet" href="<%= typekit %>" />
+    <% } %>
+  </head>
+  <body class="bg-gray-100 font-sans min-h-screen">
+    <div id="root" class="bg-gray-100 flex h-full"></div>
+    <% if(script) { %>
+    <script src="<%= script %>"></script>
+    <% } %>
+    <script>
+      window.state = {
+        {{#each this}}
+        '{{@key}}': '{{this}}',
+        {{/each}}
+      }
+    </script>
+  </body>
+</html>

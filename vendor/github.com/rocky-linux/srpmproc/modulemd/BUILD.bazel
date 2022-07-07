@@ -1,0 +1,16 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "modulemd",
+    srcs = [
+        "modulemd.go",
+        "v3.go",
+    ],
+    importmap = "peridot.resf.org/vendor/github.com/rocky-linux/srpmproc/modulemd",
+    importpath = "github.com/rocky-linux/srpmproc/modulemd",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/go-git/go-billy/v5:go-billy",
+        "//vendor/gopkg.in/yaml.v3:yaml_v3",
+    ],
+)

@@ -1,0 +1,19 @@
+load("//rules_byc:defs.bzl", "BYCDEPLOY_OUTS_MIGRATE", "container", "peridot_k8s")
+
+container(
+    base = "//bases/bazel/go",
+    files = [
+        "//peridot/cmd/v1/peridotserver",
+    ],
+    image_name = "peridotserver",
+    tars_to_layer = [
+        "//peridot/migrate",
+    ],
+)
+
+peridot_k8s(
+    name = "peridotserver",
+    src = "deploy.jsonnet",
+    outs = BYCDEPLOY_OUTS_MIGRATE,
+    deps = ["//ci"],
+)

@@ -1,0 +1,27 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+load("@raw_ts_library//:index.bzl", "raw_ts_library")
+
+go_library(
+    name = "hydra",
+    srcs = ["autosignup.go"],
+    importpath = "peridot.resf.org/hydra/pkg/hydra",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//servicecatalog",
+        "//vendor/github.com/ory/hydra-client-go/client",
+        "//vendor/github.com/ory/hydra-client-go/client/admin",
+        "//vendor/github.com/ory/hydra-client-go/models",
+        "//vendor/github.com/sirupsen/logrus",
+    ],
+)
+
+raw_ts_library(
+    name = "hydrajs",
+    srcs = ["autosignup.mjs"],
+    module_name = "hydra/pkg/hydra",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@npm//@ory/hydra-client",
+        "@npm//await-to-js",
+    ],
+)

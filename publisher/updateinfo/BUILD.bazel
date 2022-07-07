@@ -1,0 +1,11 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "updateinfo",
+    srcs = [
+        "repomd.go",
+        "updateinfo.go",
+    ],
+    importpath = "peridot.resf.org/publisher/updateinfo",
+    visibility = ["//visibility:public"],
+)

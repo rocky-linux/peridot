@@ -1,0 +1,27 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "mpb",
+    srcs = [
+        "bar.go",
+        "bar_filler.go",
+        "bar_filler_bar.go",
+        "bar_filler_spinner.go",
+        "bar_option.go",
+        "container_option.go",
+        "doc.go",
+        "priority_queue.go",
+        "progress.go",
+        "proxyreader.go",
+    ],
+    importmap = "peridot.resf.org/vendor/github.com/vbauerster/mpb/v7",
+    importpath = "github.com/vbauerster/mpb/v7",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/acarl005/stripansi",
+        "//vendor/github.com/mattn/go-runewidth",
+        "//vendor/github.com/vbauerster/mpb/v7/cwriter",
+        "//vendor/github.com/vbauerster/mpb/v7/decor",
+        "//vendor/github.com/vbauerster/mpb/v7/internal",
+    ],
+)

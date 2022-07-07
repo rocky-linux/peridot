@@ -1,0 +1,32 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "filesystem",
+    srcs = [
+        "config.go",
+        "deltaobject.go",
+        "index.go",
+        "module.go",
+        "object.go",
+        "reference.go",
+        "shallow.go",
+        "storage.go",
+    ],
+    importmap = "peridot.resf.org/vendor/github.com/go-git/go-git/v5/storage/filesystem",
+    importpath = "github.com/go-git/go-git/v5/storage/filesystem",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/go-git/go-billy/v5:go-billy",
+        "//vendor/github.com/go-git/go-git/v5/config",
+        "//vendor/github.com/go-git/go-git/v5/plumbing",
+        "//vendor/github.com/go-git/go-git/v5/plumbing/cache",
+        "//vendor/github.com/go-git/go-git/v5/plumbing/format/idxfile",
+        "//vendor/github.com/go-git/go-git/v5/plumbing/format/index",
+        "//vendor/github.com/go-git/go-git/v5/plumbing/format/objfile",
+        "//vendor/github.com/go-git/go-git/v5/plumbing/format/packfile",
+        "//vendor/github.com/go-git/go-git/v5/plumbing/storer",
+        "//vendor/github.com/go-git/go-git/v5/storage",
+        "//vendor/github.com/go-git/go-git/v5/storage/filesystem/dotgit",
+        "//vendor/github.com/go-git/go-git/v5/utils/ioutil",
+    ],
+)

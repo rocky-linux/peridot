@@ -1,0 +1,19 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "s3",
+    srcs = ["s3.go"],
+    importpath = "peridot.resf.org/peridot/lookaside/s3",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//peridot/lookaside",
+        "//vendor/github.com/aws/aws-sdk-go/aws",
+        "//vendor/github.com/aws/aws-sdk-go/aws/awserr",
+        "//vendor/github.com/aws/aws-sdk-go/aws/credentials",
+        "//vendor/github.com/aws/aws-sdk-go/aws/session",
+        "//vendor/github.com/aws/aws-sdk-go/service/s3",
+        "//vendor/github.com/aws/aws-sdk-go/service/s3/s3manager",
+        "//vendor/github.com/go-git/go-billy/v5:go-billy",
+        "//vendor/github.com/spf13/viper",
+    ],
+)

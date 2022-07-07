@@ -1,0 +1,84 @@
+/*
+ * Copyright (c) All respective contributors to the Peridot Project. All rights reserved.
+ * Copyright (c) 2021-2022 Rocky Enterprise Software Foundation, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Ctrl IQ, Inc. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright notice,
+ * this list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ *
+ * 3. Neither the name of the copyright holder nor the names of its contributors
+ * may be used to endorse or promote products derived from this software without
+ * specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+import React from 'react';
+import { setLoadingElement } from 'common/ui/remote';
+import { RippleLoading } from 'dotui/RippleLoading';
+import { Switch, Route } from 'react-router-dom';
+import { generateSuspensedComponent } from 'common/ui/SuspensedComponent';
+
+setLoadingElement(
+  <div className="w-full flex items-center justify-center">
+    <RippleLoading />
+  </div>
+);
+
+export const Root = () => {
+  return (
+    <div className="flex w-full min-h-screen">
+      <div className="flex justify-center items-center w-full h-full flex-col space-y-6">
+        <div className="bg-white rounded shadow w-full p-4 px-10 max-w-lg">
+          <Switch>
+            <Route
+              path="/login"
+              component={generateSuspensedComponent(() => import('./Login'))}
+            />
+            <Route
+              path="/consent"
+              component={generateSuspensedComponent(() => import('./Consent'))}
+            />
+            <Route
+              path="/logout"
+              component={generateSuspensedComponent(() => import('./Logout'))}
+            />
+            <Route>No active authentication or consent session found</Route>
+          </Switch>
+        </div>
+        <div className="font-bold text-xl">
+          <svg
+            className="h-12"
+            width="270"
+            height="65"
+            viewBox="0 0 270 65"
+            fill="none"
+          >
+            <path d="M50 18.9727L0 0V62H50V18.9727Z" fill="#009be5" />
+            <path
+              d="M98.6364 35.5455C98.6364 24.2614 91.75 17.6136 82.5966 17.6136C73.4261 17.6136 66.5568 24.2614 66.5568 35.5455C66.5568 46.8125 73.4261 53.4773 82.5966 53.4773C91.75 53.4773 98.6364 46.8295 98.6364 35.5455ZM92.2784 35.5455C92.2784 43.4886 88.2898 47.8011 82.5966 47.8011C76.9205 47.8011 72.9148 43.4886 72.9148 35.5455C72.9148 27.6023 76.9205 23.2898 82.5966 23.2898C88.2898 23.2898 92.2784 27.6023 92.2784 35.5455ZM104.615 53H110.683V48.875H111.041C112.013 50.7841 114.041 53.4602 118.541 53.4602C124.712 53.4602 129.331 48.5682 129.331 39.9432C129.331 31.2159 124.575 26.4773 118.524 26.4773C113.905 26.4773 111.979 29.2557 111.041 31.1477H110.786V18.0909H104.615V53ZM110.666 39.9091C110.666 34.8295 112.848 31.5398 116.82 31.5398C120.928 31.5398 123.041 35.0341 123.041 39.9091C123.041 44.8182 120.893 48.3977 116.82 48.3977C112.882 48.3977 110.666 44.9886 110.666 39.9091ZM155.27 33.7386C154.418 29.3068 150.872 26.4773 144.736 26.4773C138.429 26.4773 134.134 29.5795 134.151 34.4205C134.134 38.2386 136.486 40.7614 141.514 41.8011L145.98 42.7386C148.384 43.267 149.509 44.2386 149.509 45.7216C149.509 47.5114 147.565 48.858 144.634 48.858C141.804 48.858 139.963 47.6307 139.435 45.2784L133.418 45.858C134.185 50.6648 138.224 53.5114 144.651 53.5114C151.196 53.5114 155.815 50.1193 155.832 45.1591C155.815 41.4261 153.412 39.142 148.469 38.0682L144.003 37.1136C141.344 36.517 140.287 35.5966 140.304 34.0795C140.287 32.3068 142.247 31.0795 144.821 31.0795C147.668 31.0795 149.168 32.6307 149.645 34.3523L155.27 33.7386ZM160.92 53H167.091V26.8182H160.92V53ZM164.023 23.1023C165.983 23.1023 167.585 21.6023 167.585 19.7614C167.585 17.9034 165.983 16.4034 164.023 16.4034C162.045 16.4034 160.443 17.9034 160.443 19.7614C160.443 21.6023 162.045 23.1023 164.023 23.1023ZM183.152 53.4602C187.652 53.4602 189.68 50.7841 190.652 48.875H191.027V53H197.095V18.0909H190.908V31.1477H190.652C189.714 29.2557 187.788 26.4773 183.169 26.4773C177.118 26.4773 172.362 31.2159 172.362 39.9432C172.362 48.5682 176.982 53.4602 183.152 53.4602ZM184.874 48.3977C180.8 48.3977 178.652 44.8182 178.652 39.9091C178.652 35.0341 180.766 31.5398 184.874 31.5398C188.845 31.5398 191.027 34.8295 191.027 39.9091C191.027 44.9886 188.811 48.3977 184.874 48.3977ZM203.67 53H209.841V26.8182H203.67V53ZM206.773 23.1023C208.733 23.1023 210.335 21.6023 210.335 19.7614C210.335 17.9034 208.733 16.4034 206.773 16.4034C204.795 16.4034 203.193 17.9034 203.193 19.7614C203.193 21.6023 204.795 23.1023 206.773 23.1023ZM223.72 53.5284C227.828 53.5284 230.283 51.6023 231.408 49.4034H231.612V53H237.544V35.4773C237.544 28.5568 231.902 26.4773 226.908 26.4773C221.402 26.4773 217.175 28.9318 215.811 33.7045L221.572 34.5227C222.186 32.733 223.925 31.1989 226.942 31.1989C229.805 31.1989 231.374 32.6648 231.374 35.2386V35.3409C231.374 37.1136 229.516 37.1989 224.896 37.6932C219.817 38.2386 214.959 39.7557 214.959 45.6534C214.959 50.8011 218.726 53.5284 223.72 53.5284ZM225.322 48.9943C222.749 48.9943 220.908 47.8182 220.908 45.5511C220.908 43.1818 222.97 42.1932 225.732 41.8011C227.351 41.5795 230.589 41.1705 231.391 40.5227V43.608C231.391 46.5227 229.038 48.9943 225.322 48.9943ZM249.919 37.6591C249.919 33.875 252.203 31.6932 255.459 31.6932C258.646 31.6932 260.555 33.7898 260.555 37.2841V53H266.726V36.3295C266.743 30.0568 263.163 26.4773 257.76 26.4773C253.839 26.4773 251.146 28.3523 249.953 31.267H249.646V26.8182H243.749V53H249.919V37.6591Z"
+              fill="#009be5"
+            />
+          </svg>
+        </div>
+      </div>
+    </div>
+  );
+};

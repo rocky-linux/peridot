@@ -1,0 +1,61 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+exports_files(["fork-exec.py"])
+
+go_library(
+    name = "peridotbuilder_lib",
+    srcs = ["main.go"],
+    importpath = "peridot.resf.org/peridot/cmd/v1/peridotbuilder",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//peridot/builder/v1:builder",
+        "//peridot/common",
+        "//peridot/db/connector",
+        "//peridot/db/models",
+        "//peridot/plugin",
+        "//peridot/proto/v1/keykeeper:pb",
+        "//servicecatalog",
+        "//temporalutils",
+        "//utils",
+        "//vendor/github.com/sirupsen/logrus",
+        "//vendor/github.com/spf13/cobra",
+        "//vendor/github.com/spf13/viper",
+        "//vendor/go.temporal.io/sdk/client",
+        "@org_golang_google_grpc//:go_default_library",
+        "@org_golang_google_grpc//credentials/insecure",
+        "@org_golang_google_protobuf//encoding/protojson:go_default_library",
+        "@org_golang_google_protobuf//types/known/anypb:go_default_library",
+    ],
+)
+
+go_binary(
+    name = "peridotbuilder_amd64",
+    embed = [":peridotbuilder_lib"],
+    goarch = "amd64",
+    goos = "linux",
+    visibility = ["//visibility:public"],
+)
+
+go_binary(
+    name = "peridotbuilder_arm64",
+    embed = [":peridotbuilder_lib"],
+    goarch = "arm64",
+    goos = "linux",
+    visibility = ["//visibility:public"],
+)
+
+go_binary(
+    name = "peridotbuilder_s390x",
+    embed = [":peridotbuilder_lib"],
+    goarch = "s390x",
+    goos = "linux",
+    visibility = ["//visibility:public"],
+)
+
+go_binary(
+    name = "peridotbuilder_ppc64le",
+    embed = [":peridotbuilder_lib"],
+    goarch = "ppc64le",
+    goos = "linux",
+    visibility = ["//visibility:public"],
+)

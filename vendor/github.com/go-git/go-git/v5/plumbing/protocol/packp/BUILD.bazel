@@ -1,0 +1,35 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "packp",
+    srcs = [
+        "advrefs.go",
+        "advrefs_decode.go",
+        "advrefs_encode.go",
+        "common.go",
+        "doc.go",
+        "report_status.go",
+        "shallowupd.go",
+        "srvresp.go",
+        "ulreq.go",
+        "ulreq_decode.go",
+        "ulreq_encode.go",
+        "updreq.go",
+        "updreq_decode.go",
+        "updreq_encode.go",
+        "uppackreq.go",
+        "uppackresp.go",
+    ],
+    importmap = "peridot.resf.org/vendor/github.com/go-git/go-git/v5/plumbing/protocol/packp",
+    importpath = "github.com/go-git/go-git/v5/plumbing/protocol/packp",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/go-git/go-git/v5/plumbing",
+        "//vendor/github.com/go-git/go-git/v5/plumbing/format/pktline",
+        "//vendor/github.com/go-git/go-git/v5/plumbing/protocol/packp/capability",
+        "//vendor/github.com/go-git/go-git/v5/plumbing/protocol/packp/sideband",
+        "//vendor/github.com/go-git/go-git/v5/plumbing/storer",
+        "//vendor/github.com/go-git/go-git/v5/storage/memory",
+        "//vendor/github.com/go-git/go-git/v5/utils/ioutil",
+    ],
+)

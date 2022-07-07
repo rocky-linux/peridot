@@ -1,0 +1,14 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "authzed-go",
+    srcs = ["client.go"],
+    importmap = "peridot.resf.org/vendor/github.com/authzed/authzed-go/v1",
+    importpath = "github.com/authzed/authzed-go/v1",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/authzed/authzed-go/proto/authzed/api/v1:api",
+        "//vendor/github.com/jzelinskie/stringz",
+        "@org_golang_google_grpc//:go_default_library",
+    ],
+)

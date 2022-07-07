@@ -1,0 +1,27 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "strfmt",
+    srcs = [
+        "bson.go",
+        "date.go",
+        "default.go",
+        "doc.go",
+        "duration.go",
+        "format.go",
+        "time.go",
+        "ulid.go",
+    ],
+    importmap = "peridot.resf.org/vendor/github.com/go-openapi/strfmt",
+    importpath = "github.com/go-openapi/strfmt",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/asaskevich/govalidator",
+        "//vendor/github.com/go-openapi/errors",
+        "//vendor/github.com/mitchellh/mapstructure",
+        "//vendor/github.com/oklog/ulid",
+        "//vendor/go.mongodb.org/mongo-driver/bson",
+        "//vendor/go.mongodb.org/mongo-driver/bson/bsontype",
+        "//vendor/go.mongodb.org/mongo-driver/bson/primitive",
+    ],
+)

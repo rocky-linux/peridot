@@ -1,0 +1,90 @@
+syntax = "proto3";
+
+package resf.peridot.v1;
+
+import "peridot/proto/v1/import.proto";
+import "peridot/proto/v1/build.proto";
+import "peridot/proto/v1/yumrepofs/yumrepofs.proto";
+
+option go_package = "peridot.resf.org/peridot/pb;peridotpb";
+
+message Dependencies {
+  // Rpm based dependencies
+  // This is a list of dependencies that are installed
+  repeated string rpm = 1;
+}
+
+message ModulePlatform {
+  // Major version for EL release.
+  int32 major = 1;
+
+  // Minor version for EL release.
+  int32 minor = 2;
+
+  // Patch version for EL release.
+  int32 patch = 3;
+
+  // Virtual streams for EL release.
+  // Added to maintain compatibility with MBS (fm-orchestrator).
+  repeated string provides = 4;
+
+  // Buildroot dependencies
+  Dependencies buildroot = 5;
+
+  // Srpmroot dependencies
+  Dependencies srpmroot = 6;
+}
+
+message ModuleDefaultProfile {
+  string stream = 1;
+  repeated string name = 2;
+}
+
+message ModuleDefault {
+  string name = 1;
+  string stream = 2;
+  repeated ModuleDefaultProfile profile = 3;
+
+  // Short-hand for streams with common profile only
+  repeated string common_profile = 4;
+}
+
+message ModuleConfiguration {
+  ModulePlatform platform = 1;
+  repeated ModuleDefault default = 2;
+}
+
+message ModuleStreamDocument {
+  map<string, bytes> streams = 1;
+}
+
+message ModuleStream {
+  string dist = 1;
+  int64 increment = 2;
+  string name = 3;
+  string stream = 4;
+  string version = 5;
+  string context = 6;
+  resf.peridot.v1.ImportRevision import_revision = 7;
+  ModuleConfiguration configuration = 8;
+  // Mapped to arch
+  map<string, ModuleStreamDocument> module_stream_documents = 9;
+  repeated resf.peridot.v1.SubmitBuildTask builds = 10;
+}
+
+message ModuleBuildTask {
+  repeated ModuleStream streams = 1;
+
+  // Repo changes
+  resf.peridot.yumrepofs.v1.UpdateRepoTask repo_changes = 2;
+}
+
+message ModuleScm {
+  string ref = 1;
+}
+
+message ModuleMetadata {
+  string scm_hash = 1;
+  string scm_url = 2;
+  map<string, ModuleScm> rpms = 3;
+}

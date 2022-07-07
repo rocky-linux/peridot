@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package resf.orgmon;
+
+option go_package = "peridot.resf.org/common;commonpb";
+
+message HealthCheckRequest {}
+message HealthCheckResponse {
+  bool alive = 1;
+}

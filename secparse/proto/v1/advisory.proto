@@ -1,0 +1,157 @@
+syntax = "proto3";
+
+package resf.secparse;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+import "validate/validate.proto";
+
+option go_package = "peridot.resf.org/secparse/proto/v1;secparsepb";
+
+// Advisory
+//
+// Product advisory
+message Advisory {
+  enum Type {
+    UnknownType = 0;
+    Security = 1;
+    BugFix = 2;
+    Enhancement = 3;
+  }
+
+  // Type
+  //
+  // Type of advisory
+  Type type = 1;
+
+  // Short code
+  //
+  // Errata prefix or short code
+  // Example: RLBA, RLEA, RLSA
+  string short_code = 2;
+
+  // Name
+  //
+  // Full errata name
+  // Example: RLBA-2021:0001, RLSA-2021:0002
+  string name = 3;
+
+  // Synopsis
+  //
+  // Short description of advisory
+  string synopsis = 4;
+
+  enum Severity {
+    UnknownSeverity = 0;
+    Low = 1;
+    Moderate = 2;
+    Important = 3;
+    Critical = 4;
+  }
+
+  // Severity
+  //
+  // Severity of advisory. Used only for security advisories
+  Severity severity = 5;
+
+  // Topic
+  //
+  // Topic of advisory
+  // Example: An update for the go-toolset:rhel8 module is now available for Rocky Linux 8.
+  string topic = 6;
+
+  // Description
+  //
+  // Description of advisory. Contains information about changes and package.
+  string description = 7;
+
+  // Solution
+  //
+  // How to solve the advisory. Contains information about how to apply the advisory changes
+  google.protobuf.StringValue solution = 8;
+
+  // Affected products
+  //
+  // A list of affected products
+  repeated string affected_products = 9;
+
+  // Fixes
+  //
+  // A list of tickets from upstream bug trackers
+  repeated string fixes = 10;
+
+  // CVEs
+  //
+  // A list of CVEs assigned to this advisory
+  repeated string cves = 11;
+
+  // References
+  //
+  // General references used in this advisory
+  repeated string references = 12;
+
+  // Published at
+  //
+  // Timestamp the advisory is published at
+  google.protobuf.Timestamp published_at = 13;
+
+  // RPMs
+  //
+  // Affected RPMs
+  repeated string rpms = 14;
+}
+
+// ListAdvisoriesRequest
+//
+// Request body for `ListAdvisories`
+// All fields are optional
+message ListAdvisoriesRequest {
+  // Product
+  //
+  // The product to fetch advisories for
+  // For example: Rocky Linux, RL or Rocky
+  string product = 1;
+
+  // Version
+  //
+  // The version to fetch advisories for
+  // For example: 8.3 or 8.4
+  string version = 2;
+
+  // Before
+  //
+  // Advisories published before timestamp
+  google.protobuf.Timestamp before = 3;
+
+  // After
+  //
+  // Advisories published after timestamp
+  google.protobuf.Timestamp after = 4;
+}
+
+// ListAdvisoriesResponse
+//
+// Response body for `ListAdvisories`
+message ListAdvisoriesResponse {
+  repeated Advisory advisories = 1;
+}
+
+// GetAdvisoryRequest
+//
+// Request body for `GetAdvisory`
+message GetAdvisoryRequest {
+  // ID
+  //
+  // Errata ID
+  // Example: RLSA:2021-1515
+  string id = 1 [(validate.rules).string = {
+    pattern: "^(.+)([SEB]A)-([0-9]{4}):([0-9]+)$",
+  }];
+}
+
+// GetAdvisoryResponse
+//
+// Response body for `GetAdvisory`
+message GetAdvisoryResponse {
+  Advisory advisory = 1;
+}

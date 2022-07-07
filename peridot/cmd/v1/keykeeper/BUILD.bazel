@@ -1,0 +1,24 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "keykeeper_lib",
+    srcs = ["main.go"],
+    importpath = "peridot.resf.org/peridot/cmd/v1/keykeeper",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//peridot/common",
+        "//peridot/db/connector",
+        "//peridot/keykeeper/v1:keykeeper",
+        "//temporalutils",
+        "//utils",
+        "//vendor/github.com/sirupsen/logrus",
+        "//vendor/github.com/spf13/cobra",
+        "//vendor/go.temporal.io/sdk/client",
+    ],
+)
+
+go_binary(
+    name = "keykeeper",
+    embed = [":keykeeper_lib"],
+    visibility = ["//visibility:public"],
+)

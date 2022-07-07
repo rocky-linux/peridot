@@ -1,0 +1,17 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "sqlx",
+    srcs = [
+        "bind.go",
+        "doc.go",
+        "named.go",
+        "named_context.go",
+        "sqlx.go",
+        "sqlx_context.go",
+    ],
+    importmap = "peridot.resf.org/vendor/github.com/jmoiron/sqlx",
+    importpath = "github.com/jmoiron/sqlx",
+    visibility = ["//visibility:public"],
+    deps = ["//vendor/github.com/jmoiron/sqlx/reflectx"],
+)

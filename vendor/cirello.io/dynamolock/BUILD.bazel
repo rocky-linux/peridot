@@ -1,0 +1,24 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "dynamolock",
+    srcs = [
+        "client.go",
+        "client_heartbeat.go",
+        "client_session_monitor.go",
+        "doc.go",
+        "errors.go",
+        "lock.go",
+        "structs.go",
+    ],
+    importmap = "peridot.resf.org/vendor/cirello.io/dynamolock",
+    importpath = "cirello.io/dynamolock",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/aws/aws-sdk-go/aws",
+        "//vendor/github.com/aws/aws-sdk-go/aws/awserr",
+        "//vendor/github.com/aws/aws-sdk-go/service/dynamodb",
+        "//vendor/github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface",
+        "//vendor/github.com/aws/aws-sdk-go/service/dynamodb/expression",
+    ],
+)

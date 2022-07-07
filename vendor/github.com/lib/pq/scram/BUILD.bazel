@@ -1,0 +1,9 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "scram",
+    srcs = ["scram.go"],
+    importmap = "peridot.resf.org/vendor/github.com/lib/pq/scram",
+    importpath = "github.com/lib/pq/scram",
+    visibility = ["//visibility:public"],
+)

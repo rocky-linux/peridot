@@ -1,0 +1,8 @@
+syntax = "proto3";
+
+package resf.secparse.admin;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "peridot.resf.org/secparse/admin/proto/v1;secparseadminpb";
+

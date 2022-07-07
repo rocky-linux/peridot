@@ -1,0 +1,13 @@
+load("//rules_byc:defs.bzl", "k8s_apply")
+
+k8s_apply(
+    name = "istio-dev",
+    srcs = [
+        "istio-base-gateway.yaml",
+    ],
+    tags = [
+        "dev-only",
+        "manual",
+    ],
+    visibility = ["//visibility:public"],
+)

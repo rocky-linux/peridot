@@ -1,0 +1,1 @@
+module bazel.build/protobuf

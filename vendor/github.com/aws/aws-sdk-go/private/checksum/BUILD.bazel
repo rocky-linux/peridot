@@ -1,0 +1,14 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "checksum",
+    srcs = ["content_md5.go"],
+    importmap = "peridot.resf.org/vendor/github.com/aws/aws-sdk-go/private/checksum",
+    importpath = "github.com/aws/aws-sdk-go/private/checksum",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/aws/aws-sdk-go/aws",
+        "//vendor/github.com/aws/aws-sdk-go/aws/awserr",
+        "//vendor/github.com/aws/aws-sdk-go/aws/request",
+    ],
+)

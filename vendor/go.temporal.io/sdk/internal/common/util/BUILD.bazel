@@ -1,0 +1,18 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "util",
+    srcs = [
+        "once_cell.go",
+        "stringer.go",
+        "util.go",
+    ],
+    importmap = "peridot.resf.org/vendor/go.temporal.io/sdk/internal/common/util",
+    importpath = "go.temporal.io/sdk/internal/common/util",
+    visibility = ["//vendor/go.temporal.io/sdk:__subpackages__"],
+    deps = [
+        "//vendor/go.temporal.io/api/command/v1:command",
+        "//vendor/go.temporal.io/api/enums/v1:enums",
+        "//vendor/go.temporal.io/api/history/v1:history",
+    ],
+)

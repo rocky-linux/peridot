@@ -1,0 +1,16 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "security",
+    srcs = [
+        "authenticator.go",
+        "authorizer.go",
+    ],
+    importmap = "peridot.resf.org/vendor/github.com/go-openapi/runtime/security",
+    importpath = "github.com/go-openapi/runtime/security",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/go-openapi/errors",
+        "//vendor/github.com/go-openapi/runtime",
+    ],
+)

@@ -1,0 +1,14 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: ServiceEntry
+metadata:
+  name: google
+  namespace: istio-system
+spec:
+  hosts:
+    - oauth2.googleapis.com
+  ports:
+    - number: 443
+      name: https
+      protocol: TCP
+  resolution: DNS
+  location: MESH_EXTERNAL

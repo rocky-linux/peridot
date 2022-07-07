@@ -1,0 +1,19 @@
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+  namespace: istio-system
+spec:
+  acme:
+    email: mustafa@rockylinux.org
+    server: https://acme-v02.api.letsencrypt.org/directory
+    privateKeySecretRef:
+      name: letsencrypt-issuer-key
+    solvers:
+      - selector:
+          dnsZones:
+            - 'build.resf.org'
+        dns01:
+          route53:
+            region: us-east-2
+            hostedZoneID: Z079103519E0RNL08VXVJ

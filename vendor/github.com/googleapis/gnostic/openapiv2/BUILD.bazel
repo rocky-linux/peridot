@@ -1,0 +1,20 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "openapiv2",
+    srcs = [
+        "OpenAPIv2.go",
+        "OpenAPIv2.pb.go",
+        "document.go",
+    ],
+    importmap = "peridot.resf.org/vendor/github.com/googleapis/gnostic/openapiv2",
+    importpath = "github.com/googleapis/gnostic/openapiv2",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/googleapis/gnostic/compiler",
+        "//vendor/gopkg.in/yaml.v3:yaml_v3",
+        "@org_golang_google_protobuf//reflect/protoreflect:go_default_library",
+        "@org_golang_google_protobuf//runtime/protoimpl:go_default_library",
+        "@org_golang_google_protobuf//types/known/anypb:go_default_library",
+    ],
+)

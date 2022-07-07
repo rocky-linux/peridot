@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+#
+# Copyright (c) All respective contributors to the Peridot Project. All rights reserved.
+# Copyright (c) 2021-2022 Rocky Enterprise Software Foundation, Inc. All rights reserved.
+# Copyright (c) 2021-2022 Ctrl IQ, Inc. All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice,
+# this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+# this list of conditions and the following disclaimer in the documentation
+# and/or other materials provided with the distribution.
+#
+# 3. Neither the name of the copyright holder nor the names of its contributors
+# may be used to endorse or promote products derived from this software without
+# specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+
+# Clone https://github.com/temporalio/temporal
+# Run `make temporal-sql-tool`
+# Supply path to the temporal directory in $1
+
+DIR_TO_TEMPORAL="$1"
+if [[ -z "$DIR_TO_TEMPORAL" ]]; then
+    echo "You need to supply the directory where you cloned temporalio/temporal"
+    exit 1
+fi
+
+cd "$DIR_TO_TEMPORAL" || exit 1
+
+export SQL_PLUGIN=postgres
+export SQL_HOST=localhost
+export SQL_PORT=$POSTGRES_PORT
+export SQL_USER=postgres
+export SQL_PASSWORD=postgres
+
+./temporal-sql-tool create-database -database temporal
+SQL_DATABASE=temporal ./temporal-sql-tool setup-schema -v 0.0
+SQL_DATABASE=temporal ./temporal-sql-tool update -schema-dir schema/postgresql/v96/temporal/versioned
+
+./temporal-sql-tool create-database -database temporal_visibility
+SQL_DATABASE=temporal_visibility ./temporal-sql-tool setup-schema -v 0.0
+SQL_DATABASE=temporal_visibility ./temporal-sql-tool update -schema-dir schema/postgresql/v96/visibility/versioned
+
+sleep 10
+
+kubectl exec -it services/temporal-admintools -- tctl --namespace default namespace re

@@ -1,0 +1,19 @@
+load("//rules_byc:defs.bzl", "BYCDEPLOY_OUTS_MIGRATE", "container", "peridot_k8s")
+
+container(
+    base = "//bases/bazel/go",
+    files = [
+        "//obsidian/cmd/v1/obsidian",
+    ],
+    image_name = "obsidian",
+    tars_to_layer = [
+        "//obsidian/migrate",
+    ],
+)
+
+peridot_k8s(
+    name = "obsidian",
+    src = "deploy.jsonnet",
+    outs = BYCDEPLOY_OUTS_MIGRATE,
+    deps = ["//ci"],
+)

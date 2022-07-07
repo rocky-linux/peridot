@@ -1,0 +1,87 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+load("//rules_byc:defs.bzl", "container")
+
+go_library(
+    name = "initdb_lib",
+    srcs = ["main.go"],
+    importpath = "peridot.resf.org/initdb",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//utils",
+        "//vendor/github.com/google/uuid",
+        "//vendor/github.com/spf13/cobra",
+        "//vendor/github.com/spf13/viper",
+        "//vendor/k8s.io/api/core/v1:core",
+        "//vendor/k8s.io/apimachinery/pkg/apis/meta/v1:meta",
+        "//vendor/k8s.io/client-go/kubernetes",
+        "//vendor/k8s.io/client-go/rest",
+    ],
+)
+
+go_binary(
+    name = "initdb",
+    embed = [":initdb_lib"],
+    goarch = "amd64",
+    goos = "linux",
+    visibility = ["//visibility:public"],
+)
+
+go_binary(
+    name = "initdb_arm64",
+    embed = [":initdb_lib"],
+    goarch = "arm64",
+    goos = "linux",
+    visibility = ["//visibility:public"],
+)
+
+go_binary(
+    name = "initdb_s390x",
+    embed = [":initdb_lib"],
+    goarch = "s390x",
+    goos = "linux",
+    visibility = ["//visibility:public"],
+)
+
+go_binary(
+    name = "initdb_ppc64le",
+    embed = [":initdb_lib"],
+    goarch = "ppc64le",
+    goos = "linux",
+    visibility = ["//visibility:public"],
+)
+
+container(
+    architecture = "amd64",
+    base = "//bases/bazel/go:go_amd64",
+    files = [
+        ":initdb",
+    ],
+    image_name = "initdb",
+)
+
+container(
+    architecture = "arm64",
+    base = "//bases/bazel/go:go_arm64",
+    files = [
+        ":initdb_arm64",
+    ],
+    image_name = "initdb_arm64",
+)
+
+container(
+    architecture = "s390x",
+    base = "//bases/bazel/go:go_s390x",
+    files = [
+        ":initdb_s390x",
+    ],
+    image_name = "initdb_s390x",
+)
+
+container(
+    architecture = "ppc64le",
+    base = "//bases/bazel/go:go_ppc64le",
+    files = [
+        ":initdb_ppc64le",
+    ],
+    image_name = "initdb_ppc64le",
+)

@@ -1,0 +1,18 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "diff",
+    srcs = [
+        "colorconfig.go",
+        "patch.go",
+        "unified_encoder.go",
+    ],
+    importmap = "peridot.resf.org/vendor/github.com/go-git/go-git/v5/plumbing/format/diff",
+    importpath = "github.com/go-git/go-git/v5/plumbing/format/diff",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/go-git/go-git/v5/plumbing",
+        "//vendor/github.com/go-git/go-git/v5/plumbing/color",
+        "//vendor/github.com/go-git/go-git/v5/plumbing/filemode",
+    ],
+)

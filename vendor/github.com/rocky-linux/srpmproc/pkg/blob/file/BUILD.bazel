@@ -1,0 +1,9 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "file",
+    srcs = ["file.go"],
+    importmap = "peridot.resf.org/vendor/github.com/rocky-linux/srpmproc/pkg/blob/file",
+    importpath = "github.com/rocky-linux/srpmproc/pkg/blob/file",
+    visibility = ["//visibility:public"],
+)

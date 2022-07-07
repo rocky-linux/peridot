@@ -1,0 +1,12 @@
+load("//rules_byc:defs.bzl", "k8s_apply")
+
+k8s_apply(
+    name = "istio-prod",
+    srcs = [
+        "extarches.yaml",
+        "google.yaml",
+        "istio-base-gateway.yaml",
+        "rds.yaml",
+    ],
+    visibility = ["//visibility:public"],
+)

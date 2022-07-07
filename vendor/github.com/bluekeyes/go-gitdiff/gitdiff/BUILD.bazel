@@ -1,0 +1,19 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "gitdiff",
+    srcs = [
+        "apply.go",
+        "base85.go",
+        "binary.go",
+        "file_header.go",
+        "gitdiff.go",
+        "io.go",
+        "parser.go",
+        "patch_header.go",
+        "text.go",
+    ],
+    importmap = "peridot.resf.org/vendor/github.com/bluekeyes/go-gitdiff/gitdiff",
+    importpath = "github.com/bluekeyes/go-gitdiff/gitdiff",
+    visibility = ["//visibility:public"],
+)

@@ -1,0 +1,23 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "expression",
+    srcs = [
+        "condition.go",
+        "doc.go",
+        "error.go",
+        "expression.go",
+        "key_condition.go",
+        "operand.go",
+        "projection.go",
+        "update.go",
+    ],
+    importmap = "peridot.resf.org/vendor/github.com/aws/aws-sdk-go/service/dynamodb/expression",
+    importpath = "github.com/aws/aws-sdk-go/service/dynamodb/expression",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/aws/aws-sdk-go/aws",
+        "//vendor/github.com/aws/aws-sdk-go/service/dynamodb",
+        "//vendor/github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute",
+    ],
+)

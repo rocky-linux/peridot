@@ -1,0 +1,344 @@
+syntax = "proto3";
+
+package resf.peridot.v1;
+
+import "google/protobuf/wrappers.proto";
+import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
+import "peridot/proto/v1/import.proto";
+import "peridot/proto/v1/task.proto";
+import "peridot/proto/v1/batch.proto";
+import "peridot/proto/v1/yumrepofs/yumrepofs.proto";
+import "validate/validate.proto";
+
+option go_package = "peridot.resf.org/peridot/pb;peridotpb";
+
+service BuildService {
+  // ListBuilds returns all builds filtered through given filters
+  rpc ListBuilds(ListBuildsRequest) returns (ListBuildsResponse) {
+    option (google.api.http) = {
+      get: "/v1/projects/{project_id=*}/builds"
+    };
+  }
+
+  // GetBuild returns a build by its id
+  rpc GetBuild(GetBuildRequest) returns (GetBuildResponse) {
+    option (google.api.http) = {
+      get: "/v1/projects/{project_id=*}/builds/{build_id=*}"
+    };
+  }
+
+  // ListBuildBatches returns all build batches
+  rpc ListBuildBatches(ListBuildBatchesRequest) returns (ListBuildBatchesResponse) {
+    option (google.api.http) = {
+      get: "/v1/projects/{project_id=*}/build_batches"
+    };
+  }
+
+  // GetBuildBatch returns a build batch by its id
+  rpc GetBuildBatch(GetBuildBatchRequest) returns (GetBuildBatchResponse) {
+    option (google.api.http) = {
+      get: "/v1/projects/{project_id=*}/build_batches/{build_batch_id=*}"
+    };
+  }
+
+  // SubmitBuild builds a package scoped to a project
+  // The project has to contain an import for the specific package
+  // This method is asynchronous. Peridot uses the AsyncTask abstraction.
+  // Check out `//peridot/proto/v1:task.proto` for more information
+  rpc SubmitBuild(SubmitBuildRequest) returns (AsyncTask) {
+    option (google.api.http) = {
+      post: "/v1/projects/{project_id=*}/builds"
+      body: "*"
+    };
+    option (resf.peridot.v1.task_info) = {
+      response_type: "SubmitBuildTask"
+      metadata_type: "PackageOperationMetadata"
+    };
+  }
+
+  // SubmitBuildBatch submits a batch of builds.
+  rpc SubmitBuildBatch(SubmitBuildBatchRequest) returns (SubmitBuildBatchResponse) {
+    option (google.api.http) = {
+      post: "/v1/projects/{project_id=*}/build_batches"
+      body: "*"
+    };
+  }
+
+  // RpmImport imports rpm files into a project
+  rpc RpmImport(RpmImportRequest) returns (AsyncTask) {
+    option (google.api.http) = {
+      post: "/v1/projects/{project_id=*}/builds/rpm-import"
+      body: "*"
+    };
+    option (resf.peridot.v1.task_info) = {
+      response_type: "RpmImportTask"
+      metadata_type: "RpmImportOperationMetadata"
+    };
+  }
+}
+
+message Build {
+  // Unique identifier for the specific build
+  string id = 1;
+
+  // Timestamp the build was created
+  google.protobuf.Timestamp created_at = 2;
+
+  // Package or module name
+  string name = 3;
+
+  // Import revisions (usually one, but multiple for modules)
+  repeated ImportRevision import_revisions = 4;
+
+  // Parent task ID for the specific build
+  string task_id = 5;
+
+  // Task status
+  TaskStatus status = 6;
+}
+
+message SubmitBuildRequest {
+  // Project ID that we want this build to be assigned to
+  // All build requests need a project id, however after
+  // the initial import, sharing the VRE in an inter-project
+  // way is possible.
+  string project_id = 1;
+
+  // Package name we want to build
+  // Has to follow the OpenPatch architecture
+  oneof package {
+    google.protobuf.StringValue package_name = 2 [(validate.rules).message.required = true];
+    google.protobuf.StringValue package_id = 8 [(validate.rules).message.required = true];
+  }
+
+  // Specific import hash to build
+  // Optional, latest is built if null
+  google.protobuf.StringValue scm_hash = 3;
+
+  // Disable checks will disable testing on specified target
+  // NOT RECOMMENDED AND WILL BE LIMITED IN THE FUTURE
+  // THE RESULTING ARTIFACTS SHOULD NOT BE USED
+  bool disable_checks = 4;
+
+  // Only build specified branches
+  // Branches is only valid for modular packages
+  // If specified, "normal" packages won't be built
+  repeated string branches = 5;
+
+  // Whether to build module variant only
+  // This only works with packages with two variants
+  // Ignored for single variant packages
+  bool module_variant = 6;
+
+  // Side NVRs pulls in the specified NVRs only for this build
+  // Fails if any NVR is not available
+  repeated string side_nvrs = 7;
+
+  // Whether to set inactive or not
+  bool set_inactive = 9;
+}
+
+message SubmitBuildBatchRequest {
+  // Only the top-most project id is used for all build requests
+  string project_id = 1;
+
+  repeated SubmitBuildRequest builds = 2 [(validate.rules).repeated.min_items = 1];
+}
+
+message SubmitBuildBatchResponse {
+  string build_batch_id = 1;
+}
+
+message SubmitBuildTask {
+  // Build ID is the unique identifier that is used for a specific build request
+  string build_id = 1;
+
+  // Package name that was built
+  string package_name = 2;
+
+  // Import revision that was built
+  ImportRevision import_revision = 3;
+
+  // All produced artifacts (all artifacts should be available in blob storage)
+  repeated TaskArtifact artifacts = 4;
+
+  // True if tests/checks was disabled
+  bool checks_disabled = 5;
+
+  // Whether it was a module build or not
+  bool modular = 6;
+
+  // Parent task ID (usually for module builds)
+  google.protobuf.StringValue parent_task_id = 7;
+
+  // Repo changes
+  resf.peridot.yumrepofs.v1.UpdateRepoTask repo_changes = 8;
+
+  // Build task ID is the unique identifier that is used for a specific build request
+  string build_task_id = 9;
+}
+
+message SubmitBuildBatchTask {
+  repeated SubmitBuildTask builds = 1;
+}
+
+message BuildFilters {
+  // The status filter only returns builds that
+  // has the given status
+  TaskStatus status = 1;
+}
+
+message ListBuildsRequest {
+  string project_id = 1;
+
+  // Filters that should be applied to the list query
+  // No filters will return all builds globally
+  BuildFilters filters = 2;
+
+  int32 page = 3;
+  int32 limit = 4 [(validate.rules).int32.lte = 100];
+}
+
+message ListBuildsResponse {
+  repeated Build builds = 1;
+
+  // Total packages from server
+  int64 total = 2;
+
+  // Limit from request
+  int32 size = 3;
+
+  // Current page
+  int32 page = 4;
+}
+
+message GetBuildRequest {
+  string project_id = 1;
+  string build_id = 2;
+}
+
+message GetBuildResponse {
+  Build build = 1;
+}
+
+message BuildBatch {
+  string id = 1;
+  google.protobuf.Timestamp created_at = 2;
+
+  int32 count = 3;
+  int32 pending = 4;
+  int32 running = 5;
+  int32 succeeded = 6;
+  int32 failed = 7;
+  int32 canceled = 8;
+}
+
+message ListBuildBatchesRequest {
+  string project_id = 1;
+
+  int32 page = 2;
+  int32 limit = 3 [(validate.rules).int32.lte = 100];
+}
+
+message ListBuildBatchesResponse {
+  repeated BuildBatch build_batches = 1;
+
+  // Total packages from server
+  int64 total = 2;
+
+  // Limit from request
+  int32 size = 3;
+
+  // Current page
+  int32 page = 4;
+}
+
+message GetBuildBatchRequest {
+  string project_id = 1;
+  string build_batch_id = 2;
+  int32 page = 3;
+  int32 limit = 4 [(validate.rules).int32.lte = 100];
+  BatchFilter filter = 5;
+}
+
+message GetBuildBatchResponse {
+  repeated Build builds = 1;
+
+  int32 pending = 2;
+  int32 running = 3;
+  int32 succeeded = 4;
+  int32 failed = 5;
+  int32 canceled = 6;
+
+  // Total packages from server
+  int64 total = 7;
+
+  // Limit from request
+  int32 size = 8;
+
+  // Current page
+  int32 page = 9;
+}
+
+message ExtraYumrepofsRepo {
+  string name = 1;
+  bool module_hotfixes = 2;
+  bool ignore_exclude = 3;
+}
+
+// These options can be used to customize the behavior of the service
+// Can only be defined/set by internal services
+// Is especially used when building modules and module components
+message ExtraBuildOptions {
+  // Disable yumrepofs updates
+  bool disable_yumrepofs_updates = 1;
+
+  // Extra files that should be added to the build root
+  // Key = path to file, value = contents of file
+  map<string, string> build_arch_extra_files = 2;
+
+  // Reusable build ID
+  // Used specifically for module builds
+  string reusable_build_id = 3;
+
+  // Extra yumrepofs repos that should be added to the build root
+  repeated ExtraYumrepofsRepo extra_yumrepofs_repos = 4;
+
+  // Whether the build is part of a batch
+  string build_batch_id = 5;
+
+  // Modules to enable during build
+  repeated string modules = 6;
+
+  // Packages to exclude from all repositories not marked with ignore_exclude
+  repeated string exclude_packages = 7;
+
+  // Whether to enable networking in rpmbuild
+  bool enable_networking = 8;
+}
+
+message RpmImportRequest {
+  string project_id = 1;
+
+  // Rpms
+  //
+  // Previously uploaded RPM tarball
+  string rpms = 2 [(validate.rules).string = {
+    prefix: "/data/rpms/",
+  }];
+
+  // Force override
+  //
+  // Overwrite existing RPMs even if NVRA is locked
+  // Useful for secure boot scenarios for example
+  bool force_override = 3;
+}
+
+message RpmImportTask {
+  resf.peridot.yumrepofs.v1.UpdateRepoTask repo_changes = 1;
+}
+
+message RpmImportOperationMetadata {
+  string package_name = 1;
+}

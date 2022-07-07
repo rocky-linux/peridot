@@ -1,0 +1,14 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "compiler",
+    srcs = ["compiler.go"],
+    importmap = "peridot.resf.org/vendor/github.com/gobwas/glob/compiler",
+    importpath = "github.com/gobwas/glob/compiler",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/gobwas/glob/match",
+        "//vendor/github.com/gobwas/glob/syntax/ast",
+        "//vendor/github.com/gobwas/glob/util/runes",
+    ],
+)

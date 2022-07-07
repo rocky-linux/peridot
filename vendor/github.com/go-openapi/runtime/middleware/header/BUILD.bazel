@@ -1,0 +1,9 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "header",
+    srcs = ["header.go"],
+    importmap = "peridot.resf.org/vendor/github.com/go-openapi/runtime/middleware/header",
+    importpath = "github.com/go-openapi/runtime/middleware/header",
+    visibility = ["//visibility:public"],
+)

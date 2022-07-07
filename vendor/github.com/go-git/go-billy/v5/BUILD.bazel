@@ -1,0 +1,9 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go-billy",
+    srcs = ["fs.go"],
+    importmap = "peridot.resf.org/vendor/github.com/go-git/go-billy/v5",
+    importpath = "github.com/go-git/go-billy/v5",
+    visibility = ["//visibility:public"],
+)

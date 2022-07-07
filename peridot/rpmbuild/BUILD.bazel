@@ -1,0 +1,12 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "rpmbuild",
+    srcs = [
+        "common.go",
+        "rpmbuild.go",
+    ],
+    importpath = "peridot.resf.org/peridot/rpmbuild",
+    visibility = ["//visibility:public"],
+    deps = ["//vendor/github.com/go-git/go-billy/v5:go-billy"],
+)

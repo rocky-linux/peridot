@@ -1,0 +1,21 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "impl",
+    srcs = [
+        "cve.go",
+        "server.go",
+        "short_code.go",
+    ],
+    importpath = "peridot.resf.org/secparse/admin/impl",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//secparse/admin/proto/v1:proto",
+        "//secparse/db",
+        "//servicecatalog",
+        "//utils",
+        "//vendor/github.com/ory/hydra-client-go/client",
+        "//vendor/github.com/sirupsen/logrus",
+        "@org_golang_google_grpc//:go_default_library",
+    ],
+)

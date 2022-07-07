@@ -1,0 +1,16 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "temporalutils",
+    srcs = ["client.go"],
+    importpath = "peridot.resf.org/temporalutils",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/sirupsen/logrus",
+        "//vendor/github.com/spf13/pflag",
+        "//vendor/github.com/spf13/viper",
+        "//vendor/go.temporal.io/sdk/client",
+        "@org_golang_google_grpc//:go_default_library",
+        "@org_golang_google_grpc//credentials",
+    ],
+)

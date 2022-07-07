@@ -1,0 +1,301 @@
+syntax = "proto3";
+
+package resf.peridot.v1;
+
+import "google/protobuf/wrappers.proto";
+import "google/protobuf/timestamp.proto";
+import "validate/validate.proto";
+import "google/api/annotations.proto";
+import "peridot/proto/v1/task.proto";
+import "peridot/proto/v1/batch.proto";
+
+option go_package = "peridot.resf.org/peridot/pb;peridotpb";
+
+// ImportService provides import capabilities to projects.
+// Src imports aren't necessarily "imports" per-se,
+// but the term is used loosely and means both a literal import as
+// well as revision detection within Peridot.
+// This is done for reproducibility as well as accountability purposes.
+// todo(mustafa): Add more information about IAM
+service ImportService {
+  // ListImports lists all imports for a project.
+  rpc ListImports(ListImportsRequest) returns (ListImportsResponse) {
+    option (google.api.http) = {
+      get: "/v1/projects/{project_id=*}/imports"
+    };
+  }
+
+  // GetImport gets an import by ID.
+  rpc GetImport(GetImportRequest) returns (GetImportResponse) {
+    option (google.api.http) = {
+      get: "/v1/projects/{project_id=*}/imports/{import_id=*}"
+    };
+  }
+
+  // ListImportBatches lists all import batches for a project.
+  rpc ListImportBatches(ListImportBatchesRequest) returns (ListImportBatchesResponse) {
+    option (google.api.http) = {
+      get: "/v1/projects/{project_id=*}/import_batches"
+    };
+  }
+
+  // GetImportBatch gets an import batch by ID.
+  rpc GetImportBatch(GetImportBatchRequest) returns (GetImportBatchResponse) {
+    option (google.api.http) = {
+      get: "/v1/projects/{project_id=*}/import_batches/{import_batch_id=*}"
+    };
+  }
+
+  // ImportPackage imports a package scoped to a project
+  // This method is asynchronous. Peridot uses the AsyncTask abstraction.
+  // Check out `//peridot/proto/v1:task.proto` for more information
+  // TODO low-pri: Support inter-project imports
+  rpc ImportPackage(ImportPackageRequest) returns (AsyncTask) {
+    option (google.api.http) = {
+      post: "/v1/projects/{project_id=*}/imports"
+      body: "*"
+    };
+    option (resf.peridot.v1.task_info) = {
+      response_type: "ImportPackageTask"
+      metadata_type: "PackageOperationMetadata"
+    };
+  };
+
+  // ImportPackageBatch imports a batch of packages scoped to a project
+  rpc ImportPackageBatch(ImportPackageBatchRequest) returns (ImportPackageBatchResponse) {
+    option (google.api.http) = {
+      post: "/v1/projects/{project_id=*}/import_batches"
+      body: "*"
+    };
+  };
+
+  // ImportBatchRetryFailed retries failed imports in a batch.
+  rpc ImportBatchRetryFailed(ImportBatchRetryFailedRequest) returns (ImportBatchRetryFailedResponse) {
+    option (google.api.http) = {
+      post: "/v1/projects/{project_id=*}/import_batches/{import_batch_id=*}/retry_failed"
+    };
+  }
+}
+
+message Import {
+  // Unique identifier for the specific build
+  string id = 1;
+
+  // Timestamp the build was created
+  google.protobuf.Timestamp created_at = 2;
+
+  // Package or module name
+  string name = 3;
+
+  // Parent task ID for the specific build
+  string task_id = 5;
+
+  // Task status
+  TaskStatus status = 6;
+
+  // Revisions for the import
+  repeated ImportRevision revisions = 7;
+}
+
+message ImportBatch {
+  string id = 1;
+  google.protobuf.Timestamp created_at = 2;
+
+  int32 count = 3;
+  int32 pending = 4;
+  int32 running = 5;
+  int32 succeeded = 6;
+  int32 failed = 7;
+  int32 canceled = 8;
+}
+
+message ListImportsRequest {
+  string project_id = 1;
+  int32 page = 2;
+  int32 limit = 3 [(validate.rules).int32.lte = 100];
+}
+
+message ListImportsResponse {
+  repeated Import imports = 1;
+
+  // Total packages from server
+  int64 total = 2;
+
+  // Limit from request
+  int32 size = 3;
+
+  // Current page
+  int32 page = 4;
+}
+
+message GetImportRequest {
+  string project_id = 1;
+  string import_id = 2;
+}
+
+message GetImportResponse {
+  Import import = 1;
+}
+
+message ListImportBatchesRequest {
+  string project_id = 1;
+  int32 page = 2;
+  int32 limit = 3 [(validate.rules).int32.lte = 100];
+}
+
+message ListImportBatchesResponse {
+  repeated ImportBatch import_batches = 1;
+
+  // Total packages from server
+  int64 total = 2;
+
+  // Limit from request
+  int32 size = 3;
+
+  // Current page
+  int32 page = 4;
+}
+
+message GetImportBatchRequest {
+  string project_id = 1;
+  string import_batch_id = 2;
+  int32 page = 3;
+  int32 limit = 4 [(validate.rules).int32.lte = 100];
+  BatchFilter filter = 5;
+}
+
+message GetImportBatchResponse {
+  repeated Import imports = 1;
+
+  int32 pending = 2;
+  int32 running = 3;
+  int32 succeeded = 4;
+  int32 failed = 5;
+  int32 canceled = 6;
+
+  // Total packages from server
+  int64 total = 7;
+
+  // Limit from request
+  int32 size = 8;
+
+  // Current page
+  int32 page = 9;
+}
+
+// VersionRelease contains versioning information about
+// a specific package
+message VersionRelease {
+  // Version is the RPM version field from the spec
+  google.protobuf.StringValue version = 1;
+  // Release is the RPM release field from the spec
+  // This value will have the %{?dist} macro expanded
+  google.protobuf.StringValue release = 2;
+}
+
+// ImportPackageRequest is the request message for ImportService.ImportPackage
+message ImportPackageRequest {
+  // Project ID that we want this import to be assigned to
+  // All import requests need a project id, however after
+  // the initial import, sharing the VRE in an inter-project
+  // way is possible.
+  string project_id = 1;
+
+  // Package name/ID we want to import
+  // Has to follow the OpenPatch architecture
+  oneof package {
+    google.protobuf.StringValue package_name = 2 [(validate.rules).message.required = true];
+    google.protobuf.StringValue package_id = 4 [(validate.rules).message.required = true];
+  }
+
+  // Specific version details that we want the import to adhere to
+  // Can be used to import a specific version for example, or the version
+  // released mid-cycle for a point release
+  VersionRelease vre = 3;
+
+  // Whether to set import as inactive or not.
+  // This will make the import not appear as the latest
+  bool set_inactive = 5;
+}
+
+message ImportPackageBatchRequest {
+  // Only the top-most project id is used for all import requests
+  string project_id = 1;
+
+  repeated ImportPackageRequest imports = 2 [(validate.rules).repeated.min_items = 1];
+}
+
+message ImportPackageBatchResponse {
+  string import_batch_id = 1;
+}
+
+message ImportBatchRetryFailedRequest {
+  string project_id = 1;
+  string import_batch_id = 2;
+}
+
+message ImportBatchRetryFailedResponse {
+  string import_batch_id = 1;
+}
+
+// ImportRevision is SCM metadata as well as versioning information of a specific
+// import element.
+message ImportRevision {
+  // SCM Hash for the specific revision. For example Git hash
+  string scm_hash = 1;
+
+  // Branch name that we imported the content from
+  string scm_branch_name = 2;
+
+  // Versioning details that was parsed from the spec file
+  VersionRelease vre = 3;
+
+  // Indicate whether this was a module import or not
+  bool module = 4;
+
+  // Indicate whether this was a module stream import or not
+  bool module_stream = 5;
+
+  // Upstream URL for the import
+  string scm_url = 6;
+
+  // Package version id
+  string package_version_id = 7;
+}
+
+// ImportPackageTask is the AsyncTask metadata that is included
+// in the parent task for a specific import request
+message ImportPackageTask {
+  // Import ID is the unique identifier that is used for a specific import request
+  string import_id = 1;
+
+  // Package name that was imported
+  string package_name = 2;
+
+  // Revisions that was able to be imported
+  repeated ImportRevision import_revisions = 3;
+}
+
+message ImportPackageBatchTask {
+  repeated ImportPackageTask imports = 1;
+}
+
+// PackageSrcGitResponse is the Temporal Activity metadata for PackageSrcGit
+// Contains information about lookaside blobs that was packaged as well as
+// the subtask ID
+message PackageSrcGitResponse {
+  // A map of tarballs with their SHA256 hashes
+  // These blobs were uploaded to the lookaside cache
+  // and should be present in the metadata.
+  // The information is added to the metadata during
+  // dist-git sync
+  map<string, string> name_hashes = 1;
+
+  // Subtask ID
+  string task_id = 2;
+}
+
+message ExtraImportOptions {
+  // Whether the import is part of a batch
+  string import_batch_id = 1;
+}

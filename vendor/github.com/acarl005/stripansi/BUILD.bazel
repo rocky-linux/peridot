@@ -1,0 +1,9 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "stripansi",
+    srcs = ["stripansi.go"],
+    importmap = "peridot.resf.org/vendor/github.com/acarl005/stripansi",
+    importpath = "github.com/acarl005/stripansi",
+    visibility = ["//visibility:public"],
+)

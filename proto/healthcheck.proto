@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package resf.orgmon;
+
+import "google/api/annotations.proto";
+import "proto/common.proto";
+
+option go_package = "peridot.resf.org/common;commonpb";
+
+service HealthCheckService {
+    rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse) {
+        option (google.api.http) = {
+            get: "/_/healthz"
+        };
+    }
+}

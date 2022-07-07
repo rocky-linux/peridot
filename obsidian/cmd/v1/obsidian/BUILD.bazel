@@ -1,0 +1,21 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_binary(
+    name = "obsidian",
+    embed = [":obsidian_lib"],
+    visibility = ["//visibility:public"],
+)
+
+go_library(
+    name = "obsidian_lib",
+    srcs = ["main.go"],
+    importpath = "peridot.resf.org/obsidian/cmd/v1/obsidian",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//obsidian/db/connector",
+        "//obsidian/impl/v1:impl",
+        "//utils",
+        "//vendor/github.com/sirupsen/logrus",
+        "//vendor/github.com/spf13/cobra",
+    ],
+)

@@ -1,0 +1,13 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "storage",
+    srcs = ["storer.go"],
+    importmap = "peridot.resf.org/vendor/github.com/go-git/go-git/v5/storage",
+    importpath = "github.com/go-git/go-git/v5/storage",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/go-git/go-git/v5/config",
+        "//vendor/github.com/go-git/go-git/v5/plumbing/storer",
+    ],
+)

@@ -1,0 +1,13 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "metautils",
+    srcs = [
+        "doc.go",
+        "nicemd.go",
+    ],
+    importmap = "peridot.resf.org/vendor/github.com/grpc-ecosystem/go-grpc-middleware/util/metautils",
+    importpath = "github.com/grpc-ecosystem/go-grpc-middleware/util/metautils",
+    visibility = ["//visibility:public"],
+    deps = ["@org_golang_google_grpc//metadata"],
+)

@@ -1,0 +1,18 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "koji",
+    srcs = [
+        "base.go",
+        "build.go",
+        "get_package.go",
+        "koji.go",
+        "list_builds.go",
+        "list_rpms.go",
+        "list_tagged.go",
+        "mock.go",
+    ],
+    importpath = "peridot.resf.org/koji",
+    visibility = ["//visibility:public"],
+    deps = ["//vendor/alexejk.io/go-xmlrpc"],
+)

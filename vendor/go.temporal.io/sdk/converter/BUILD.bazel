@@ -1,0 +1,31 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "converter",
+    srcs = [
+        "byte_slice_payload_converter.go",
+        "composite_data_converter.go",
+        "data_converter.go",
+        "default_data_converter.go",
+        "encoding_data_converter.go",
+        "errors.go",
+        "json_payload_converter.go",
+        "metadata.go",
+        "nil_payload_converter.go",
+        "payload_converter.go",
+        "proto_json_payload_converter.go",
+        "proto_payload_converter.go",
+        "reflect.go",
+        "value.go",
+    ],
+    importmap = "peridot.resf.org/vendor/go.temporal.io/sdk/converter",
+    importpath = "go.temporal.io/sdk/converter",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/gogo/protobuf/jsonpb",
+        "//vendor/github.com/gogo/protobuf/proto",
+        "//vendor/go.temporal.io/api/common/v1:common",
+        "@org_golang_google_protobuf//encoding/protojson:go_default_library",
+        "@org_golang_google_protobuf//proto:go_default_library",
+    ],
+)
