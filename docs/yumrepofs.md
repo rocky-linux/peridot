@@ -1,43 +1,41 @@
 # yumrepofs
 
-Yumrepofs is a virtual Yum repo server. Packages or metadata do not co-exist on disk, but is rather stored in blob storage (ex. S3)
+`yumrepofs` is a technology that creates and manages a virtual yum repo server. Packages and/or metadata do not exist on disk together but is instead stored in a blob storage (for example, S3).
 
-The goal is to be able to store RPMs and serve repositories without the need for NFS.
+## Goals
 
-## Serving
+There are a few goals of `yumrepofs`. However, **the primary goal** is to be able to store and serve RPM packages and repositories without the need for a remote-backed storage solution like NFS or local server disks.
 
-The lifecycle of a dnf call is as follows:
+## Repository Serving
 
-* dnf sends a request to {baseurl}/repodata/repomd.xml
-* Server responds with metadata on where to find further metadata (ex. primary, filelists and other)
-* dnf queries metadata listed in repomd.xml
+Most of `dnf`'s common commands has calls with a (mostly) simple lifecycle:
 
-The most important file in this case is definitely primary.xml. This is where dnf finds information about packages, and specifically where to fetch them from.
+* `dnf` sends a request to a repository looking for `$BASEURL/repodata/repomd.xml`
+* Server responds with the initial metadata and more information to find the rest (primary, filelists, modules, etc)
+* `dnf` queries metadata listed in repomd.xml
 
-Yumrepofs populates `href` fields with a path like this `Packages/{TASK_ID}/{KEY_ID}/{RPM_NAME}`. This in turn signes a S3 url and redirects the end user.
+The most important metadata file in this case is `primary.xml`. This is where `dnf` finds information about packages, and specifically where to fetch them from.
 
-## Updating the repo
+And this is where `yumrepofs` comes in: It populates `href` fields with a path like `Packages/$TASK_ID/$KEY_ID/$RPM_NAME`. This in turn signs an S3 URL and thus will redirect the user's dnf client appropriately.
 
-Let's start from the build step. Post-build, Peridot runs `createrepo_c` on all individual RPMs to create necessary metadata and stores that.
+## Updating the repository/repositories
 
-When an update request is sent to `yumrepofsupdater` containing a specific build, `GetBuildArtifacts` is called to fetch RPMs+Metadata.
+After a build is completed in peridot, the following happens:
 
-Using this method, packages wouldn't need to coexist on disk to create a new repo, because that metadata could then be swapped into the correct place
+* Peridot runs `createrepo_c` on all individual RPMs - This creates necessary metadata and stores that information for use later
+* When an update request is sent to `yumrepofsupdater` containing a specific build, `GetBuildArtifacts` is called - This fetches the RPMs *and* corresponding metadata
+* `yumrepofsupdater` fetches the latest revision of that repository and architecture, unmarshalls it, and swaps the metadata from the `GetBuildArtifacts` call
 
-Yumrepofsupdater first fetches the latest yumrepofs revision of that repo+arch, unmarshals it, then swaps in-place the metadata from the `GetBuildArtifacts` call.
+Using this method, packages never need to coexist on disk to create a new repository in the traditional way, because the metadata could then be swapped into the correct place as needed.
 
-Currently in-repo artifacts that are no longer to be found (based on NVRA), will be removed, just like with `createrepo_c`.
+As of this writing, in-repo artifacts that are no longer found (based on its NEVRA) will be removed. This is just like with `createrepo_c` on a normal, on-disk repository.
 
-## Comps/groups
+## Comps, groups, and you
 
-Using Peridot Catalogs, comps/groups can be declared that is later applied to every revision of target repo.
+Using Peridot Catalogs, comps and groups can be declared that is then applied to a revision of the target repository. [comps2peridot](https://github.com/rocky-linux/peridot-releng/tree/main/comps2peridot) can be used to generate comps in a format Peridot accepts, for example.
 
-[comps2peridot](https://github.com/rocky-linux/peridot-releng/tree/main/comps2peridot) can be used to generate comps in a format Peridot accepts.
+## SQLite/Hashed hrefs
 
-A configuration example can be found at [peridot-rocky](https://git.rockylinux.org/rocky/peridot-rocky/-/tree/r9)
+`yumrepofs` has something called "hashed variants" that can be created on demand. Just like pungi's `hashed_directories` directive, this changes package href's to the format of `Packages/$INITIAL/$RPM_NAME`. For example: `Packages/b/bash-5.1.8-4.el9.x86_64.rpm`. If an end user decides to do a reposync from a hashed `yumrepofs` repository, they will get a sorted repository directory structure that has packages sorted by their first alphanumeric character, similar to the Rocky Linux repositories as well as the Fedora Project's repositories.
 
-## Sqlite/Hashed hrefs
-
-Yumrepofs has something called "hashed variants" that can be created on demand. This changes package hrefs to the format of `Packages/{INITIAL}/{RPM_NAME}` (ex. `Packages/b/bash-5.1.8-4.el9.x86_64.rpm`).
-
-This variant also runs `sqliterepo_c` on metadata and stores the sqlite files in S3. This is also served the same way as any yumrepofs artifact.
+This particular variant also runs `sqliterepo_c` on metadata and stores the sqlite files in S3, just like any other `yumrepofs` artifact. This is particularly useful for cases where applications that manage repositories (or "content") rely on sqlite metadata in a repository.
