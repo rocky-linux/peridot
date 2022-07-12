@@ -1,0 +1,56 @@
+name: Bug Report
+description: Create a bug report to help us improve Peridot!
+labels: bug
+assignees:
+  - mstg
+  - NeilHanlon
+  - nazunalika
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for taking the time to fill out this bug report! It really helps us out!
+
+  - type: textarea
+    id: describe-bug
+    attributes:
+      label: Describe The Bug
+      description: Provide a clear and concise description of what the bug is
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction-steps
+    attributes:
+      label: Reproduction Steps
+      description: Steps to reproduce the behavior you are seeing
+      value: |
+        1.
+        2.
+        3.
+        . . .
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: Expected Behavior
+      description: Provide a clear and concise description of what you expected to happen
+    validations:
+      required: true
+
+  - type: textarea
+    id: version-build-info
+    attributes:
+      label: Version and Build Information
+      description: Provide Peridot/Utility version and build information
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional context
+      description: Add any other context about the problem here

@@ -1,0 +1,48 @@
+name: Request for Enhancement
+description: Suggest an idea or an enhancement for Peridot
+labels: enhancement
+assignees:
+  - mstg
+  - NeilHanlon
+  - nazunalika
+
+body:
+  - type: textarea
+    id: describe-problem
+    attributes:
+      label: Is this feature request related to a problem? If so, please describe it.
+      description: Provide a clear and concise description of what the problem is.
+    validations:
+      required: true
+
+  - type: textarea
+    id: describe-solution
+    attributes:
+      label: Describe the solution you'd like to see
+      description: Provide a clear and concise description of what you want to happen.
+    validations:
+      required: true
+
+  - type: textarea
+    id: describe-alternatives
+    attributes:
+      label: Have you considered alternative solutions/features? If so, please describe them.
+      description: Provide a clear and concise description of any alternative solutions or features you've considered.
+    validations:
+      required: false
+
+  - type: textarea
+    id: version-build-info
+    attributes:
+      label: Version and Build Information
+      description: Provide Peridot/Utility version and build information
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Provide any other context, such as screenshots, logs, mock-ups, and so on.
+    validations:
+      required: false
