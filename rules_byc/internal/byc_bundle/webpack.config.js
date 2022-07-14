@@ -32,10 +32,9 @@
 
 // Global imports
 const path = require('path');
-const fs = require('fs');
+const fs = require('fs-extra');
 const webpack = require('webpack');
 const glob = require('glob');
-const mergeDirs = require('merge-dirs');
 
 const TerserJSPlugin = require('terser-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
@@ -133,7 +132,7 @@ const prodPlugins = !dev
 if (!dev) {
   const files = glob.sync('bazel-out/*-fastbuild/bin', {});
   if (files.length === 1) {
-    mergeDirs.default(files[0], process.cwd(), 'skip');
+    fs.copySync(files[0], process.cwd(), { overwrite: false });
   }
 }
 

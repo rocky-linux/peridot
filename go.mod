@@ -12,12 +12,10 @@ require (
 	github.com/PuerkitoBio/goquery v1.7.0
 	github.com/antchfx/xmlquery v1.3.6 // indirect
 	github.com/authzed/authzed-go v0.3.0
-	github.com/authzed/grpcutil v0.0.0-20211115181027-063820eb2511 // indirect
+	github.com/authzed/grpcutil v0.0.0-20211115181027-063820eb2511
 	github.com/aws/aws-sdk-go v1.36.12
 	github.com/cavaliergopher/rpm v1.2.0
 	github.com/coreos/go-oidc/v3 v3.0.0
-	github.com/creack/pty v1.1.18 // indirect
-	github.com/docker/docker v20.10.14+incompatible // indirect
 	github.com/fatih/color v1.12.0
 	github.com/go-chi/chi v4.1.2+incompatible
 	github.com/go-git/go-billy/v5 v5.3.1
@@ -28,13 +26,10 @@ require (
 	github.com/gocolly/colly/v2 v2.1.0
 	github.com/gogo/status v1.1.0
 	github.com/google/uuid v1.3.0
-	github.com/gosimple/slug v1.12.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.6.0
 	github.com/imdario/mergo v0.3.11 // indirect
-	github.com/jedib0t/go-pretty/v6 v6.2.7 // indirect
 	github.com/jmoiron/sqlx v1.3.4
 	github.com/lib/pq v1.10.2
-	github.com/mattn/go-tty v0.0.4 // indirect
 	github.com/ory/hydra-client-go v1.10.6
 	github.com/pelletier/go-toml v1.8.1 // indirect
 	github.com/rocky-linux/srpmproc v0.3.16
@@ -44,14 +39,14 @@ require (
 	github.com/spf13/viper v1.7.1
 	github.com/stretchr/testify v1.7.0
 	github.com/temoto/robotstxt v1.1.2 // indirect
-	github.com/uber/jaeger-client-go v2.29.1+incompatible // indirect
 	github.com/vbauerster/mpb/v7 v7.0.2
-	github.com/vishvananda/netlink v1.1.0 // indirect
 	github.com/xanzy/go-gitlab v0.50.4
 	go.temporal.io/api v1.6.1-0.20211110205628-60c98e9cbfe2
 	go.temporal.io/sdk v1.13.1
+	golang.org/x/crypto v0.0.0-20220622213112-05595931fe9d // indirect
 	golang.org/x/oauth2 v0.0.0-20210819190943-2bc19b11175f
 	golang.org/x/sys v0.0.0-20211110154304-99a53858aa08
+	golang.org/x/tools v0.1.6-0.20210726203631-07bc1bf47fb2 // indirect
 	google.golang.org/genproto v0.0.0-20211104193956-4c6863e31247
 	google.golang.org/grpc v1.44.0
 	google.golang.org/protobuf v1.27.1
@@ -60,7 +55,6 @@ require (
 	k8s.io/api v0.22.1
 	k8s.io/apimachinery v0.22.1
 	k8s.io/client-go v0.22.1
-	kernel.org/pub/linux/libs/security/libcap/cap v1.2.64 // indirect
 	peridot.resf.org/common v0.0.0-00010101000000-000000000000
 	peridot.resf.org/obsidian/pb v0.0.0-00010101000000-000000000000
 	peridot.resf.org/peridot/keykeeper/pb v0.0.0-00010101000000-000000000000
@@ -69,6 +63,9 @@ require (
 	peridot.resf.org/secparse/admin/proto v0.0.0-00010101000000-000000000000
 	peridot.resf.org/secparse/proto v0.0.0-00010101000000-000000000000
 )
+
+// Manual replace
+replace github.com/dgrijalva/jwt-go v3.2.0+incompatible => github.com/golang-jwt/jwt/v4 v4.4.2
 
 // sync-replace-start
 replace (

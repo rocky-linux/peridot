@@ -263,7 +263,7 @@ def packserver(ctx, webpack_config, webpack_inputs):
     runfiles = runfiles.merge(ctx.attr._node[DefaultInfo].default_runfiles)
     runfiles = runfiles.merge(ctx.runfiles(
         transitive_files = ctx.attr._node.files,
-        files = direct_inputs + direct_inputs_srcs + ctx.files.srcs + webpack_inputs + ctx.files._webpack_data + ctx.files.server_srcs + collect_ts_sources(ctx).to_list() + [webpack_config, ctx.file._run_child_script] + ctx.files._node + ctx.files._node_files
+        files = direct_inputs + direct_inputs_srcs + ctx.files.srcs + webpack_inputs + ctx.files._webpack_data + ctx.files.server_srcs + collect_ts_sources(ctx).to_list() + [webpack_config, ctx.file._run_child_script] + ctx.files._node + ctx.files._node_files,
     ))
 
     return [DefaultInfo(
@@ -316,7 +316,7 @@ WEBPACK_DATA = [
     "@npm//file-loader",
     "@npm//glob",
     "@npm//html-webpack-plugin",
-    "@npm//merge-dirs",
+    "@npm//fs-extra",
     "@npm//mini-css-extract-plugin",
     "@npm//native-url",
     "@npm//optimize-css-assets-webpack-plugin",
@@ -384,7 +384,7 @@ BYC_BUNDLE_ATTRS = {
     ),
     "server_srcs": attr.label_list(
         allow_files = True,
-        mandatory = True
+        mandatory = True,
     ),
     "server_deps": attr.label_list(
         aspects = [module_mappings_aspect, node_modules_aspect],
@@ -407,7 +407,7 @@ BYC_BUNDLE_ATTRS = {
         default = Label("@nodejs//:node_bin"),
         allow_single_file = True,
         executable = True,
-        cfg = "host"
+        cfg = "host",
     ),
     "_node_files": attr.label_list(
         default = [Label("@nodejs//:node_files")],
@@ -421,11 +421,11 @@ BYC_BUNDLE_ATTRS = {
     ),
     "_run_child_script": attr.label(
         default = Label("//rules_byc/internal/byc_bundle:run_child.mjs"),
-        allow_single_file = True
+        allow_single_file = True,
     ),
     "_packserver": attr.label(
         default = Label("//rules_byc/internal/byc_bundle:packserver.bash"),
-        allow_single_file = True
+        allow_single_file = True,
     ),
     "_tsconfig": attr.label(
         default = Label("//rules_byc/internal/byc_bundle:tsconfig.json"),
@@ -454,7 +454,7 @@ BYC_BUNDLE_ATTRS = {
     ),
     "_node_bash_runfiles": attr.label(
         default = Label("@build_bazel_rules_nodejs//third_party/github.com/bazelbuild/bazel/tools/bash/runfiles"),
-    )
+    ),
 }
 
 byc_bundle = rule(
@@ -465,6 +465,5 @@ byc_bundle = rule(
 byc_bundle_run = rule(
     implementation = _byc_bundle,
     attrs = BYC_BUNDLE_ATTRS,
-    executable = True
+    executable = True,
 )
-
