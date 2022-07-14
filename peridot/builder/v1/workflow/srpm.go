@@ -46,7 +46,6 @@ import (
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/rocky-linux/srpmproc/pkg/srpmproc"
 	"go.temporal.io/sdk/activity"
-	"golang.org/x/sys/unix"
 	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 	"io"
@@ -58,7 +57,6 @@ import (
 	peridotpb "peridot.resf.org/peridot/pb"
 	"peridot.resf.org/peridot/rpmbuild"
 	"strings"
-	"syscall"
 	"time"
 )
 
@@ -448,9 +446,6 @@ func (c *Controller) BuildSRPMActivity(ctx context.Context, upstreamPrefix strin
 	cmd := exec.Command("/bundle/fork-exec.py", args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	cmd.SysProcAttr = &syscall.SysProcAttr{
-		Pdeathsig: unix.SIGTERM,
-	}
 	err = cmd.Run()
 	if err != nil {
 		return fmt.Errorf("could not mock build: %v", err)
