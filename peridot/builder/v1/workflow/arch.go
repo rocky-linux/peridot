@@ -38,7 +38,6 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"go.temporal.io/sdk/activity"
-	"golang.org/x/sys/unix"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 	"io"
 	"io/fs"
@@ -56,7 +55,6 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"syscall"
 	"time"
 )
 
@@ -692,9 +690,6 @@ func (c *Controller) BuildArchActivity(ctx context.Context, projectId string, pa
 	cmd := exec.Command("/bundle/fork-exec.py", args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	cmd.SysProcAttr = &syscall.SysProcAttr{
-		Pdeathsig: unix.SIGTERM,
-	}
 	err = cmd.Run()
 	if err != nil {
 		return fmt.Errorf("could not mock build: %v", err)

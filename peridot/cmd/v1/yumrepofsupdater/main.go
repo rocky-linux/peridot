@@ -66,6 +66,7 @@ func init() {
 	cnf.Name = "yumrepofsupdater"
 
 	peridotcommon.AddFlags(root.PersistentFlags())
+	root.PersistentFlags().String("dynamodb-table", "peridot-repo-revision-lock", "DynamoDB table name")
 	utils.AddFlags(root.PersistentFlags(), cnf)
 }
 

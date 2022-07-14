@@ -43,6 +43,7 @@ import (
 	"fmt"
 	"github.com/gobwas/glob"
 	"github.com/google/uuid"
+	"github.com/spf13/viper"
 	"go.temporal.io/sdk/activity"
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
@@ -518,7 +519,7 @@ func (c *Controller) UpdateRepoActivity(ctx context.Context, req *UpdateRepoRequ
 
 	lock, err := dynamolock.New(
 		c.dynamodb,
-		"peridot-repo-revision-lock",
+		viper.GetString("dynamodb-table"),
 		dynamolock.WithLeaseDuration(10*time.Second),
 		dynamolock.WithHeartbeatPeriod(3*time.Second),
 	)
