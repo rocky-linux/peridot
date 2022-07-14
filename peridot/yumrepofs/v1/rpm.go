@@ -51,6 +51,9 @@ func (s *Server) GetRpm(ctx context.Context, req *yumrepofspb.GetRpmRequest) (*y
 	if err := req.ValidateAll(); err != nil {
 		return nil, err
 	}
+	if req.Arch == "i386" {
+		req.Arch = "i686"
+	}
 
 	fileName := fmt.Sprintf("%s/%s.rpm", req.ParentTaskId, strings.TrimSuffix(req.FileName, ".rpm"))
 	if len(req.ParentTaskId) == 1 {

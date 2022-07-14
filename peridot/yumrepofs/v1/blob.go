@@ -62,6 +62,9 @@ func (s *Server) GetBlob(ctx context.Context, req *yumrepofspb.GetBlobRequest) (
 	if err := req.ValidateAll(); err != nil {
 		return nil, err
 	}
+	if req.Arch == "i386" {
+		req.Arch = "i686"
+	}
 
 	if strings.HasSuffix(req.Blob, ".sqlite.gz") {
 		s3Req, _ := s.s3.GetObjectRequest(&s3.GetObjectInput{

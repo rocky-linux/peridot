@@ -1,5 +1,5 @@
 load("@bazel_tools//tools/build_defs/pkg:pkg.bzl", "pkg_tar")
-load("@io_bazel_rules_docker//container:container.bzl", "container_image", "container_push", "container_layer")
+load("@io_bazel_rules_docker//container:container.bzl", "container_image", "container_layer", "container_push")
 load("@io_bazel_rules_docker//nodejs:image.bzl", "nodejs_image")
 
 REGISTRY_VARIANT = "aws"
@@ -63,10 +63,10 @@ def container(image_name, files, tars_to_layer = [], base = "//bases/bazel/go", 
 
     if len(server_files) > 0:
         nodejs_image(
-            name = "%s_image_node" %image_name,
+            name = "%s_image_node" % image_name,
             entry_point = server_entrypoint,
             data = server_files,
-            base = ":%s_image" % image_name
+            base = ":%s_image" % image_name,
         )
 
     container_push(
@@ -88,4 +88,3 @@ def container(image_name, files, tars_to_layer = [], base = "//bases/bazel/go", 
         }) if should_use_aws_format and not disable_conditional else tag,
         visibility = ["//visibility:public"],
     )
-

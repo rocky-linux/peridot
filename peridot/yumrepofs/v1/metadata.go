@@ -44,6 +44,9 @@ func (s *Server) GetRepoMd(_ context.Context, req *yumrepofspb.GetRepoMdRequest)
 	if err := req.ValidateAll(); err != nil {
 		return nil, err
 	}
+	if req.Arch == "i386" {
+		req.Arch = "i686"
+	}
 
 	latestRevision, err := s.db.GetLatestActiveRepositoryRevisionByProjectIdAndNameAndArch(req.ProjectId, req.RepoName, req.Arch)
 	if err != nil {
@@ -65,6 +68,9 @@ func (s *Server) GetRepoMd(_ context.Context, req *yumrepofspb.GetRepoMdRequest)
 func (s *Server) GetRepoMdSignature(_ context.Context, req *yumrepofspb.GetRepoMdRequest) (*httpbody.HttpBody, error) {
 	if err := req.ValidateAll(); err != nil {
 		return nil, err
+	}
+	if req.Arch == "i386" {
+		req.Arch = "i686"
 	}
 
 	latestRevision, err := s.db.GetLatestActiveRepositoryRevisionByProjectIdAndNameAndArch(req.ProjectId, req.RepoName, req.Arch)
@@ -88,6 +94,9 @@ func (s *Server) GetPublicKey(_ context.Context, req *yumrepofspb.GetPublicKeyRe
 	if err := req.ValidateAll(); err != nil {
 		return nil, err
 	}
+	if req.Arch == "i386" {
+		req.Arch = "i686"
+	}
 
 	key, err := s.db.GetDefaultKeyForProject(req.ProjectId)
 	if err != nil {
@@ -103,6 +112,9 @@ func (s *Server) GetPublicKey(_ context.Context, req *yumrepofspb.GetPublicKeyRe
 func (s *Server) GetUrlMappings(_ context.Context, req *yumrepofspb.GetUrlMappingsRequest) (*yumrepofspb.GetUrlMappingsResponse, error) {
 	if err := req.ValidateAll(); err != nil {
 		return nil, err
+	}
+	if req.Arch == "i386" {
+		req.Arch = "i686"
 	}
 
 	latestRevision, err := s.db.GetLatestActiveRepositoryRevisionByProjectIdAndNameAndArch(req.ProjectId, req.RepoName, req.Arch)
