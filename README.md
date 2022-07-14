@@ -5,7 +5,6 @@ Named after the Gemstone,  Peridot (pronounced  - PERR-ih-dot) is a cloud-native
 __Other components pending__
 
 * publisher - `Composer for Peridot (currently only includes legacy mode)`
-* peridot - `Modern build system`
 * secparse - `Errata mirroring and publishing platform`
   * ui - `Product Errata UI`
 * utils - `Common utilities`
