@@ -103,7 +103,7 @@ export default async function(opts) {
     }
 
     const config = {
-      authRequired: (process.env['DISABLE_AUTH_ENFORCE'] && process.env['DISABLE_AUTH_ENFORCE'] === 'false') || !!!opts.disableAuthEnforce,
+      authRequired: process.env['DISABLE_AUTH_ENFORCE'] ? process.env['DISABLE_AUTH_ENFORCE'] === 'false' : !!!opts.disableAuthEnforce,
       // Disable telemetry
       enableTelemetry: false,
       // Use dev secret is none is present (Prod requires a secret so not a security issue)
