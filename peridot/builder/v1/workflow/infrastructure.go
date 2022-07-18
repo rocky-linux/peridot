@@ -579,6 +579,10 @@ func (c *Controller) CreateK8sPodActivity(ctx context.Context, req *ProvisionWor
 							Value: imageArch,
 						},
 						{
+							Name:  "TEMPORAL_NAMESPACE",
+							Value: viper.GetString("temporal.namespace"),
+						},
+						{
 							Name:  "KEYKEEPER_GRPC_ENDPOINT_OVERRIDE",
 							Value: os.Getenv("KEYKEEPER_GRPC_ENDPOINT_OVERRIDE"),
 						},

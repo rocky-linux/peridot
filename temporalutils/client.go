@@ -95,6 +95,7 @@ func NewClient(opts client.Options) (client.Client, error) {
 		return nil, err
 	}
 	opts.Namespace = bycNs
+	viper.Set("temporal.namespace", bycNs)
 
 	return client.NewClient(opts)
 }
