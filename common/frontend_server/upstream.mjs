@@ -34,6 +34,9 @@ import os from 'os';
 
 export function svcName(svc, protocol) {
   let env = process.env['BYC_ENV'];
+  if (!env) {
+    env = 'dev';
+  }
   return `${svc}-${protocol}-${env}-service`;
 }
 
@@ -42,6 +45,10 @@ export function svcNameHttp(svc) {
 }
 
 export function endpoint(generatedServiceName, ns, port) {
+  const forceNs = process.env['BYC_FORCE_NS'];
+  if (forceNs) {
+    ns = forceNs;
+  }
   return `${generatedServiceName}.${ns}.svc.cluster.local${port}`;
 }
 
