@@ -31,11 +31,15 @@
 package servicecatalog
 
 func HydraPublic() string {
-	svcName := SvcNameHttp("hydra-public")
-	return EndpointHttp(svcName, NS("hydra-public")) + ":4444"
+	return envOverridable("hydra_public", "http", func() string {
+		svcName := SvcNameHttp("hydra-public")
+		return EndpointHttp(svcName, NS("hydra-public")) + ":4444"
+	})
 }
 
 func HydraAdmin() string {
-	svcName := SvcNameHttp("hydra-admin")
-	return EndpointHttp(svcName, NS("hydra-admin")) + ":4445"
+	return envOverridable("hydra_admin", "http", func() string {
+		svcName := SvcNameHttp("hydra-admin")
+		return EndpointHttp(svcName, NS("hydra-admin")) + ":4445"
+	})
 }

@@ -37,8 +37,10 @@ import (
 )
 
 func SpiceDB() string {
-	svcName := SvcNameGrpc("spicedb")
-	return Endpoint(svcName, NS("spicedb"), ":50051")
+	return envOverridable("spicedb", "grpc", func() string {
+		svcName := SvcNameGrpc("spicedb")
+		return Endpoint(svcName, NS("spicedb"), ":50051")
+	})
 }
 
 func SpiceDBCredentials() []grpc.DialOption {
