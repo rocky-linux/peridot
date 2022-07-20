@@ -82,12 +82,12 @@ go_repository(
 go_repository(
     name = "com_github_ProtonMail_go_crypto",
     importpath = "github.com/ProtonMail/go-crypto",
+    patch_args = ["-p1"],
+    patches = [
+        "//patches:0001-Key-ID-subpacket-should-not-be-hashed-or-critical-fo.patch",
+    ],
     sum = "h1:J2FzIrXN82q5uyUraeJpLIm7U6PffRwje2ORho5yIik=",
     version = "v0.0.0-20220113124808-70ae35bab23f",
-    patches = [
-      "//patches:0001-Key-ID-subpacket-should-not-be-hashed-or-critical-fo.patch",
-    ],
-    patch_args = ["-p1"],
 )
 
 go_repository(
