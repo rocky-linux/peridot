@@ -56,6 +56,9 @@ export default async function(opts) {
   appZ.get('/healthz', ((req, res) => {
     res.end();
   }));
+  appZ.get('/_/healthz', ((req, res) => {
+    res.end();
+  }));
 
   const app = express();
   app.use(function(req, res, next) {
@@ -66,7 +69,7 @@ export default async function(opts) {
       next();
     }
   });
-  const prod = process.env.NODE_ENV === 'production';
+  const prod = process.env.NODE_ENV !== 'production';
 
   const port = prod ? (process.env.PORT || 8086) : opts.port;
 
