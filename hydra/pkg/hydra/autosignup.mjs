@@ -33,20 +33,29 @@
 // noinspection JSUnresolvedFunction
 // noinspection ES6PreferShortImport
 
-import { svcNameHttp, endpointHttp, NS } from '../../../common/frontend_server/upstream.mjs';
+import {
+  svcNameHttp,
+  endpointHttp,
+  NS,
+  envOverridable
+} from '../../../common/frontend_server/upstream.mjs';
 import pkg from '@ory/hydra-client';
 import os from 'os';
 
 const { Configuration, PublicApi, AdminApi } = pkg;
 
 export function hydraPublicUrl() {
-  const svc = svcNameHttp('hydra-public');
-  return endpointHttp(svc, NS('hydra-public'), ':4444');
+  return envOverridable('hydra_public', 'http', () => {
+    const svc = svcNameHttp('hydra-public');
+    return endpointHttp(svc, NS('hydra-public'), ':4444');
+  });
 }
 
 function hydraAdminUrl() {
-  const svc = svcNameHttp('hydra-admin');
-  return endpointHttp(svc, NS('hydra-admin'), ':4445');
+  return envOverridable('hydra_admin', 'http', () => {
+    const svc = svcNameHttp('hydra-admin');
+    return endpointHttp(svc, NS('hydra-admin'), ':4445');
+  });
 }
 
 const hydraAdmin = new AdminApi(

@@ -32,6 +32,15 @@
 
 import os from 'os';
 
+export function envOverridable(svcName, protocol, x) {
+  const envName = `${svcName}_${protocol}_ENDPOINT_OVERRIDE`.toUpperCase();
+  const envValue = process.env[envName];
+  if (envValue) {
+    return envValue;
+  }
+  return x();
+}
+
 export function svcName(svc, protocol) {
   let env = process.env['BYC_ENV'];
   if (!env) {
