@@ -32,8 +32,20 @@
 
 import os from 'os';
 
+export function envOverridable(svcName, protocol, x) {
+  const envName = `${svcName}_${protocol}_ENDPOINT_OVERRIDE`.toUpperCase();
+  const envValue = process.env[envName];
+  if (envValue) {
+    return envValue;
+  }
+  return x();
+}
+
 export function svcName(svc, protocol) {
   let env = process.env['BYC_ENV'];
+  if (!env) {
+    env = 'dev';
+  }
   return `${svc}-${protocol}-${env}-service`;
 }
 
@@ -42,6 +54,10 @@ export function svcNameHttp(svc) {
 }
 
 export function endpoint(generatedServiceName, ns, port) {
+  const forceNs = process.env['BYC_FORCE_NS'];
+  if (forceNs) {
+    ns = forceNs;
+  }
   return `${generatedServiceName}.${ns}.svc.cluster.local${port}`;
 }
 

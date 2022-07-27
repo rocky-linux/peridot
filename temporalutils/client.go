@@ -31,14 +31,18 @@
 package temporalutils
 
 import (
+	"context"
 	"crypto/tls"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
+	"go.temporal.io/api/workflowservice/v1"
 	"go.temporal.io/sdk/client"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"os"
 	"strings"
+	"time"
 )
 
 func AddFlags(pflags *pflag.FlagSet) {
@@ -65,6 +69,33 @@ func NewClient(opts client.Options) (client.Client, error) {
 	logrus.Infof("Using Temporal instance at %s", temporalHostPort)
 
 	opts.HostPort = temporalHostPort
+
+	bycNs := os.Getenv("BYC_NS")
+	temporalNamespace := os.Getenv("TEMPORAL_NAMESPACE")
+	if temporalNamespace != "" {
+		bycNs = temporalNamespace
+	}
+	if opts.Namespace != "" {
+		bycNs = opts.Namespace
+	}
+	if bycNs == "" {
+		bycNs = "default"
+	}
+
+	nscl, err := client.NewNamespaceClient(opts)
+	if err != nil {
+		return nil, err
+	}
+	dur := 5 * 24 * time.Hour
+	err = nscl.Register(context.TODO(), &workflowservice.RegisterNamespaceRequest{
+		Namespace:                        bycNs,
+		WorkflowExecutionRetentionPeriod: &dur,
+	})
+	if err != nil && !strings.Contains(err.Error(), "Namespace already exists") {
+		return nil, err
+	}
+	opts.Namespace = bycNs
+	viper.Set("temporal.namespace", bycNs)
 
 	return client.NewClient(opts)
 }

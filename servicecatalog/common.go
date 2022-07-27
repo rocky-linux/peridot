@@ -50,6 +50,9 @@ func SvcNameGrpc(svc string) string {
 }
 
 func Endpoint(svcName string, ns string, port string) string {
+	if forceNs := os.Getenv("BYC_FORCE_NS"); forceNs != "" {
+		ns = forceNs
+	}
 	return fmt.Sprintf("%s.%s.svc.cluster.local%s", svcName, ns, port)
 }
 
