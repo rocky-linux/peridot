@@ -213,7 +213,7 @@ func (s *Server) SignArtifactActivity(ctx context.Context, artifactId string, ke
 				if err2 != nil {
 					s.log.Errorf("failed to add error details to status: %v", err2)
 				}
-				return nil, fmt.Errorf("failed to sign artifact %s: %v\nlogs: %s", artifact.Name, err, outBuf.String())
+				return nil, statusErr
 			}
 			_, err = s.storage.PutObject(newObjectKey, localPath)
 			if err != nil {
@@ -251,6 +251,8 @@ func (s *Server) SignArtifactActivity(ctx context.Context, artifactId string, ke
 				"--checksig", localPath,
 			}
 			cmd := gpgCmdEnv(exec.Command("rpm", opts...))
+			cmd.Stdout = os.Stdout
+			cmd.Stderr = os.Stderr
 			err := cmd.Run()
 			if err != nil {
 				s.log.Errorf("failed to verify artifact %s: %v", artifact.Name, err)
@@ -260,11 +262,8 @@ func (s *Server) SignArtifactActivity(ctx context.Context, artifactId string, ke
 		}
 		var tries int
 		for {
-			res, err := rpmSign()
-			if err == nil {
-				return res, nil
-			}
-			err = verifySig()
+			res, _ := rpmSign()
+			err := verifySig()
 			if err == nil {
 				return res, nil
 			}
