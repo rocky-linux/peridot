@@ -213,7 +213,7 @@ func (s *Server) SignArtifactActivity(ctx context.Context, artifactId string, ke
 				if err2 != nil {
 					s.log.Errorf("failed to add error details to status: %v", err2)
 				}
-				return nil, statusErr
+				return nil, statusErr.Err()
 			}
 			_, err = s.storage.PutObject(newObjectKey, localPath)
 			if err != nil {
