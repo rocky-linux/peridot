@@ -50,7 +50,6 @@ bycdeploy.new({
       name: 'PERIDOT_PRODUCTION',
       value: if kubernetes.dev() then 'false' else 'true',
     },
-    temporal.kube_env('PERIDOT'),
     $.dsn,
-  ],
+  ] + temporal.kube_env('PERIDOT'),
 })

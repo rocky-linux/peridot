@@ -108,10 +108,6 @@ bycdeploy.new({
       value: 'https://yumrepofs.build.resf.org',
     },
     if site == 'extarches' then {
-      name: 'PERIDOTEPHEMERAL_TEMPORAL_HOSTPORT',
-      value: 'temporal.corp.build.resf.org:443',
-    } else temporal.kube_env('PERIDOTEPHEMERAL'),
-    if site == 'extarches' then {
       name: 'PERIDOTEPHEMERAL_PROVISION_ONLY',
       value: 'true',
     },
@@ -136,7 +132,16 @@ bycdeploy.new({
       },
     },
     $.dsn,
-  ],
+  ] + if site == 'extarches' then [
+    {
+      name: 'PERIDOTEPHEMERAL_TEMPORAL_HOSTPORT',
+      value: 'temporal.corp.build.resf.org:443',
+    },
+    {
+      name: 'TEMPORAL_NAMESPACE',
+      value: 'default',
+    },
+  ] else temporal.kube_env('PERIDOTEPHEMERAL'),
   custom_job_items(metadata, extra): [
     provisionWorkerRole(metadata),
     kubernetes.bind_to_role_sa(provisionWorkerRole(metadata), extra.service_account_name)

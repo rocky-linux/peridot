@@ -81,7 +81,6 @@ bycdeploy.new({
       name: 'KEYKEEPER_S3_BUCKET',
       value: 'resf-peridot-prod',
     },
-    temporal.kube_env('KEYKEEPER'),
     $.dsn,
-  ],
+  ] + temporal.kube_env('KEYKEEPER'),
 })
