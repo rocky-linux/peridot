@@ -7,4 +7,5 @@ local localImage = if localEnvironment == "1" then true else false;
 {
   local_image: localImage,
   docker_hub_image(name): "%s/%s" % [ociRegistryDocker, name],
+  helm_mode: false,
 }
