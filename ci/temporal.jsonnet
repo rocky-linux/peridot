@@ -6,7 +6,7 @@ local utils = import 'ci/utils.jsonnet';
     {
       name: '%s_TEMPORAL_HOSTPORT' % prefix,
       value: $.hostport,
-    }
+    },
     {
       name: 'TEMPORAL_NAMESPACE',
       value: if utils.helm_mode then '{{ .Values.temporalNamespace | default !"!" }}' else 'default',

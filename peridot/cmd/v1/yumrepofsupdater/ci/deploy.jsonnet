@@ -68,7 +68,6 @@ bycdeploy.new({
       name: 'YUMREPOFSUPDATER_S3_BUCKET',
       value: 'resf-peridot-prod',
     },
-    temporal.kube_env('YUMREPOFSUPDATER'),
     $.dsn,
-  ],
+  ] + temporal.kube_env('YUMREPOFSUPDATER'),
 })
