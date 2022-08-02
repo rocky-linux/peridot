@@ -421,6 +421,10 @@ func (c *Controller) BuildSRPMActivity(ctx context.Context, upstreamPrefix strin
 	if err != nil {
 		return fmt.Errorf("could not write mock config: %v", err)
 	}
+	// The SOURCES dir should always be available. Some packages don't have that
+	// and Mock complains. Loudly. About that
+	_ = os.MkdirAll(filepath.Join(cloneDir, "SOURCES"), 0644)
+
 	args := []string{
 		"mock",
 		"--isolation=simple",
