@@ -38,8 +38,6 @@ import (
 	"fmt"
 	"github.com/ProtonMail/gopenpgp/v2/crypto"
 	"github.com/google/uuid"
-	"io/ioutil"
-	"os"
 	"os/exec"
 	"peridot.resf.org/peridot/db/models"
 	"peridot.resf.org/utils"
@@ -88,13 +86,10 @@ func (s *Server) importGpgKey(armoredKey string) error {
 // WarmGPGKey warms up a specific GPG key
 // This involves shelling out to GPG to import the key
 func (s *Server) WarmGPGKey(key string, armoredKey string, gpgKey *crypto.Key, db *models.Key) (*LoadedKey, error) {
-	s.keyImportLock.ReadLock(key)
-	defer s.keyImportLock.ReadUnlock(key)
-
-	cachedKey := s.keys[key]
+	cachedKeyAny, ok := s.keys.Load(key)
 	// This means that the key is already loaded
-	if cachedKey != nil {
-		return cachedKey, nil
+	if ok {
+		return cachedKeyAny.(*LoadedKey), nil
 	}
 
 	err := s.importGpgKey(armoredKey)
@@ -102,21 +97,20 @@ func (s *Server) WarmGPGKey(key string, armoredKey string, gpgKey *crypto.Key, d
 		return nil, err
 	}
 
-	if cachedKey == nil {
-		s.keys[key] = &LoadedKey{
-			keyUuid: db.ID,
-			gpgId:   gpgKey.GetHexKeyID(),
-		}
+	cachedKey := &LoadedKey{
+		keyUuid: db.ID,
+		gpgId:   gpgKey.GetHexKeyID(),
 	}
+	s.keys.Store(key, cachedKey)
 
-	return s.keys[key], nil
+	return cachedKey, nil
 }
 
 // EnsureGPGKey ensures that the key is loaded
 func (s *Server) EnsureGPGKey(key string) (*LoadedKey, error) {
-	cachedKey := s.keys[key]
-	if cachedKey != nil {
-		return cachedKey, nil
+	cachedKeyAny, ok := s.keys.Load(key)
+	if ok {
+		return cachedKeyAny.(*LoadedKey), nil
 	}
 
 	// Key not found in cache, fetch from database
