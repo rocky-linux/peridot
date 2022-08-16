@@ -65,14 +65,6 @@ func gpgCmdEnv(cmd *exec.Cmd) *exec.Cmd {
 	return cmd
 }
 
-func (s *Server) deleteGpgKey(keyId string) error {
-	out, err := logCmdRun(gpgCmdEnv(exec.Command("gpg", "--batch", "--yes", "--delete-secret-and-public-key", keyId)))
-	if err != nil {
-		s.log.Errorf("failed to delete gpg key: %s", out.String())
-	}
-	return err
-}
-
 func (s *Server) importGpgKey(armoredKey string) error {
 	cmd := gpgCmdEnv(exec.Command("gpg", "--batch", "--yes", "--import", "-"))
 	cmd.Stdin = strings.NewReader(armoredKey)
