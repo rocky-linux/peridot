@@ -114,7 +114,7 @@ func (s *Server) SignArtifactsWorkflow(ctx workflow.Context, artifacts models.Ta
 		signArtifactCtx := workflow.WithActivityOptions(ctx, workflow.ActivityOptions{
 			ScheduleToStartTimeout: 10 * time.Hour,
 			StartToCloseTimeout:    24 * time.Hour,
-			HeartbeatTimeout:       time.Minute,
+			HeartbeatTimeout:       10 * time.Minute,
 			TaskQueue:              TaskQueue,
 		})
 		futures = append(futures, peridotworkflow.FutureContext{
