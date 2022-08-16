@@ -57,17 +57,45 @@ import (
 
 const TaskQueue = "keykeeper"
 
+type MapStringLock struct {
+	*sync.RWMutex
+	m map[string]*sync.Mutex
+}
+
+func (m *MapStringLock) ReadLock(key string) {
+	m.RLock()
+	defer m.RUnlock()
+	if m.m[key] == nil {
+		m.Lock()
+		m.m[key] = &sync.Mutex{}
+		m.Unlock()
+	}
+	m.m[key].Lock()
+}
+
+func (m *MapStringLock) ReadUnlock(key string) {
+	m.RLock()
+	defer m.RUnlock()
+	if m.m[key] == nil {
+		m.Lock()
+		m.m[key] = &sync.Mutex{}
+		m.Unlock()
+	}
+	m.m[key].Unlock()
+}
+
 type Server struct {
 	keykeeperpb.UnimplementedKeykeeperServiceServer
 
-	log          *logrus.Logger
-	db           peridotdb.Access
-	storage      lookaside.Storage
-	worker       worker.Worker
-	temporal     client.Client
-	stores       map[string]store.Store
-	keys         map[string]*LoadedKey
-	defaultStore string
+	log           *logrus.Logger
+	db            peridotdb.Access
+	storage       lookaside.Storage
+	worker        worker.Worker
+	temporal      client.Client
+	stores        map[string]store.Store
+	keys          map[string]*LoadedKey
+	keyImportLock *MapStringLock
+	defaultStore  string
 }
 
 func NewServer(db peridotdb.Access, c client.Client) (*Server, error) {
@@ -82,13 +110,19 @@ func NewServer(db peridotdb.Access, c client.Client) (*Server, error) {
 	}
 
 	return &Server{
-		log:          logrus.New(),
-		db:           db,
-		storage:      storage,
-		worker:       worker.New(c, TaskQueue, worker.Options{}),
-		temporal:     c,
-		stores:       map[string]store.Store{"awssm": sm},
-		keys:         map[string]*LoadedKey{},
+		log:     logrus.New(),
+		db:      db,
+		storage: storage,
+		worker: worker.New(c, TaskQueue, worker.Options{
+			DeadlockDetectionTimeout: 15 * time.Minute,
+		}),
+		temporal: c,
+		stores:   map[string]store.Store{"awssm": sm},
+		keys:     map[string]*LoadedKey{},
+		keyImportLock: &MapStringLock{
+			RWMutex: &sync.RWMutex{},
+			m:       map[string]*sync.Mutex{},
+		},
 		defaultStore: "awssm",
 	}, nil
 }

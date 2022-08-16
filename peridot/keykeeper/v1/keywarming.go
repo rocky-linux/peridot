@@ -106,9 +106,11 @@ func (s *Server) importRpmKey(publicKey string) error {
 // WarmGPGKey warms up a specific GPG key
 // This involves shelling out to GPG to import the key
 func (s *Server) WarmGPGKey(key string, armoredKey string, gpgKey *crypto.Key, db *models.Key) (*LoadedKey, error) {
+	s.keyImportLock.ReadLock(key)
+	defer s.keyImportLock.ReadUnlock(key)
+
 	cachedKey := s.keys[key]
 	// This means that the key is already loaded
-	// We need to delete and replace it
 	if cachedKey != nil {
 		return cachedKey, nil
 	}
