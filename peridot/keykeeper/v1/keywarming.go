@@ -110,16 +110,7 @@ func (s *Server) WarmGPGKey(key string, armoredKey string, gpgKey *crypto.Key, d
 	// This means that the key is already loaded
 	// We need to delete and replace it
 	if cachedKey != nil {
-		cachedKey.Lock()
-		defer cachedKey.Unlock()
-
-		keyId := gpgKey.GetHexKeyID()
-		err := s.deleteGpgKey(keyId)
-		if err != nil {
-			return nil, err
-		}
-
-		cachedKey.gpgId = keyId
+		return cachedKey, nil
 	}
 
 	err := s.importGpgKey(armoredKey)
