@@ -96,6 +96,7 @@ func (s *Storage) DownloadObject(objectName string, path string) error {
 	if err != nil {
 		return err
 	}
+	defer f.Close()
 
 	_, err = s.downloader.Download(
 		f,
@@ -105,7 +106,7 @@ func (s *Storage) DownloadObject(objectName string, path string) error {
 		},
 	)
 
-	return nil
+	return err
 }
 
 func (s *Storage) ReadObject(objectName string) ([]byte, error) {
