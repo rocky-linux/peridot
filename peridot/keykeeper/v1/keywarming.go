@@ -38,8 +38,6 @@ import (
 	"fmt"
 	"github.com/ProtonMail/gopenpgp/v2/crypto"
 	"github.com/google/uuid"
-	"io/ioutil"
-	"os"
 	"os/exec"
 	"peridot.resf.org/peridot/db/models"
 	"peridot.resf.org/utils"
@@ -67,14 +65,6 @@ func gpgCmdEnv(cmd *exec.Cmd) *exec.Cmd {
 	return cmd
 }
 
-func (s *Server) deleteGpgKey(keyId string) error {
-	out, err := logCmdRun(gpgCmdEnv(exec.Command("gpg", "--batch", "--yes", "--delete-secret-and-public-key", keyId)))
-	if err != nil {
-		s.log.Errorf("failed to delete gpg key: %s", out.String())
-	}
-	return err
-}
-
 func (s *Server) importGpgKey(armoredKey string) error {
 	cmd := gpgCmdEnv(exec.Command("gpg", "--batch", "--yes", "--import", "-"))
 	cmd.Stdin = strings.NewReader(armoredKey)
@@ -85,41 +75,13 @@ func (s *Server) importGpgKey(armoredKey string) error {
 	return err
 }
 
-func (s *Server) importRpmKey(publicKey string) error {
-	tmpFile, err := ioutil.TempFile("/tmp", "peridot-key-")
-	if err != nil {
-		return err
-	}
-	defer os.Remove(tmpFile.Name())
-	_, err = tmpFile.Write([]byte(publicKey))
-	if err != nil {
-		return err
-	}
-	cmd := gpgCmdEnv(exec.Command("rpm", "--import", tmpFile.Name()))
-	out, err := logCmdRun(cmd)
-	if err != nil {
-		s.log.Errorf("failed to import rpm key: %s", out.String())
-	}
-	return err
-}
-
 // WarmGPGKey warms up a specific GPG key
 // This involves shelling out to GPG to import the key
 func (s *Server) WarmGPGKey(key string, armoredKey string, gpgKey *crypto.Key, db *models.Key) (*LoadedKey, error) {
-	cachedKey := s.keys[key]
+	cachedKeyAny, ok := s.keys.Load(key)
 	// This means that the key is already loaded
-	// We need to delete and replace it
-	if cachedKey != nil {
-		cachedKey.Lock()
-		defer cachedKey.Unlock()
-
-		keyId := gpgKey.GetHexKeyID()
-		err := s.deleteGpgKey(keyId)
-		if err != nil {
-			return nil, err
-		}
-
-		cachedKey.gpgId = keyId
+	if ok {
+		return cachedKeyAny.(*LoadedKey), nil
 	}
 
 	err := s.importGpgKey(armoredKey)
@@ -127,26 +89,20 @@ func (s *Server) WarmGPGKey(key string, armoredKey string, gpgKey *crypto.Key, d
 		return nil, err
 	}
 
-	err = s.importRpmKey(db.PublicKey)
-	if err != nil {
-		return nil, err
+	cachedKey := &LoadedKey{
+		keyUuid: db.ID,
+		gpgId:   gpgKey.GetHexKeyID(),
 	}
+	s.keys.Store(key, cachedKey)
 
-	if cachedKey == nil {
-		s.keys[key] = &LoadedKey{
-			keyUuid: db.ID,
-			gpgId:   gpgKey.GetHexKeyID(),
-		}
-	}
-
-	return s.keys[key], nil
+	return cachedKey, nil
 }
 
 // EnsureGPGKey ensures that the key is loaded
 func (s *Server) EnsureGPGKey(key string) (*LoadedKey, error) {
-	cachedKey := s.keys[key]
-	if cachedKey != nil {
-		return cachedKey, nil
+	cachedKeyAny, ok := s.keys.Load(key)
+	if ok {
+		return cachedKeyAny.(*LoadedKey), nil
 	}
 
 	// Key not found in cache, fetch from database

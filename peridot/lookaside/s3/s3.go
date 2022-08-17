@@ -41,16 +41,16 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/go-git/go-billy/v5"
 	"github.com/spf13/viper"
-	"io"
 	"io/ioutil"
 	"os"
 	"peridot.resf.org/peridot/lookaside"
 )
 
 type Storage struct {
-	bucket   string
-	uploader *s3manager.Uploader
-	fs       billy.Filesystem
+	bucket     string
+	uploader   *s3manager.Uploader
+	downloader *s3manager.Downloader
+	fs         billy.Filesystem
 }
 
 func New(fs billy.Filesystem) (*Storage, error) {
@@ -81,34 +81,32 @@ func New(fs billy.Filesystem) (*Storage, error) {
 		return nil, err
 	}
 	uploader := s3manager.NewUploader(sess)
+	downloader := s3manager.NewDownloader(sess)
 
 	return &Storage{
-		bucket:   viper.GetString("s3-bucket"),
-		uploader: uploader,
-		fs:       fs,
+		bucket:     viper.GetString("s3-bucket"),
+		uploader:   uploader,
+		downloader: downloader,
+		fs:         fs,
 	}, nil
 }
 
 func (s *Storage) DownloadObject(objectName string, path string) error {
-	obj, err := s.uploader.S3.GetObject(&s3.GetObjectInput{
-		Bucket: aws.String(s.bucket),
-		Key:    aws.String(objectName),
-	})
+	f, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
 		return err
 	}
+	defer f.Close()
 
-	f, err := s.fs.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
-	if err != nil {
-		return err
-	}
+	_, err = s.downloader.Download(
+		f,
+		&s3.GetObjectInput{
+			Bucket: aws.String(s.bucket),
+			Key:    aws.String(objectName),
+		},
+	)
 
-	_, err = io.Copy(f, obj.Body)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 func (s *Storage) ReadObject(objectName string) ([]byte, error) {

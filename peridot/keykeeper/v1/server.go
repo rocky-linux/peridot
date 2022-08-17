@@ -66,7 +66,7 @@ type Server struct {
 	worker       worker.Worker
 	temporal     client.Client
 	stores       map[string]store.Store
-	keys         map[string]*LoadedKey
+	keys         *sync.Map
 	defaultStore string
 }
 
@@ -82,13 +82,15 @@ func NewServer(db peridotdb.Access, c client.Client) (*Server, error) {
 	}
 
 	return &Server{
-		log:          logrus.New(),
-		db:           db,
-		storage:      storage,
-		worker:       worker.New(c, TaskQueue, worker.Options{}),
+		log:     logrus.New(),
+		db:      db,
+		storage: storage,
+		worker: worker.New(c, TaskQueue, worker.Options{
+			DeadlockDetectionTimeout: 15 * time.Minute,
+		}),
 		temporal:     c,
 		stores:       map[string]store.Store{"awssm": sm},
-		keys:         map[string]*LoadedKey{},
+		keys:         &sync.Map{},
 		defaultStore: "awssm",
 	}, nil
 }
