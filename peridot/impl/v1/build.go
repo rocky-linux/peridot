@@ -567,3 +567,77 @@ func (s *Server) RpmImport(ctx context.Context, req *peridotpb.RpmImportRequest)
 		Done:     false,
 	}, nil
 }
+
+func (s *Server) RpmLookasideBatchImport(ctx context.Context, req *peridotpb.RpmLookasideBatchImportRequest) (*peridotpb.AsyncTask, error) {
+	if err := req.ValidateAll(); err != nil {
+		return nil, err
+	}
+	if err := s.checkPermission(ctx, ObjectProject, req.ProjectId, PermissionBuild); err != nil {
+		return nil, err
+	}
+	user, err := utils.UserFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	projects, err := s.db.ListProjects(&peridotpb.ProjectFilters{
+		Id: wrapperspb.String(req.ProjectId),
+	})
+	if err != nil {
+		s.log.Errorf("could not list projects in RpmLookasideBatchImport: %v", err)
+		return nil, utils.InternalError
+	}
+	if len(projects) != 1 {
+		return nil, status.Errorf(codes.InvalidArgument, "project %s does not exist", req.ProjectId)
+	}
+
+	rollback := true
+	beginTx, err := s.db.Begin()
+	if err != nil {
+		s.log.Error(err)
+		return nil, utils.InternalError
+	}
+	defer func() {
+		if rollback {
+			_ = beginTx.Rollback()
+		}
+	}()
+	tx := s.db.UseTransaction(beginTx)
+
+	task, err := tx.CreateTask(user, "noarch", peridotpb.TaskType_TASK_TYPE_RPM_LOOKASIDE_BATCH_IMPORT, &req.ProjectId, nil)
+	if err != nil {
+		s.log.Errorf("could not create build task in RpmImport: %v", err)
+		return nil, status.Error(codes.InvalidArgument, "could not create rpm import task")
+	}
+
+	taskProto, err := task.ToProto(true)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "could not marshal task: %v", err)
+	}
+
+	rollback = false
+	err = beginTx.Commit()
+	if err != nil {
+		return nil, status.Error(codes.Internal, "could not save, try again")
+	}
+
+	_, err = s.temporal.ExecuteWorkflow(
+		context.Background(),
+		client.StartWorkflowOptions{
+			TaskQueue: MainTaskQueue,
+		},
+		s.temporalWorker.WorkflowController.RpmLookasideBatchImportWorkflow,
+		req,
+		task,
+	)
+	if err != nil {
+		s.log.Errorf("could not start rpm lookaside batch import workflow in RpmImport: %v", err)
+		return nil, status.Error(codes.Internal, "could not start rpm lookaside batch import workflow")
+	}
+
+	return &peridotpb.AsyncTask{
+		TaskId:   task.ID.String(),
+		Subtasks: []*peridotpb.Subtask{taskProto},
+		Done:     false,
+	}, nil
+}

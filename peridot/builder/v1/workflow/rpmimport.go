@@ -54,11 +54,17 @@ import (
 	yumrepofspb "peridot.resf.org/peridot/yumrepofs/pb"
 	"peridot.resf.org/secparse/rpmutils"
 	"peridot.resf.org/utils"
+	"strings"
 	"time"
 )
 
 type RpmImportActivityTaskStage1 struct {
 	Build *models.Build
+}
+
+type RpmImportUploadWrapper struct {
+	Upload *UploadActivityResult
+	TaskID string
 }
 
 func (c *Controller) RpmImportWorkflow(ctx workflow.Context, req *peridotpb.RpmImportRequest, task *models.Task) (*peridotpb.RpmImportTask, error) {
@@ -93,7 +99,7 @@ func (c *Controller) RpmImportWorkflow(ctx workflow.Context, req *peridotpb.RpmI
 			MaximumAttempts: 1,
 		},
 	})
-	err = workflow.ExecuteActivity(importCtx, c.RpmImportActivity, req, task.ID.String()).Get(ctx, &importRes)
+	err = workflow.ExecuteActivity(importCtx, c.RpmImportActivity, req, task.ID.String(), false).Get(ctx, &importRes)
 	if err != nil {
 		setActivityError(errorDetails, err)
 		return nil, err
@@ -149,7 +155,139 @@ func (c *Controller) RpmImportWorkflow(ctx workflow.Context, req *peridotpb.RpmI
 	return &ret, nil
 }
 
-func (c *Controller) RpmImportActivity(ctx context.Context, req *peridotpb.RpmImportRequest, taskID string) (*RpmImportActivityTaskStage1, error) {
+func (c *Controller) RpmLookasideBatchImportWorkflow(ctx workflow.Context, req *peridotpb.RpmLookasideBatchImportRequest, task *models.Task) (*peridotpb.RpmLookasideBatchImportTask, error) {
+	var ret peridotpb.RpmLookasideBatchImportTask
+	deferTask, errorDetails, err := c.commonCreateTask(task, &ret)
+	defer deferTask()
+	if err != nil {
+		return nil, err
+	}
+
+	task.Status = peridotpb.TaskStatus_TASK_STATUS_FAILED
+
+	importTaskQueue, cleanupWorker, err := c.provisionWorker(ctx, &ProvisionWorkerRequest{
+		TaskId:       task.ID.String(),
+		ParentTaskId: task.ParentTaskId,
+		Purpose:      "batchrpmimport",
+		Arch:         "noarch",
+		ProjectId:    req.ProjectId,
+	})
+	if err != nil {
+		setInternalError(errorDetails, err)
+		return nil, err
+	}
+	defer cleanupWorker()
+
+	taskID := task.ID.String()
+	var importResults []*RpmImportActivityTaskStage1
+	var taskIDs []string
+	taskIDBuildMap := map[string]*RpmImportActivityTaskStage1{}
+	for _, blob := range req.LookasideBlobs {
+		var archTask models.Task
+		archTaskEffect := workflow.SideEffect(ctx, func(ctx workflow.Context) interface{} {
+			newTask, err := c.db.CreateTask(nil, "noarch", peridotpb.TaskType_TASK_TYPE_RPM_IMPORT, &req.ProjectId, &taskID)
+			if err != nil {
+				return &models.Task{}
+			}
+
+			_ = c.db.SetTaskStatus(newTask.ID.String(), peridotpb.TaskStatus_TASK_STATUS_RUNNING)
+			return newTask
+		})
+		err := archTaskEffect.Get(&archTask)
+		if err != nil || !archTask.ProjectId.Valid {
+			return nil, fmt.Errorf("failed to create rpm task: %s", err)
+		}
+		taskIDs = append(taskIDs, archTask.ID.String())
+
+		var importRes RpmImportActivityTaskStage1
+		importCtx := workflow.WithActivityOptions(ctx, workflow.ActivityOptions{
+			StartToCloseTimeout: time.Hour,
+			HeartbeatTimeout:    20 * time.Second,
+			TaskQueue:           importTaskQueue,
+			RetryPolicy: &temporal.RetryPolicy{
+				MaximumAttempts: 1,
+			},
+		})
+		blobReq := &peridotpb.RpmImportRequest{
+			ProjectId:     req.ProjectId,
+			Rpms:          blob,
+			ForceOverride: req.ForceOverride,
+		}
+		err = workflow.ExecuteActivity(importCtx, c.RpmImportActivity, blobReq, archTask.ID.String(), true).Get(ctx, &importRes)
+		if err != nil {
+			setActivityError(errorDetails, err)
+			return nil, err
+		}
+		importResults = append(importResults, &importRes)
+		taskIDBuildMap[archTask.ID.String()] = &importRes
+	}
+
+	var res []*RpmImportUploadWrapper
+	for _, importTaskID := range taskIDs {
+		uploadArchCtx := workflow.WithActivityOptions(ctx, workflow.ActivityOptions{
+			ScheduleToStartTimeout: 12 * time.Hour,
+			StartToCloseTimeout:    24 * time.Hour,
+			HeartbeatTimeout:       2 * time.Minute,
+			TaskQueue:              importTaskQueue,
+		})
+
+		var interimRes []*UploadActivityResult
+		err = workflow.ExecuteActivity(uploadArchCtx, c.UploadArchActivity, req.ProjectId, importTaskID).Get(ctx, &interimRes)
+		if err != nil {
+			setActivityError(errorDetails, err)
+			return nil, err
+		}
+		for _, ires := range interimRes {
+			res = append(res, &RpmImportUploadWrapper{
+				Upload: ires,
+				TaskID: importTaskID,
+			})
+		}
+	}
+
+	for _, result := range res {
+		stage1 := taskIDBuildMap[result.TaskID]
+		if stage1 == nil {
+			return nil, fmt.Errorf("failed to find task %s", result.TaskID)
+		}
+		err = c.db.AttachTaskToBuild(stage1.Build.ID.String(), result.Upload.Subtask.ID.String())
+		if err != nil {
+			err = status.Errorf(codes.Internal, "could not attach task to build: %v", err)
+			setInternalError(errorDetails, err)
+			return nil, err
+		}
+		if result.Upload.Skip {
+			continue
+		}
+	}
+
+	yumrepoCtx := workflow.WithChildOptions(ctx, workflow.ChildWorkflowOptions{
+		TaskQueue: "yumrepofs",
+	})
+	updateRepoRequest := &UpdateRepoRequest{
+		ProjectID:        req.ProjectId,
+		BuildIDs:         []string{},
+		Delete:           false,
+		TaskID:           &taskID,
+		NoDeletePrevious: true,
+	}
+	for _, importRes := range importResults {
+		updateRepoRequest.BuildIDs = append(updateRepoRequest.BuildIDs, importRes.Build.ID.String())
+	}
+	updateRepoTask := &yumrepofspb.UpdateRepoTask{}
+	err = workflow.ExecuteChildWorkflow(yumrepoCtx, c.RepoUpdaterWorkflow, updateRepoRequest).Get(yumrepoCtx, updateRepoTask)
+	if err != nil {
+		setActivityError(errorDetails, err)
+		return nil, err
+	}
+
+	task.Status = peridotpb.TaskStatus_TASK_STATUS_SUCCEEDED
+
+	ret.RepoChanges = updateRepoTask
+	return &ret, nil
+}
+
+func (c *Controller) RpmImportActivity(ctx context.Context, req *peridotpb.RpmImportRequest, taskID string, setTaskStatus bool) (*RpmImportActivityTaskStage1, error) {
 	go func() {
 		for {
 			activity.RecordHeartbeat(ctx)
@@ -164,41 +302,65 @@ func (c *Controller) RpmImportActivity(ctx context.Context, req *peridotpb.RpmIm
 	}
 	buf.Write(bts)
 
-	c.log.Infof("Reading tar: %s", req.Rpms)
-
-	rpmBufs := map[string][]byte{}
-	tr := tar.NewReader(&buf)
-	for {
-		hdr, err := tr.Next()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			return nil, err
-		}
-		var nBuf bytes.Buffer
-		if _, err := io.Copy(&nBuf, tr); err != nil {
-			return nil, err
-		}
-		c.log.Infof("Detected RPM: %s", hdr.Name)
-		rpmBufs[hdr.Name] = nBuf.Bytes()
-	}
 	var rpms []*rpm.Package
-	for _, b := range rpmBufs {
-		p, err := rpm.Read(bytes.NewBuffer(b))
+	rpmBufs := map[string][]byte{}
+
+	if strings.HasSuffix(req.Rpms, ".tar") {
+		c.log.Infof("Reading tar: %s", req.Rpms)
+
+		tr := tar.NewReader(&buf)
+		for {
+			hdr, err := tr.Next()
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				return nil, err
+			}
+			var nBuf bytes.Buffer
+			if _, err := io.Copy(&nBuf, tr); err != nil {
+				return nil, err
+			}
+			c.log.Infof("Detected RPM: %s", hdr.Name)
+			rpmBufs[hdr.Name] = nBuf.Bytes()
+		}
+		for _, b := range rpmBufs {
+			p, err := rpm.Read(bytes.NewBuffer(b))
+			if err != nil {
+				return nil, err
+			}
+			rpms = append(rpms, p)
+		}
+	} else {
+		c.log.Infof("Reading RPM: %s", req.Rpms)
+		p, err := rpm.Read(&buf)
 		if err != nil {
 			return nil, err
 		}
 		rpms = append(rpms, p)
+
+		realName := p.String() + ".rpm"
+		if p.SourceRPM() == "" && p.Architecture() == "i686" {
+			realName = strings.ReplaceAll(realName, ".i686", ".src")
+		}
+		rpmBufs[realName] = bts
 	}
 
 	var nvr string
 	for _, rpmObj := range rpms {
+		realNvr := rpmObj.String()
+		if rpmObj.SourceRPM() == "" && rpmObj.Architecture() == "i686" {
+			realNvr = strings.ReplaceAll(realNvr, ".i686", ".src")
+		}
 		if nvr == "" {
 			nvr = rpmObj.SourceRPM()
-		}
-		if nvr != rpmObj.SourceRPM() {
-			return nil, fmt.Errorf("only include RPMs from one package")
+			if nvr == "" && rpmObj.Architecture() == "i686" {
+				nvr = realNvr
+			}
+		} else {
+			if nvr != rpmObj.SourceRPM() && nvr != fmt.Sprintf("%s.rpm", realNvr) {
+				return nil, fmt.Errorf("only include RPMs from one package")
+			}
 		}
 	}
 	if !rpmutils.NVR().MatchString(nvr) {
@@ -303,6 +465,14 @@ func (c *Controller) RpmImportActivity(ctx context.Context, req *peridotpb.RpmIm
 		err = tx.LockNVRA(srcNvra)
 		if err != nil {
 			err = status.Errorf(codes.Internal, "could not lock NVRA: %v", err)
+			return nil, err
+		}
+	}
+
+	if setTaskStatus {
+		err = tx.SetTaskStatus(taskID, peridotpb.TaskStatus_TASK_STATUS_SUCCEEDED)
+		if err != nil {
+			err = status.Errorf(codes.Internal, "could not set task status: %v", err)
 			return nil, err
 		}
 	}

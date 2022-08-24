@@ -8,6 +8,7 @@ go_library(
         "hashed_repositories.go",
         "import.go",
         "infrastructure.go",
+        "lookaside.go",
         "module.go",
         "rpmimport.go",
         "srpm.go",

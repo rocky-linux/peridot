@@ -104,7 +104,7 @@ type Access interface {
 	// ListTasks returns only parent tasks
 	ListTasks(projectId *string, page int32, limit int32) (models.Tasks, error)
 	// GetTask returns a parent task as well as all it's child tasks
-	GetTask(id string, projectId string) (models.Tasks, error)
+	GetTask(id string, projectId *string) (models.Tasks, error)
 	// GetTaskByBuildId returns the task of a build (only parent task)
 	GetTaskByBuildId(buildId string) (*models.Task, error)
 	AttachTaskToBuild(buildId string, taskId string) error

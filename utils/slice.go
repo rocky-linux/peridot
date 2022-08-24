@@ -50,3 +50,14 @@ func IntersectString(a, b []string) []string {
 
 	return c
 }
+
+func Take[T comparable](a []T, x T) []T {
+	var n []T
+	for _, v := range a {
+		if v != x {
+			n = append(n, v)
+		}
+	}
+
+	return n
+}

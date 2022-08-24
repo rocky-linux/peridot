@@ -32,6 +32,7 @@ go_library(
         "//vendor/github.com/jmoiron/sqlx",
         "//vendor/github.com/lib/pq",
         "//vendor/github.com/ory/hydra-client-go/client",
+        "//vendor/github.com/ory/hydra-client-go/client/admin",
         "//vendor/github.com/ory/hydra-client-go/client/public",
         "//vendor/github.com/sirupsen/logrus",
         "//vendor/github.com/spf13/pflag",

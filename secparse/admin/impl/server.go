@@ -71,7 +71,7 @@ func NewServer(db db.Access) *Server {
 
 func (s *Server) interceptor(ctx context.Context, req interface{}, usi *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 	n := utils.EndInterceptor
-	n = utils.AuthInterceptor(s.hydra, []string{}, true, n)
+	n = utils.AuthInterceptor(s.hydra, nil, []string{}, true, n)
 
 	return n(ctx, req, usi, handler)
 }

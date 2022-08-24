@@ -51,9 +51,14 @@ func (s *Server) ListTasks(ctx context.Context, req *peridotpb.ListTasksRequest)
 		return nil, err
 	}
 
+	var projectId *string
+	if req.ProjectId.Value != "global" {
+		projectId = &req.ProjectId.Value
+	}
+
 	page := utils.MinPage(req.Page)
 	limit := utils.MinLimit(req.Limit)
-	tasks, err := s.db.ListTasks(&req.ProjectId.Value, page, limit)
+	tasks, err := s.db.ListTasks(projectId, page, limit)
 	if err != nil {
 		s.log.Error(err)
 		return nil, utils.InternalError
@@ -61,12 +66,6 @@ func (s *Server) ListTasks(ctx context.Context, req *peridotpb.ListTasksRequest)
 	var total int64
 	if len(tasks) > 0 {
 		total = tasks[0].Total
-	} else {
-		total, err = s.db.ImportCountInProject(req.ProjectId.Value)
-		if err != nil {
-			s.log.Errorf("could not count imports: %v", err)
-			return nil, utils.CouldNotRetrieveObjects
-		}
 	}
 
 	var asyncTasks []*peridotpb.AsyncTask
@@ -98,7 +97,12 @@ func (s *Server) GetTask(ctx context.Context, req *peridotpb.GetTaskRequest) (*p
 		return nil, err
 	}
 
-	tasks, err := s.db.GetTask(req.Id, req.ProjectId.Value)
+	var projectId *string
+	if req.ProjectId.Value != "global" {
+		projectId = &req.ProjectId.Value
+	}
+
+	tasks, err := s.db.GetTask(req.Id, projectId)
 	if err != nil {
 		s.log.Error(err)
 		return nil, utils.InternalError
@@ -135,12 +139,16 @@ func (s *Server) StreamTaskLogs(req *peridotpb.StreamTaskLogsRequest, stream per
 
 	var taskId *string = nil
 	var parentTaskId *string = nil
+	var projectId *string
+	if req.ProjectId != "global" {
+		projectId = &req.ProjectId
+	}
 	if req.Parent {
 		parentTaskId = &req.Id
 	} else {
 		taskId = &req.Id
 	}
-	_, err := s.db.GetTask(req.Id, req.ProjectId)
+	_, err := s.db.GetTask(req.Id, projectId)
 	if err != nil {
 		s.log.Errorf("error getting task: %s", err)
 		return utils.InternalError
@@ -173,7 +181,7 @@ func (s *Server) StreamTaskLogs(req *peridotpb.StreamTaskLogsRequest, stream per
 			}
 		}
 
-		task, err := s.db.GetTask(req.Id, req.ProjectId)
+		task, err := s.db.GetTask(req.Id, projectId)
 		if err != nil {
 			s.log.Errorf("error getting task: %s", err)
 			return utils.InternalError
@@ -189,11 +197,23 @@ func (s *Server) CancelTask(ctx context.Context, req *peridotpb.CancelTaskReques
 	if err := req.ValidateAll(); err != nil {
 		return nil, err
 	}
-	if err := s.checkPermission(ctx, ObjectProject, req.ProjectId, PermissionBuild); err != nil {
-		return nil, err
+
+	if req.ProjectId == "global" {
+		if err := s.checkPermission(ctx, ObjectGlobal, ObjectIdPeridot, PermissionManage); err != nil {
+			return nil, err
+		}
+	} else {
+		if err := s.checkPermission(ctx, ObjectProject, req.ProjectId, PermissionBuild); err != nil {
+			return nil, err
+		}
 	}
 
-	tasks, err := s.db.GetTask(req.Id, req.ProjectId)
+	var projectId *string
+	if req.ProjectId != "global" {
+		projectId = &req.ProjectId
+	}
+
+	tasks, err := s.db.GetTask(req.Id, projectId)
 	if err != nil {
 		s.log.Error(err)
 		return nil, utils.InternalError

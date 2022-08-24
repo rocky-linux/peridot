@@ -40,6 +40,7 @@ import (
 	"go.temporal.io/sdk/client"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
 	"io"
 	"net/url"
@@ -87,6 +88,7 @@ type Server struct {
 	temporalWorker *builderv1.Worker
 	authz          *authzed.Client
 	hydra          *hydraclient.OryHydra
+	hydraAdmin     *hydraclient.OryHydra
 }
 
 func NewServer(db peridotdb.Access, c client.Client) (*Server, error) {
@@ -104,11 +106,20 @@ func NewServer(db peridotdb.Access, c client.Client) (*Server, error) {
 	if err != nil {
 		return nil, fmt.Errorf("could not parse hydra public url, error: %s", err)
 	}
-
 	hydraSDK := hydraclient.NewHTTPClientWithConfig(nil, &hydraclient.TransportConfig{
 		Schemes:  []string{publicURL.Scheme},
 		Host:     publicURL.Host,
 		BasePath: publicURL.Path,
+	})
+
+	adminURL, err := url.Parse(servicecatalog.HydraAdmin())
+	if err != nil {
+		return nil, fmt.Errorf("could not parse hydra admin url, error: %s", err)
+	}
+	hydraAdminSDK := hydraclient.NewHTTPClientWithConfig(nil, &hydraclient.TransportConfig{
+		Schemes:  []string{adminURL.Scheme},
+		Host:     adminURL.Host,
+		BasePath: adminURL.Path,
 	})
 
 	return &Server{
@@ -118,19 +129,20 @@ func NewServer(db peridotdb.Access, c client.Client) (*Server, error) {
 		temporalWorker: temporalWorker,
 		authz:          authz,
 		hydra:          hydraSDK,
+		hydraAdmin:     hydraAdminSDK,
 	}, nil
 }
 
 func (s *Server) interceptor(ctx context.Context, req interface{}, usi *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 	n := utils.EndInterceptor
-	n = utils.AuthInterceptor(s.hydra, []string{}, false, n)
+	n = utils.AuthInterceptor(s.hydra, s.hydraAdmin, []string{}, false, n)
 
 	return n(ctx, req, usi, handler)
 }
 
 func (s *Server) serverInterceptor(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
 	n := utils.ServerEndInterceptor
-	n = utils.ServerAuthInterceptor(s.hydra, []string{}, false, n)
+	n = utils.ServerAuthInterceptor(s.hydra, s.hydraAdmin, []string{}, false, n)
 
 	return n(srv, ss, info, handler)
 }
@@ -138,6 +150,10 @@ func (s *Server) serverInterceptor(srv interface{}, ss grpc.ServerStream, info *
 func (s *Server) Run() {
 	res := utils.NewGRPCServer(
 		&utils.GRPCOptions{
+			DialOptions: []grpc.DialOption{
+				grpc.WithTransportCredentials(insecure.NewCredentials()),
+				grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(1024 * 1024 * 1024)),
+			},
 			ServerOptions: []grpc.ServerOption{
 				grpc.UnaryInterceptor(s.interceptor),
 				grpc.StreamInterceptor(s.serverInterceptor),

@@ -588,6 +588,7 @@ golang.org/x/net/trace
 ## explicit
 golang.org/x/oauth2
 golang.org/x/oauth2/authhandler
+golang.org/x/oauth2/clientcredentials
 golang.org/x/oauth2/google
 golang.org/x/oauth2/google/internal/externalaccount
 golang.org/x/oauth2/internal
@@ -981,6 +982,9 @@ k8s.io/client-go/util/workqueue
 k8s.io/klog/v2
 # k8s.io/utils v0.0.0-20210707171843-4b05e18ac7d9
 k8s.io/utils/integer
+# openapi.peridot.resf.org/peridotopenapi v0.0.0-00010101000000-000000000000 => ./bazel-bin/peridot/proto/v1/client_go
+## explicit
+openapi.peridot.resf.org/peridotopenapi
 # peridot.resf.org/common v0.0.0-00010101000000-000000000000 => ./bazel-bin/proto/commonpb_go_proto_/peridot.resf.org/common
 ## explicit
 peridot.resf.org/common
@@ -1010,6 +1014,7 @@ sigs.k8s.io/structured-merge-diff/v4/value
 # sigs.k8s.io/yaml v1.2.0
 sigs.k8s.io/yaml
 # github.com/dgrijalva/jwt-go v3.2.0+incompatible => github.com/golang-jwt/jwt/v4 v4.4.2
+# openapi.peridot.resf.org/peridotopenapi => ./bazel-bin/peridot/proto/v1/client_go
 # bazel.build/protobuf => ./bazel-bin/build/bazel/protobuf/bazelbuild_go_proto_/bazel.build/protobuf
 # bazel.build/remote/execution/v2 => ./bazel-bin/build/bazel/remote/execution/v2/remoteexecution_go_proto_/bazel.build/remote/execution/v2
 # bazel.build/semver => ./bazel-bin/build/bazel/semver/semver_go_proto_/bazel.build/semver

@@ -104,7 +104,9 @@ func mn(_ *cobra.Command, _ []string) {
 		w.Worker.RegisterWorkflow(w.WorkflowController.TriggerImportFromBatchWorkflow)
 		w.Worker.RegisterWorkflow(w.WorkflowController.SyncCatalogWorkflow)
 		w.Worker.RegisterWorkflow(w.WorkflowController.RpmImportWorkflow)
+		w.Worker.RegisterWorkflow(w.WorkflowController.RpmLookasideBatchImportWorkflow)
 		w.Worker.RegisterWorkflow(w.WorkflowController.CreateHashedRepositoriesWorkflow)
+		w.Worker.RegisterWorkflow(w.WorkflowController.LookasideFileUploadWorkflow)
 	}
 	w.Worker.RegisterWorkflow(w.WorkflowController.ProvisionWorkerWorkflow)
 	w.Worker.RegisterWorkflow(w.WorkflowController.DestroyWorkerWorkflow)

@@ -154,7 +154,7 @@ func (s *Server) ListProjects(ctx context.Context, req *peridotpb.ListProjectsRe
 	}
 
 	projects, err := s.db.ListProjects(&peridotpb.ProjectFilters{
-		Ids: resources,
+		Ids: utils.Take[string](resources, "global"),
 	})
 	if err != nil {
 		s.log.Errorf("could not list projects: %v", err)
@@ -388,6 +388,72 @@ func (s *Server) CreateHashedRepositories(ctx context.Context, req *peridotpb.Cr
 			TaskQueue: MainTaskQueue,
 		},
 		s.temporalWorker.WorkflowController.CreateHashedRepositoriesWorkflow,
+		req,
+		task,
+	)
+	if err != nil {
+		s.log.Errorf("could not start workflow: %v", err)
+		_ = s.db.SetTaskStatus(task.ID.String(), peridotpb.TaskStatus_TASK_STATUS_FAILED)
+		return nil, err
+	}
+
+	return &peridotpb.AsyncTask{
+		TaskId:   task.ID.String(),
+		Subtasks: []*peridotpb.Subtask{taskProto},
+		Done:     false,
+	}, nil
+}
+
+func (s *Server) LookasideFileUpload(ctx context.Context, req *peridotpb.LookasideFileUploadRequest) (*peridotpb.AsyncTask, error) {
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	if err := s.checkPermission(ctx, ObjectGlobal, ObjectIdPeridot, PermissionManage); err != nil {
+		return nil, err
+	}
+
+	user, err := utils.UserFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	rollback := true
+	beginTx, err := s.db.Begin()
+	if err != nil {
+		s.log.Error(err)
+		return nil, utils.InternalError
+	}
+	defer func() {
+		if rollback {
+			_ = beginTx.Rollback()
+		}
+	}()
+	tx := s.db.UseTransaction(beginTx)
+
+	task, err := tx.CreateTask(user, "noarch", peridotpb.TaskType_TASK_TYPE_LOOKASIDE_FILE_UPLOAD, nil, nil)
+	if err != nil {
+		s.log.Errorf("could not create task: %v", err)
+		return nil, utils.InternalError
+	}
+
+	taskProto, err := task.ToProto(false)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "could not marshal task: %v", err)
+	}
+
+	rollback = false
+	err = beginTx.Commit()
+	if err != nil {
+		return nil, status.Error(codes.Internal, "could not save, try again")
+	}
+
+	_, err = s.temporal.ExecuteWorkflow(
+		context.Background(),
+		client.StartWorkflowOptions{
+			ID:        task.ID.String(),
+			TaskQueue: MainTaskQueue,
+		},
+		s.temporalWorker.WorkflowController.LookasideFileUploadWorkflow,
 		req,
 		task,
 	)

@@ -55,6 +55,7 @@ require (
 	k8s.io/api v0.22.1
 	k8s.io/apimachinery v0.22.1
 	k8s.io/client-go v0.22.1
+	openapi.peridot.resf.org/peridotopenapi v0.0.0-00010101000000-000000000000 // indirect
 	peridot.resf.org/common v0.0.0-00010101000000-000000000000
 	peridot.resf.org/obsidian/pb v0.0.0-00010101000000-000000000000
 	peridot.resf.org/peridot/keykeeper/pb v0.0.0-00010101000000-000000000000
@@ -65,7 +66,10 @@ require (
 )
 
 // Manual replace
-replace github.com/dgrijalva/jwt-go v3.2.0+incompatible => github.com/golang-jwt/jwt/v4 v4.4.2
+replace (
+	github.com/dgrijalva/jwt-go v3.2.0+incompatible => github.com/golang-jwt/jwt/v4 v4.4.2
+	openapi.peridot.resf.org/peridotopenapi => ./bazel-bin/peridot/proto/v1/client_go
+)
 
 // sync-replace-start
 replace (

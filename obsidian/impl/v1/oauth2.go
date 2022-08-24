@@ -61,6 +61,9 @@ func callbackForwarder(callbackURL string) string {
 	// this section contained a callback forwarder, but cannot be published
 	// todo(mustafa): evaluate other ways to make it easier for dev
 	if env == "dev" || env == "" {
+		if fwd := os.Getenv("OBSIDIAN_CALLBACK_FORWARDER"); fwd != "" {
+			return fmt.Sprintf("%s/%s", fwd, callbackURL)
+		}
 		return callbackURL
 	}
 	return callbackURL

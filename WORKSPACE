@@ -54,7 +54,7 @@ go_rules_dependencies()
 
 go_register_toolchains(
     nogo = "@peridot//:nogo",
-    version = "1.17.7",
+    version = "1.18.3",
 )
 
 go_repository(
@@ -164,10 +164,10 @@ go_repositories()
 # --start protoc_gen_validate--
 http_archive(
     name = "com_envoyproxy_protoc_gen_validate",
-    sha256 = "51ba05210a1a2940530455e01c010daa26d504f4b14855a452716772ea39090c",
-    strip_prefix = "protoc-gen-validate-0.6.3",
+    sha256 = "4c692c62e16c168049bca2b2972b0a25222870cf53e61be30b50d761e58728bd",
+    strip_prefix = "protoc-gen-validate-0.6.7",
     urls = [
-        "https://github.com/envoyproxy/protoc-gen-validate/archive/v0.6.3.tar.gz",
+        "https://github.com/envoyproxy/protoc-gen-validate/archive/v0.6.7.tar.gz",
     ],
 )
 

@@ -1,0 +1,33 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "peridot_lib",
+    srcs = [
+        "build.go",
+        "build_rpm_import.go",
+        "lookaside.go",
+        "lookaside_upload.go",
+        "main.go",
+        "utils.go",
+    ],
+    data = [
+        "//peridot/proto/v1:client_go",
+    ],
+    importpath = "peridot.resf.org/peridot/cmd/v1/peridot",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//utils",
+        "//vendor/github.com/sirupsen/logrus",
+        "//vendor/github.com/spf13/cobra",
+        "//vendor/github.com/spf13/viper",
+        "//vendor/golang.org/x/oauth2",
+        "//vendor/golang.org/x/oauth2/clientcredentials",
+        "//vendor/openapi.peridot.resf.org/peridotopenapi",
+    ],
+)
+
+go_binary(
+    name = "peridot",
+    embed = [":peridot_lib"],
+    visibility = ["//visibility:public"],
+)

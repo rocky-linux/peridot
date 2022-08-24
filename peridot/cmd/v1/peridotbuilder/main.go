@@ -107,14 +107,16 @@ func mn(_ *cobra.Command, _ []string) {
 	db := serverconnector.MustAuto()
 
 	var initiatedPlugins []plugin.Plugin
-	plugins, err := db.GetPluginsForProject(projectId)
-	if err != nil {
-		logrus.Fatalf("could not get plugins: %v", err)
-	}
-	if plugins != nil {
-		initiatedPlugins, err = initiatePlugins(plugins)
+	if projectId != "" {
+		plugins, err := db.GetPluginsForProject(projectId)
 		if err != nil {
-			logrus.Fatalf("could not initiate plugins: %v", err)
+			logrus.Fatalf("could not get plugins: %v", err)
+		}
+		if plugins != nil {
+			initiatedPlugins, err = initiatePlugins(plugins)
+			if err != nil {
+				logrus.Fatalf("could not initiate plugins: %v", err)
+			}
 		}
 	}
 
@@ -155,6 +157,9 @@ func mn(_ *cobra.Command, _ []string) {
 
 	// RPM Import
 	w.Worker.RegisterActivity(w.WorkflowController.RpmImportActivity)
+
+	// Lookaside
+	w.Worker.RegisterActivity(w.WorkflowController.LookasideFileUploadActivity)
 
 	// Yumrepofs
 	w.Worker.RegisterActivity(w.WorkflowController.CreateHashedRepositoriesActivity)
