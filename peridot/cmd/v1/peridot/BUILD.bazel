@@ -8,6 +8,8 @@ go_library(
         "lookaside.go",
         "lookaside_upload.go",
         "main.go",
+        "project.go",
+        "project_create_hashed_repos.go",
         "utils.go",
     ],
     data = [

@@ -31,79 +31,44 @@
 package main
 
 import (
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"log"
-	"strings"
+	"openapi.peridot.resf.org/peridotopenapi"
 )
 
-var root = &cobra.Command{
-	Use: "peridot",
+var projectCreateHashedRepos = &cobra.Command{
+	Use:  "create-hashed-repos [repositories]",
+	Args: cobra.MinimumNArgs(1),
+	Run:  projectCreateHashedReposMn,
 }
 
-func init() {
-	root.PersistentFlags().String("endpoint", "peridot-api.build.resf.org", "Peridot API endpoint")
-	root.PersistentFlags().String("hdr-endpoint", "hdr.build.resf.org", "RESF OIDC endpoint")
-	root.PersistentFlags().Bool("skip-ca-verify", false, "Whether to accept self-signed certificates")
-	root.PersistentFlags().String("client-id", "", "Client ID for authentication")
-	root.PersistentFlags().String("client-secret", "", "Client secret for authentication")
-	root.PersistentFlags().String("project-id", "", "Peridot project ID")
-	root.PersistentFlags().Bool("debug", false, "Debug mode")
+func projectCreateHashedReposMn(_ *cobra.Command, args []string) {
+	projectID := mustGetProjectID()
 
-	root.AddCommand(lookaside)
-	lookaside.AddCommand(lookasideUpload)
+	taskCl := getClient(serviceTask).(peridotopenapi.TaskServiceApi)
+	cl := getClient(serviceProject).(peridotopenapi.ProjectServiceApi)
 
-	root.AddCommand(build)
-	build.AddCommand(buildRpmImport)
+	hashedRes, _, err := cl.CreateHashedRepositories(getContext(), projectID).
+		Body(peridotopenapi.InlineObject8{
+			Repositories: &args,
+		}).
+		Execute()
+	errFatal(err)
 
-	root.AddCommand(project)
-	project.AddCommand(projectCreateHashedRepos)
-
-	viper.SetEnvPrefix("PERIDOT")
-	viper.AutomaticEnv()
-	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_"))
-
-	err := viper.BindPFlags(root.PersistentFlags())
-	if err != nil {
-		log.Fatalf("could not bind pflags to viper - %s", err)
+	// Wait for task to complete
+	log.Printf("Waiting for hashed operation %s to finish\n", hashedRes.GetTaskId())
+	for {
+		res, _, err := taskCl.GetTask(getContext(), projectID, hashedRes.GetTaskId()).Execute()
+		errFatal(err)
+		task := res.GetTask()
+		if task.GetDone() {
+			if task.GetSubtasks()[0].GetStatus() == peridotopenapi.SUCCEEDED {
+				log.Printf("Hashed operation %s finished successfully\n", hashedRes.GetTaskId())
+				break
+			} else {
+				log.Printf("Hashed operation %s failed with status %s\n", hashedRes.GetTaskId(), task.GetSubtasks()[0].GetStatus())
+				break
+			}
+		}
 	}
-}
-
-func main() {
-	if err := root.Execute(); err != nil {
-		logrus.Fatal(err)
-	}
-}
-
-func endpoint() string {
-	return viper.GetString("endpoint")
-}
-
-func hdrEndpoint() string {
-	return viper.GetString("hdr-endpoint")
-}
-
-func skipCaVerify() bool {
-	return viper.GetBool("skip-ca-verify")
-}
-
-func getClientId() string {
-	return viper.GetString("client-id")
-}
-
-func getClientSecret() string {
-	return viper.GetString("client-secret")
-}
-
-func mustGetProjectID() string {
-	ret := viper.GetString("project-id")
-	if ret == "" {
-		logrus.Fatal("project-id is required")
-	}
-	return ret
-}
-
-func debug() bool {
-	return viper.GetBool("debug")
 }
