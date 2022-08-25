@@ -227,8 +227,13 @@ func GenerateArchMapForArtifacts(artifacts models.TaskArtifacts, project *models
 	for i, artifact := range artifacts {
 		var name string
 		var arch string
-		if rpmutils.NVR().MatchString(filepath.Base(artifact.Name)) {
-			nvr := rpmutils.NVR().FindStringSubmatch(filepath.Base(artifact.Name))
+		base := strings.TrimSuffix(filepath.Base(artifact.Name), ".rpm")
+		if rpmutils.NVRUnusualRelease().MatchString(base) {
+			nvr := rpmutils.NVRUnusualRelease().FindStringSubmatch(base)
+			name = nvr[1]
+			arch = nvr[4]
+		} else if rpmutils.NVR().MatchString(base) {
+			nvr := rpmutils.NVR().FindStringSubmatch(base)
 			name = nvr[1]
 			arch = nvr[4]
 		}
@@ -324,7 +329,6 @@ func GenerateArchMapForArtifacts(artifacts models.TaskArtifacts, project *models
 				artifactArchMap[arch] = append(artifactArchMap[arch], &newArtifact)
 			}
 		} else {
-			arch := artifact.Arch
 			if composetools.IsDebugPackage(name) {
 				arch = arch + "-debug"
 			}

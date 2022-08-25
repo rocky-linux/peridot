@@ -357,6 +357,8 @@ func (c *Controller) RpmImportActivity(ctx context.Context, req *peridotpb.RpmIm
 			if nvr == "" && rpmObj.Architecture() == "i686" {
 				nvr = realNvr
 			}
+
+			break
 		} else {
 			if nvr != rpmObj.SourceRPM() && nvr != fmt.Sprintf("%s.rpm", realNvr) {
 				return nil, fmt.Errorf("only include RPMs from one package")
@@ -367,7 +369,12 @@ func (c *Controller) RpmImportActivity(ctx context.Context, req *peridotpb.RpmIm
 		return nil, fmt.Errorf("invalid SNVR: %s", nvr)
 	}
 
-	nvrMatch := rpmutils.NVR().FindStringSubmatch(nvr)
+	var nvrMatch []string
+	if rpmutils.NVRUnusualRelease().MatchString(nvr) {
+		nvrMatch = rpmutils.NVRUnusualRelease().FindStringSubmatch(nvr)
+	} else {
+		nvrMatch = rpmutils.NVR().FindStringSubmatch(nvr)
+	}
 	srcNvra := fmt.Sprintf("%s-%s-%s.src", nvrMatch[1], nvrMatch[2], nvrMatch[3])
 
 	beginTx, err := c.db.Begin()
