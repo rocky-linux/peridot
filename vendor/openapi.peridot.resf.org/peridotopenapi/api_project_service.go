@@ -132,9 +132,9 @@ type ProjectServiceApi interface {
 
 	/*
 	 * LookasideFileUploadExecute executes the request
-	 * @return V1AsyncTask
+	 * @return V1LookasideFileUploadResponse
 	 */
-	LookasideFileUploadExecute(r ApiLookasideFileUploadRequest) (V1AsyncTask, *_nethttp.Response, error)
+	LookasideFileUploadExecute(r ApiLookasideFileUploadRequest) (V1LookasideFileUploadResponse, *_nethttp.Response, error)
 
 	/*
 	 * SetProjectCredentials Method for SetProjectCredentials
@@ -1009,7 +1009,7 @@ func (r ApiLookasideFileUploadRequest) Body(body V1LookasideFileUploadRequest) A
 	return r
 }
 
-func (r ApiLookasideFileUploadRequest) Execute() (V1AsyncTask, *_nethttp.Response, error) {
+func (r ApiLookasideFileUploadRequest) Execute() (V1LookasideFileUploadResponse, *_nethttp.Response, error) {
 	return r.ApiService.LookasideFileUploadExecute(r)
 }
 
@@ -1027,16 +1027,16 @@ func (a *ProjectServiceApiService) LookasideFileUpload(ctx _context.Context) Api
 
 /*
  * Execute executes the request
- * @return V1AsyncTask
+ * @return V1LookasideFileUploadResponse
  */
-func (a *ProjectServiceApiService) LookasideFileUploadExecute(r ApiLookasideFileUploadRequest) (V1AsyncTask, *_nethttp.Response, error) {
+func (a *ProjectServiceApiService) LookasideFileUploadExecute(r ApiLookasideFileUploadRequest) (V1LookasideFileUploadResponse, *_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodPost
 		localVarPostBody     interface{}
 		localVarFormFileName string
 		localVarFileName     string
 		localVarFileBytes    []byte
-		localVarReturnValue  V1AsyncTask
+		localVarReturnValue  V1LookasideFileUploadResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "ProjectServiceApiService.LookasideFileUpload")

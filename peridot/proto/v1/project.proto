@@ -76,7 +76,7 @@ service ProjectService {
     };
   }
 
-  rpc LookasideFileUpload(LookasideFileUploadRequest) returns (resf.peridot.v1.AsyncTask) {
+  rpc LookasideFileUpload(LookasideFileUploadRequest) returns (LookasideFileUploadResponse) {
     option (google.api.http) = {
       post: "/v1/lookaside"
       body: "*"
@@ -302,6 +302,6 @@ message CreateHashedRepositoriesTask {
 message LookasideFileUploadRequest {
   string file = 1 [(validate.rules).string.min_bytes = 1];
 }
-message LookasideFileUploadTask {
+message LookasideFileUploadResponse {
   string digest = 1;
 }

@@ -18,7 +18,6 @@ go_library(
     importpath = "peridot.resf.org/peridot/cmd/v1/peridot",
     visibility = ["//visibility:private"],
     deps = [
-        "//utils",
         "//vendor/github.com/sirupsen/logrus",
         "//vendor/github.com/spf13/cobra",
         "//vendor/github.com/spf13/viper",

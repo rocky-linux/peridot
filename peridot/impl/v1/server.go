@@ -47,6 +47,7 @@ import (
 	commonpb "peridot.resf.org/common"
 	builderv1 "peridot.resf.org/peridot/builder/v1"
 	peridotdb "peridot.resf.org/peridot/db"
+	"peridot.resf.org/peridot/lookaside"
 	peridotpb "peridot.resf.org/peridot/pb"
 	"peridot.resf.org/servicecatalog"
 	"peridot.resf.org/utils"
@@ -89,9 +90,10 @@ type Server struct {
 	authz          *authzed.Client
 	hydra          *hydraclient.OryHydra
 	hydraAdmin     *hydraclient.OryHydra
+	storage        lookaside.Storage
 }
 
-func NewServer(db peridotdb.Access, c client.Client) (*Server, error) {
+func NewServer(db peridotdb.Access, c client.Client, storage lookaside.Storage) (*Server, error) {
 	temporalWorker, err := builderv1.NewWorker(db, c, MainTaskQueue, nil)
 	if err != nil {
 		return nil, err
@@ -130,6 +132,7 @@ func NewServer(db peridotdb.Access, c client.Client) (*Server, error) {
 		authz:          authz,
 		hydra:          hydraSDK,
 		hydraAdmin:     hydraAdminSDK,
+		storage:        storage,
 	}, nil
 }
 
@@ -152,11 +155,11 @@ func (s *Server) Run() {
 		&utils.GRPCOptions{
 			DialOptions: []grpc.DialOption{
 				grpc.WithTransportCredentials(insecure.NewCredentials()),
-				grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(1024 * 1024 * 1024)),
 			},
 			ServerOptions: []grpc.ServerOption{
 				grpc.UnaryInterceptor(s.interceptor),
 				grpc.StreamInterceptor(s.serverInterceptor),
+				grpc.MaxRecvMsgSize(1024 * 1024 * 1024),
 			},
 		},
 		func(r *utils.Register) {

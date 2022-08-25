@@ -18,6 +18,7 @@ go_library(
         "//peridot/builder/v1/workflow",
         "//peridot/db",
         "//peridot/db/models",
+        "//peridot/lookaside",
         "//peridot/proto/v1:pb",
         "//proto:common",
         "//servicecatalog",

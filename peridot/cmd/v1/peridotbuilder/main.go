@@ -158,9 +158,6 @@ func mn(_ *cobra.Command, _ []string) {
 	// RPM Import
 	w.Worker.RegisterActivity(w.WorkflowController.RpmImportActivity)
 
-	// Lookaside
-	w.Worker.RegisterActivity(w.WorkflowController.LookasideFileUploadActivity)
-
 	// Yumrepofs
 	w.Worker.RegisterActivity(w.WorkflowController.CreateHashedRepositoriesActivity)
 

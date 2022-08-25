@@ -153,6 +153,13 @@ func NewGRPCServer(goptions *GRPCOptions, endpoint func(*Register), serve func(*
 		}
 	}
 
+	opts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
+	// use DialOptions if not nil
+	if options.DialOptions != nil {
+		opts = options.DialOptions
+	}
+	opts = append(opts, grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(1000*1024*1024), grpc.MaxCallSendMsgSize(1000*1024*1024)))
+
 	serv := grpc.NewServer(options.ServerOptions...)
 
 	// background context since this is the "main" app
@@ -178,12 +185,6 @@ func NewGRPCServer(goptions *GRPCOptions, endpoint func(*Register), serve func(*
 	}
 
 	mux := runtime.NewServeMux(muxOptions...)
-	opts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
-	// use DialOptions if not nil
-	if options.DialOptions != nil {
-		opts = options.DialOptions
-	}
-	opts = append(opts, grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(1000*1024*1024), grpc.MaxCallSendMsgSize(1000*1024*1024)))
 
 	register := &Register{
 		Context:  ctx,

@@ -32,14 +32,11 @@ package main
 
 import (
 	"encoding/base64"
-	"encoding/json"
-	"fmt"
 	"github.com/spf13/cobra"
 	"io/ioutil"
 	"log"
 	"openapi.peridot.resf.org/peridotopenapi"
 	"os"
-	"peridot.resf.org/utils"
 	"time"
 )
 
@@ -86,7 +83,7 @@ func buildRpmImportMn(_ *cobra.Command, args []string) {
 	}
 
 	// Upload blobs to lookaside and wait for operation to finish
-	var operations []string
+	var blobs []string
 	projectCl := getClient(serviceProject).(peridotopenapi.ProjectServiceApi)
 	for _, arg := range args {
 		bts, err := ioutil.ReadFile(arg)
@@ -97,56 +94,12 @@ func buildRpmImportMn(_ *cobra.Command, args []string) {
 			File: &base64EncodedBytes,
 		}).Execute()
 		errFatal(err)
-		log.Printf("Uploading %s to lookaside with task id %s\n", arg, res.GetTaskId())
-		operations = append(operations, res.GetTaskId())
+		log.Printf("Uploaded %s to lookaside", arg)
+		blobs = append(blobs, res.GetDigest())
 	}
 
-	log.Println("Waiting for upload tasks to finish...")
-
-	// Wait for tasks to reach success state
 	taskCl := getClient(serviceTask).(peridotopenapi.TaskServiceApi)
-	var doneOperations []string
-	var blobs []string
-	for {
-		didBreak := false
-		for _, op := range operations {
-			log.Printf("Waiting for %s to finish\n", op)
-			if len(doneOperations) == len(operations) {
-				didBreak = true
-				break
-			}
-			if utils.StrContains(op, doneOperations) {
-				continue
-			}
 
-			res, resp, err := taskCl.GetTask(getContext(), "global", op).Execute()
-			errFatal(err)
-			task := res.GetTask()
-			if task.GetDone() {
-				subtask := task.GetSubtasks()[0]
-				if subtask.GetStatus() == peridotopenapi.SUCCEEDED {
-					b, err := ioutil.ReadAll(resp.Body)
-					errFatal(err)
-
-					var subtaskFull LookasideUploadTask
-					errFatal(json.Unmarshal(b, &subtaskFull))
-
-					blobs = append(blobs, subtaskFull.Task.Subtasks[0].Response.Digest)
-					doneOperations = append(doneOperations, op)
-					log.Printf("Task %s finished successfully\n", op)
-				} else if subtask.GetStatus() != peridotopenapi.RUNNING || subtask.GetStatus() != peridotopenapi.PENDING {
-					errFatal(fmt.Errorf("subtask %s failed with status %s", op, subtask.GetStatus()))
-				}
-			}
-
-			time.Sleep(2 * time.Second)
-		}
-		if didBreak {
-			break
-		}
-	}
-
-	log.Println("Upload tasks finished")
 	log.Println("Triggering RPM batch import")
 
 	cl := getClient(serviceBuild).(peridotopenapi.BuildServiceApi)
@@ -156,4 +109,23 @@ func buildRpmImportMn(_ *cobra.Command, args []string) {
 			ForceOverride:  &buildRpmImportForceOverride,
 		}).Execute()
 	errFatal(err)
+
+	// Wait for import to finish
+	log.Printf("Waiting for import %s to finish\n", importRes.GetTaskId())
+	for {
+		res, _, err := taskCl.GetTask(getContext(), projectId, importRes.GetTaskId()).Execute()
+		errFatal(err)
+		task := res.GetTask()
+		if task.GetDone() {
+			if task.GetSubtasks()[0].GetStatus() == peridotopenapi.SUCCEEDED {
+				log.Printf("Import %s finished successfully\n", importRes.GetTaskId())
+				break
+			} else {
+				log.Printf("Import %s failed with status %s\n", importRes.GetTaskId(), task.GetSubtasks()[0].GetStatus())
+				break
+			}
+		}
+
+		time.Sleep(5 * time.Second)
+	}
 }

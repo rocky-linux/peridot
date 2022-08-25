@@ -32,7 +32,10 @@ package peridotimplv1
 
 import (
 	"context"
+	"crypto/sha256"
 	"database/sql"
+	"encoding/base64"
+	"encoding/hex"
 	v1 "github.com/authzed/authzed-go/proto/authzed/api/v1"
 	"go.temporal.io/sdk/client"
 	"google.golang.org/grpc/codes"
@@ -404,7 +407,7 @@ func (s *Server) CreateHashedRepositories(ctx context.Context, req *peridotpb.Cr
 	}, nil
 }
 
-func (s *Server) LookasideFileUpload(ctx context.Context, req *peridotpb.LookasideFileUploadRequest) (*peridotpb.AsyncTask, error) {
+func (s *Server) LookasideFileUpload(ctx context.Context, req *peridotpb.LookasideFileUploadRequest) (*peridotpb.LookasideFileUploadResponse, error) {
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
@@ -412,60 +415,36 @@ func (s *Server) LookasideFileUpload(ctx context.Context, req *peridotpb.Lookasi
 		return nil, err
 	}
 
-	user, err := utils.UserFromContext(ctx)
+	base64DecodedFile, err := base64.StdEncoding.DecodeString(req.File)
 	if err != nil {
 		return nil, err
 	}
 
-	rollback := true
-	beginTx, err := s.db.Begin()
+	hasher := sha256.New()
+	_, err = hasher.Write(base64DecodedFile)
 	if err != nil {
-		s.log.Error(err)
-		return nil, utils.InternalError
+		return nil, err
 	}
-	defer func() {
-		if rollback {
-			_ = beginTx.Rollback()
+	sha256Sum := hex.EncodeToString(hasher.Sum(nil))
+
+	exists, err := s.storage.Exists(sha256Sum)
+	if err != nil {
+		if !strings.Contains(err.Error(), "NotFound") {
+			return nil, err
 		}
-	}()
-	tx := s.db.UseTransaction(beginTx)
-
-	task, err := tx.CreateTask(user, "noarch", peridotpb.TaskType_TASK_TYPE_LOOKASIDE_FILE_UPLOAD, nil, nil)
-	if err != nil {
-		s.log.Errorf("could not create task: %v", err)
-		return nil, utils.InternalError
+	}
+	if exists {
+		return &peridotpb.LookasideFileUploadResponse{
+			Digest: sha256Sum,
+		}, nil
 	}
 
-	taskProto, err := task.ToProto(false)
+	_, err = s.storage.PutObjectBytes(sha256Sum, base64DecodedFile)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "could not marshal task: %v", err)
-	}
-
-	rollback = false
-	err = beginTx.Commit()
-	if err != nil {
-		return nil, status.Error(codes.Internal, "could not save, try again")
-	}
-
-	_, err = s.temporal.ExecuteWorkflow(
-		context.Background(),
-		client.StartWorkflowOptions{
-			ID:        task.ID.String(),
-			TaskQueue: MainTaskQueue,
-		},
-		s.temporalWorker.WorkflowController.LookasideFileUploadWorkflow,
-		req,
-		task,
-	)
-	if err != nil {
-		s.log.Errorf("could not start workflow: %v", err)
-		_ = s.db.SetTaskStatus(task.ID.String(), peridotpb.TaskStatus_TASK_STATUS_FAILED)
 		return nil, err
 	}
 
-	return &peridotpb.AsyncTask{
-		TaskId:   task.ID.String(),
-		Subtasks: []*peridotpb.Subtask{taskProto},
-		Done:     false,
+	return &peridotpb.LookasideFileUploadResponse{
+		Digest: sha256Sum,
 	}, nil
 }

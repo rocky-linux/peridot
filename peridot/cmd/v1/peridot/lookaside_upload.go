@@ -35,6 +35,7 @@ import (
 	"fmt"
 	"github.com/spf13/cobra"
 	"io/ioutil"
+	"log"
 	"openapi.peridot.resf.org/peridotopenapi"
 	"os"
 )
@@ -58,8 +59,10 @@ func lookasideUploadMn(_ *cobra.Command, args []string) {
 	base64EncodedBytes := base64.StdEncoding.EncodeToString(bts)
 
 	cl := getClient(serviceProject).(peridotopenapi.ProjectServiceApi)
-	_, _, err = cl.LookasideFileUpload(getContext()).Body(peridotopenapi.V1LookasideFileUploadRequest{
+	res, _, err := cl.LookasideFileUpload(getContext()).Body(peridotopenapi.V1LookasideFileUploadRequest{
 		File: &base64EncodedBytes,
 	}).Execute()
 	errFatal(err)
+
+	log.Printf("Digest: %s", res.GetDigest())
 }
