@@ -118,6 +118,9 @@ func checkAuth(ctx context.Context, hydraSDK *client.OryHydra, hydraAdmin *clien
 		userInfo.Payload.Name = introspect.Payload.Sub
 		userInfo.Payload.Email = fmt.Sprintf("%s@%s", introspect.Payload.Sub, "serviceaccount.resf.org")
 	}
+	if userInfo.Payload.Sub == "" {
+		return ctx, status.Errorf(codes.Unauthenticated, "invalid authorization token")
+	}
 
 	// supply subject and token to further requests
 	pairs := metadata.Pairs("x-user-id", userInfo.Payload.Sub, "x-user-name", userInfo.Payload.Name, "x-user-email", userInfo.Payload.Email, "x-auth-token", authToken[1])

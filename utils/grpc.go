@@ -32,6 +32,7 @@ package utils
 
 import (
 	"context"
+	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	"github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"google.golang.org/grpc/credentials/insecure"
@@ -169,25 +170,10 @@ func NewGRPCServer(goptions *GRPCOptions, endpoint func(*Register), serve func(*
 	// If the server already declares a unary interceptor, let's chain
 	// and make grpc_prometheus run first
 	if options.Interceptor != nil {
-		serverOpts = append(serverOpts, grpc.UnaryInterceptor(
-			func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
-				n := func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
-					return options.Interceptor(ctx, req, info, handler)
-				}
-				n = func(next grpc.UnaryServerInterceptor) grpc.UnaryServerInterceptor {
-					return func(ctx context.Context, req interface{}, usi *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
-						_, err := grpc_prometheus.UnaryServerInterceptor(ctx, req, info, handler)
-						if err != nil {
-							return nil, err
-						}
-
-						return next(ctx, req, usi, handler)
-					}
-				}(n)
-
-				return n(ctx, req, info, handler)
-			},
-		))
+		serverOpts = append(serverOpts, grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
+			grpc_prometheus.UnaryServerInterceptor,
+			options.Interceptor,
+		)))
 	} else {
 		// Else, only declare prometheus interceptor
 		serverOpts = append(serverOpts, grpc.UnaryInterceptor(grpc_prometheus.UnaryServerInterceptor))
@@ -196,25 +182,10 @@ func NewGRPCServer(goptions *GRPCOptions, endpoint func(*Register), serve func(*
 	// If the server already declares a stream interceptor, let's chain
 	// and make grpc_prometheus run first
 	if options.ServerInterceptor != nil {
-		serverOpts = append(serverOpts, grpc.StreamInterceptor(
-			func(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
-				n := func(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
-					return options.ServerInterceptor(srv, ss, info, handler)
-				}
-				n = func(next grpc.StreamServerInterceptor) grpc.StreamServerInterceptor {
-					return func(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
-						err := grpc_prometheus.StreamServerInterceptor(srv, ss, info, handler)
-						if err != nil {
-							return err
-						}
-
-						return next(srv, ss, info, handler)
-					}
-				}(n)
-
-				return n(srv, ss, info, handler)
-			},
-		))
+		serverOpts = append(serverOpts, grpc.StreamInterceptor(grpc_middleware.ChainStreamServer(
+			grpc_prometheus.StreamServerInterceptor,
+			options.ServerInterceptor,
+		)))
 	} else {
 		// Else, only declare prometheus interceptor
 		serverOpts = append(serverOpts, grpc.StreamInterceptor(grpc_prometheus.StreamServerInterceptor))
