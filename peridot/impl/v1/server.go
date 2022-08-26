@@ -156,9 +156,9 @@ func (s *Server) Run() {
 			DialOptions: []grpc.DialOption{
 				grpc.WithTransportCredentials(insecure.NewCredentials()),
 			},
+			Interceptor:       s.interceptor,
+			ServerInterceptor: s.serverInterceptor,
 			ServerOptions: []grpc.ServerOption{
-				grpc.UnaryInterceptor(s.interceptor),
-				grpc.StreamInterceptor(s.serverInterceptor),
 				grpc.MaxRecvMsgSize(1024 * 1024 * 1024),
 			},
 		},
