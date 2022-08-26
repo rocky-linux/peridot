@@ -78,7 +78,7 @@ func (s *Server) GetBlob(ctx context.Context, req *yumrepofspb.GetBlobRequest) (
 		}
 
 		header := metadata.Pairs("Location", urlStr)
-		err = grpc.SendHeader(ctx, header)
+		err = grpc.SetHeader(ctx, header)
 		if err != nil {
 			s.log.Errorf("failed to send header: %v", err)
 			return nil, status.Error(codes.Internal, "failed to send header")
