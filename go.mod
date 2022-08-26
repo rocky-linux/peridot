@@ -26,12 +26,14 @@ require (
 	github.com/gocolly/colly/v2 v2.1.0
 	github.com/gogo/status v1.1.0
 	github.com/google/uuid v1.3.0
+	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.6.0
 	github.com/imdario/mergo v0.3.11 // indirect
 	github.com/jmoiron/sqlx v1.3.4
 	github.com/lib/pq v1.10.2
 	github.com/ory/hydra-client-go v1.10.6
 	github.com/pelletier/go-toml v1.8.1 // indirect
+	github.com/prometheus/client_golang v1.13.0
 	github.com/rocky-linux/srpmproc v0.3.16
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/cobra v1.1.3
@@ -44,18 +46,17 @@ require (
 	go.temporal.io/api v1.6.1-0.20211110205628-60c98e9cbfe2
 	go.temporal.io/sdk v1.13.1
 	golang.org/x/crypto v0.0.0-20220622213112-05595931fe9d // indirect
-	golang.org/x/oauth2 v0.0.0-20210819190943-2bc19b11175f
-	golang.org/x/sys v0.0.0-20211110154304-99a53858aa08
+	golang.org/x/oauth2 v0.0.0-20220223155221-ee480838109b
 	golang.org/x/tools v0.1.6-0.20210726203631-07bc1bf47fb2 // indirect
 	google.golang.org/genproto v0.0.0-20211104193956-4c6863e31247
 	google.golang.org/grpc v1.44.0
-	google.golang.org/protobuf v1.27.1
+	google.golang.org/protobuf v1.28.1
 	gopkg.in/ini.v1 v1.57.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 	k8s.io/api v0.22.1
 	k8s.io/apimachinery v0.22.1
 	k8s.io/client-go v0.22.1
-	openapi.peridot.resf.org/peridotopenapi v0.0.0-00010101000000-000000000000 // indirect
+	openapi.peridot.resf.org/peridotopenapi v0.0.0-00010101000000-000000000000
 	peridot.resf.org/common v0.0.0-00010101000000-000000000000
 	peridot.resf.org/obsidian/pb v0.0.0-00010101000000-000000000000
 	peridot.resf.org/peridot/keykeeper/pb v0.0.0-00010101000000-000000000000
