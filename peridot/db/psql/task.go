@@ -122,7 +122,7 @@ func (a *Access) SetTaskMetadata(id string, metadata *anypb.Any) error {
 	return err
 }
 
-func (a *Access) GetTask(id string, projectId string) (ret models.Tasks, err error) {
+func (a *Access) GetTask(id string, projectId *string) (ret models.Tasks, err error) {
 	err = a.query.Select(
 		&ret,
 		`
@@ -130,7 +130,7 @@ func (a *Access) GetTask(id string, projectId string) (ret models.Tasks, err err
 			select * from tasks
 			where
 				id = $1
-				and project_id = $2
+				and ($2 :: uuid is null or project_id = $2 :: uuid)
 			union all
 			select t.* from tasks t
 			join task_query tq on tq.id = t.parent_task_id

@@ -33,13 +33,14 @@ package rpmutils
 import "regexp"
 
 var (
-	nvr        *regexp.Regexp
-	nvrNoArch  *regexp.Regexp
-	epoch      *regexp.Regexp
-	module     *regexp.Regexp
-	dist       *regexp.Regexp
-	moduleDist *regexp.Regexp
-	advisoryId *regexp.Regexp
+	nvr               *regexp.Regexp
+	nvrNoArch         *regexp.Regexp
+	nvrUnusualRelease *regexp.Regexp
+	epoch             *regexp.Regexp
+	module            *regexp.Regexp
+	dist              *regexp.Regexp
+	moduleDist        *regexp.Regexp
+	advisoryId        *regexp.Regexp
 )
 
 func NVR() *regexp.Regexp {
@@ -54,6 +55,13 @@ func NVRNoArch() *regexp.Regexp {
 		nvrNoArch = regexp.MustCompile("^(\\S+)-([\\w~%.+]+)-(\\w+(?:\\.[\\w+]+)+?)(?:\\.rpm)?$")
 	}
 	return nvrNoArch
+}
+
+func NVRUnusualRelease() *regexp.Regexp {
+	if nvrUnusualRelease == nil {
+		nvrUnusualRelease = regexp.MustCompile("^(\\S+)-([\\w~%.+]+)-(\\w+?)(?:\\.(\\w+))?(?:\\.rpm)?$")
+	}
+	return nvrUnusualRelease
 }
 
 func Epoch() *regexp.Regexp {

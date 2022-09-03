@@ -75,6 +75,13 @@ service ProjectService {
       body: "*"
     };
   }
+
+  rpc LookasideFileUpload(LookasideFileUploadRequest) returns (LookasideFileUploadResponse) {
+    option (google.api.http) = {
+      post: "/v1/lookaside"
+      body: "*"
+    };
+  }
 }
 
 // Project is a contained RPM distribution
@@ -290,4 +297,11 @@ message CreateHashedRepositoriesRequest {
 
 message CreateHashedRepositoriesTask {
   repeated string repo_revisions = 1;
+}
+
+message LookasideFileUploadRequest {
+  string file = 1 [(validate.rules).string.min_bytes = 1];
+}
+message LookasideFileUploadResponse {
+  string digest = 1;
 }

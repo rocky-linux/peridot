@@ -6,10 +6,13 @@ go_library(
     importpath = "peridot.resf.org/peridot/cmd/v1/peridotserver",
     visibility = ["//visibility:private"],
     deps = [
+        "//peridot/common",
         "//peridot/db/connector",
         "//peridot/impl/v1:impl",
+        "//peridot/lookaside/s3",
         "//temporalutils",
         "//utils",
+        "//vendor/github.com/go-git/go-billy/v5/osfs",
         "//vendor/github.com/sirupsen/logrus",
         "//vendor/github.com/spf13/cobra",
         "//vendor/go.temporal.io/sdk/client",

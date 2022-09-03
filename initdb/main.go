@@ -64,11 +64,16 @@ func init() {
 
 	pf := root.PersistentFlags()
 	pf.String("target.db", "", "target db to initialize")
+	pf.Bool("skip", false, "Whether to skip InitDB without removing it as an init container")
 
 	utils.AddFlags(pf, cnf)
 }
 
 func mn(_ *cobra.Command, _ []string) {
+	if viper.GetBool("skip") {
+		os.Exit(0)
+	}
+
 	ctx := context.TODO()
 
 	targetDB := viper.GetString("target.db")

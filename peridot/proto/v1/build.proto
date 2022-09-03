@@ -65,7 +65,7 @@ service BuildService {
     };
   }
 
-  // RpmImport imports rpm files into a project
+  // RpmImport imports rpm files into a project (packaged into tar format)
   rpc RpmImport(RpmImportRequest) returns (AsyncTask) {
     option (google.api.http) = {
       post: "/v1/projects/{project_id=*}/builds/rpm-import"
@@ -74,6 +74,18 @@ service BuildService {
     option (resf.peridot.v1.task_info) = {
       response_type: "RpmImportTask"
       metadata_type: "RpmImportOperationMetadata"
+    };
+  }
+
+  // RpmLookasideBatchImport imports rpm files into a project (stored in Lookaside)
+  rpc RpmLookasideBatchImport(RpmLookasideBatchImportRequest) returns (AsyncTask) {
+    option (google.api.http) = {
+      post: "/v1/projects/{project_id=*}/builds/rpm-lookaside-batch-import"
+      body: "*"
+    };
+    option (resf.peridot.v1.task_info) = {
+      response_type: "RpmLookasideBatchImportTask"
+      metadata_type: "RpmLookasideBatchImportOperationMetadata"
     };
   }
 }
@@ -341,4 +353,27 @@ message RpmImportTask {
 
 message RpmImportOperationMetadata {
   string package_name = 1;
+}
+
+message RpmLookasideBatchImportRequest {
+  string project_id = 1;
+
+  // Rpms
+  //
+  // Previously uploaded RPM tarball
+  repeated string lookaside_blobs = 2;
+
+  // Force override
+  //
+  // Overwrite existing RPMs even if NVRA is locked
+  // Useful for secure boot scenarios for example
+  bool force_override = 3;
+}
+
+message RpmLookasideBatchImportTask {
+  resf.peridot.yumrepofs.v1.UpdateRepoTask repo_changes = 1;
+}
+
+message RpmLookasideBatchImportOperationMetadata {
+  repeated string package_names = 1;
 }

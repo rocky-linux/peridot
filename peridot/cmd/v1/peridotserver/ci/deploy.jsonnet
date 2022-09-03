@@ -29,6 +29,11 @@ bycdeploy.new({
     cpu: '2',
     memory: '10G',
   },
+  service_account_options: {
+    annotations: {
+      'eks.amazonaws.com/role-arn': 'arn:aws:iam::893168113496:role/peridot_k8s_role',
+    }
+  },
   ports: [
     {
       name: 'http',
@@ -49,6 +54,18 @@ bycdeploy.new({
     {
       name: 'PERIDOT_PRODUCTION',
       value: if kubernetes.dev() then 'false' else 'true',
+    },
+    if utils.local_image then {
+      name: 'PERIDOT_S3_ENDPOINT',
+      value: 'minio.default.svc.cluster.local:9000'
+    },
+    if utils.local_image then {
+      name: 'PERIDOT_S3_DISABLE_SSL',
+      value: 'true'
+    },
+    if utils.local_image then {
+      name: 'PERIDOT_S3_FORCE_PATH_STYLE',
+      value: 'true'
     },
     $.dsn,
   ] + temporal.kube_env('PERIDOT'),

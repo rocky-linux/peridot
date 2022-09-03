@@ -54,6 +54,7 @@ import (
 	"peridot.resf.org/peridot/db/models"
 	peridotpb "peridot.resf.org/peridot/pb"
 	"peridot.resf.org/utils"
+	"runtime"
 	"strings"
 	"time"
 )
@@ -78,6 +79,19 @@ func archToGoArch(arch string) string {
 	return arch
 }
 
+func goArchToArch(arch string) string {
+	switch arch {
+	case "arm64":
+		return "aarch64"
+	case "ppc64le":
+		return "ppc64le"
+	case "s390x":
+		return "s390x"
+	default:
+		return "x86_64"
+	}
+}
+
 func (c *Controller) genNameWorker(buildID, purpose string) string {
 	return strings.ReplaceAll(fmt.Sprintf("pb-%s-%s", buildID, purpose), "_", "-")
 }
@@ -89,13 +103,20 @@ func (c *Controller) genNameWorker(buildID, purpose string) string {
 func (c *Controller) provisionWorker(ctx workflow.Context, req *ProvisionWorkerRequest) (string, func(), error) {
 	queue := c.mainQueue
 
-	projects, err := c.db.ListProjects(&peridotpb.ProjectFilters{
-		Id: wrapperspb.String(req.ProjectId),
-	})
-	if err != nil {
-		return "", nil, fmt.Errorf("could not list projects: %v", err)
+	var project *models.Project
+	if req.ProjectId != "" {
+		projects, err := c.db.ListProjects(&peridotpb.ProjectFilters{
+			Id: wrapperspb.String(req.ProjectId),
+		})
+		if err != nil {
+			return "", nil, fmt.Errorf("could not list projects: %v", err)
+		}
+		project = &projects[0]
+	} else {
+		project = &models.Project{
+			Archs: []string{goArchToArch(runtime.GOARCH)},
+		}
 	}
-	project := projects[0]
 
 	// Normalize arch string
 	imageArch := req.Arch
@@ -149,7 +170,7 @@ func (c *Controller) provisionWorker(ctx workflow.Context, req *ProvisionWorkerR
 	ctx = workflow.WithChildOptions(ctx, workflow.ChildWorkflowOptions{
 		TaskQueue: queue,
 	})
-	err = workflow.ExecuteChildWorkflow(ctx, c.ProvisionWorkerWorkflow, req, queue, imageArch).Get(ctx, &podName)
+	err := workflow.ExecuteChildWorkflow(ctx, c.ProvisionWorkerWorkflow, req, queue, imageArch).Get(ctx, &podName)
 	if err != nil {
 		var applicationErr *temporal.ApplicationError
 		if errors.As(err, &applicationErr) {
@@ -181,7 +202,11 @@ func (c *Controller) provisionWorker(ctx workflow.Context, req *ProvisionWorkerR
 func (c *Controller) ProvisionWorkerWorkflow(ctx workflow.Context, req *ProvisionWorkerRequest, queue string, imageArch string) (string, error) {
 	var task models.Task
 	taskSideEffect := workflow.SideEffect(ctx, func(ctx workflow.Context) interface{} {
-		task, err := c.db.CreateTask(nil, "noarch", peridotpb.TaskType_TASK_TYPE_WORKER_PROVISION, &req.ProjectId, &req.TaskId)
+		var projectId *string
+		if req.ProjectId != "" {
+			projectId = &req.ProjectId
+		}
+		task, err := c.db.CreateTask(nil, "noarch", peridotpb.TaskType_TASK_TYPE_WORKER_PROVISION, projectId, &req.TaskId)
 		if err != nil {
 			return nil
 		}
@@ -192,7 +217,7 @@ func (c *Controller) ProvisionWorkerWorkflow(ctx workflow.Context, req *Provisio
 	if err != nil {
 		return "", err
 	}
-	if !task.ProjectId.Valid {
+	if task.ID.String() == "" {
 		return "", fmt.Errorf("could not create task")
 	}
 
@@ -234,7 +259,11 @@ func (c *Controller) ProvisionWorkerWorkflow(ctx workflow.Context, req *Provisio
 func (c *Controller) DestroyWorkerWorkflow(ctx workflow.Context, req *ProvisionWorkerRequest) error {
 	var task models.Task
 	taskSideEffect := workflow.SideEffect(ctx, func(ctx workflow.Context) interface{} {
-		task, err := c.db.CreateTask(nil, "noarch", peridotpb.TaskType_TASK_TYPE_WORKER_DESTROY, &req.ProjectId, &req.TaskId)
+		var projectId *string
+		if req.ProjectId != "" {
+			projectId = &req.ProjectId
+		}
+		task, err := c.db.CreateTask(nil, "noarch", peridotpb.TaskType_TASK_TYPE_WORKER_DESTROY, projectId, &req.TaskId)
 		if err != nil {
 			return nil
 		}
@@ -245,7 +274,7 @@ func (c *Controller) DestroyWorkerWorkflow(ctx workflow.Context, req *ProvisionW
 	if err != nil {
 		return err
 	}
-	if !task.ProjectId.Valid {
+	if task.ID.String() == "" {
 		return fmt.Errorf("could not create task")
 	}
 
@@ -569,6 +598,10 @@ func (c *Controller) CreateK8sPodActivity(ctx context.Context, req *ProvisionWor
 						{
 							Name:  "BYC_NS",
 							Value: os.Getenv("BYC_NS"),
+						},
+						{
+							Name:  "BYC_FORCE_NS",
+							Value: os.Getenv("BYC_FORCE_NS"),
 						},
 						{
 							Name:  "LOCALSTACK_ENDPOINT",

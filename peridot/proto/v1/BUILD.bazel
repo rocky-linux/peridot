@@ -70,6 +70,18 @@ openapi_generator(
     visibility = ["//visibility:public"],
 )
 
+openapi_generator(
+    name = "client_go",
+    additional_properties = {
+        "packageName": "peridotopenapi",
+        "generateInterfaces": "true",
+        "hideGenerationTimestamp": "true",
+    },
+    generator = "go",
+    spec = ":openapi",
+    visibility = ["//visibility:public"],
+)
+
 go_library(
     name = "pb",
     embed = [":peridotpb_go_proto"],

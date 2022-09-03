@@ -1,0 +1,25 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go-grpc-prometheus",
+    srcs = [
+        "client.go",
+        "client_metrics.go",
+        "client_reporter.go",
+        "metric_options.go",
+        "server.go",
+        "server_metrics.go",
+        "server_reporter.go",
+        "util.go",
+    ],
+    importmap = "peridot.resf.org/vendor/github.com/grpc-ecosystem/go-grpc-prometheus",
+    importpath = "github.com/grpc-ecosystem/go-grpc-prometheus",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/prometheus/client_golang/prometheus",
+        "@org_golang_google_grpc//:go_default_library",
+        "@org_golang_google_grpc//codes",
+        "@org_golang_google_grpc//status",
+        "@org_golang_x_net//context",
+    ],
+)

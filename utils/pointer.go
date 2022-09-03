@@ -102,10 +102,22 @@ func NullTimeToTimestamppb(t sql.NullTime) *timestamppb.Timestamp {
 	return timestamppb.New(t.Time)
 }
 
+func NullStringToPointer(s sql.NullString) *string {
+	if !s.Valid {
+		return nil
+	}
+
+	return &s.String
+}
+
 func Int64(i int64) *int64 {
 	return &i
 }
 
 func Bool(b bool) *bool {
 	return &b
+}
+
+func Pointer[T any](t T) *T {
+	return &t
 }

@@ -31,11 +31,14 @@
 package main
 
 import (
+	"github.com/go-git/go-billy/v5/osfs"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"go.temporal.io/sdk/client"
+	peridotcommon "peridot.resf.org/peridot/common"
 	serverconnector "peridot.resf.org/peridot/db/connector"
 	peridotimplv1 "peridot.resf.org/peridot/impl/v1"
+	"peridot.resf.org/peridot/lookaside/s3"
 	"peridot.resf.org/temporalutils"
 	"peridot.resf.org/utils"
 )
@@ -54,6 +57,7 @@ func init() {
 	cnf.DatabaseName = &dname
 	cnf.Name = "peridot"
 
+	peridotcommon.AddFlags(root.PersistentFlags())
 	utils.AddFlags(root.PersistentFlags(), cnf)
 }
 
@@ -64,7 +68,12 @@ func mn(_ *cobra.Command, _ []string) {
 	}
 	defer c.Close()
 
-	s, err := peridotimplv1.NewServer(serverconnector.MustAuto(), c)
+	storage, err := s3.New(osfs.New("/"))
+	if err != nil {
+		logrus.Fatalln("unable to create S3 storage", err)
+	}
+
+	s, err := peridotimplv1.NewServer(serverconnector.MustAuto(), c, storage)
 	if err != nil {
 		logrus.Fatalf("could not init server: %v", err)
 	}

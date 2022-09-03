@@ -46,6 +46,7 @@ import (
 	peridotpb "peridot.resf.org/peridot/pb"
 	"peridot.resf.org/peridot/plugin"
 	"peridot.resf.org/peridot/rpmbuild"
+	"peridot.resf.org/utils"
 )
 
 const (
@@ -199,7 +200,7 @@ func (c *Controller) commonCreateTask(task *models.Task, taskResponse proto.Mess
 			c.log.Errorf("could not set task status: %v", err)
 		}
 
-		taskDb, err := c.db.GetTask(task.ID.String(), task.ProjectId.String)
+		taskDb, err := c.db.GetTask(task.ID.String(), utils.NullStringToPointer(task.ProjectId))
 		if err != nil {
 			c.log.Errorf("could not get task: %v", err)
 			return

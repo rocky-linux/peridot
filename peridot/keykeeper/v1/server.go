@@ -174,10 +174,8 @@ func (s *Server) Run() {
 		defer wg.Done()
 		res := utils.NewGRPCServer(
 			&utils.GRPCOptions{
-				Timeout: &timeout,
-				ServerOptions: []grpc.ServerOption{
-					grpc.UnaryInterceptor(s.interceptor),
-				},
+				Timeout:     &timeout,
+				Interceptor: s.interceptor,
 			},
 			func(r *utils.Register) {
 				endpoints := []utils.GrpcEndpointRegister{

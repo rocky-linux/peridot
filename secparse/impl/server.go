@@ -67,9 +67,7 @@ func (s *Server) interceptor(ctx context.Context, req interface{}, usi *grpc.Una
 func (s *Server) Run() {
 	res := utils.NewGRPCServer(
 		&utils.GRPCOptions{
-			ServerOptions: []grpc.ServerOption{
-				grpc.UnaryInterceptor(s.interceptor),
-			},
+			Interceptor: s.interceptor,
 		},
 		func(r *utils.Register) {
 			err := secparsepb.RegisterSecparseHandlerFromEndpoint(

@@ -33,7 +33,7 @@ service PackageService {
 // for a specific package
 enum PackageType {
   // Unknown value. Should never be used
-  PACKAGE_TYPE_UNSPECIFIED = 0;
+  PACKAGE_TYPE_DEFAULT = 0;
 
   // Normal packages from downstream dist-git
   // The repos are imported as-is
