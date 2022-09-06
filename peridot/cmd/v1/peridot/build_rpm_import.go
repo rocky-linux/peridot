@@ -32,12 +32,13 @@ package main
 
 import (
 	"encoding/base64"
-	"github.com/spf13/cobra"
 	"io/ioutil"
 	"log"
-	"openapi.peridot.resf.org/peridotopenapi"
 	"os"
 	"time"
+
+	"github.com/spf13/cobra"
+	"openapi.peridot.resf.org/peridotopenapi"
 )
 
 type LookasideUploadTask struct {
@@ -103,7 +104,7 @@ func buildRpmImportMn(_ *cobra.Command, args []string) {
 	log.Println("Triggering RPM batch import")
 
 	cl := getClient(serviceBuild).(peridotopenapi.BuildServiceApi)
-	_, _, err := cl.RpmLookasideBatchImport(getContext(), projectId).
+	importRes, _, err := cl.RpmLookasideBatchImport(getContext(), projectId).
 		Body(peridotopenapi.InlineObject4{
 			LookasideBlobs: &blobs,
 			ForceOverride:  &buildRpmImportForceOverride,
