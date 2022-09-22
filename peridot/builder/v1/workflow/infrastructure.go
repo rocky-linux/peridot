@@ -36,12 +36,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"math/rand"
-	"os"
-	"runtime"
-	"strings"
-	"time"
-
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"go.temporal.io/api/enums/v1"
@@ -55,9 +49,14 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	"math/rand"
+	"os"
 	"peridot.resf.org/peridot/db/models"
 	peridotpb "peridot.resf.org/peridot/pb"
 	"peridot.resf.org/utils"
+	"runtime"
+	"strings"
+	"time"
 )
 
 type ProvisionWorkerRequest struct {
@@ -639,14 +638,6 @@ func (c *Controller) CreateK8sPodActivity(ctx context.Context, req *ProvisionWor
 							Name:      "security-limits",
 							MountPath: "/etc/security/limits.conf",
 						},
-						{
-							Name:      "sysfs",
-							MountPath: "/sys/fs",
-						},
-						{
-							Name:      "tmpfs",
-							MountPath: "/tmp/",
-						},
 					},
 				},
 			},
@@ -666,23 +657,6 @@ func (c *Controller) CreateK8sPodActivity(ctx context.Context, req *ProvisionWor
 							Path: "/etc/security/limits.conf",
 						},
 					},
-				},
-				{
-					Name: "sysfs",
-					VolumeSource: v1.VolumeSource{
-						HostPath: &v1.HostPathVolumeSource{
-							Path: "/sys/fs",
-						},
-					},
-				},
-				{
-					Name:         "tmpfs",
-					VolumeSource: v1.VolumeSource{
-						EmptyDir: &v1.EmptyDirVolumeSource{
-							Medium: "Memory",
-							SizeLimit: nil
-						}
-					}
 				},
 			},
 			Tolerations: []v1.Toleration{
