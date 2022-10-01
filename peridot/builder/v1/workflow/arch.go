@@ -36,9 +36,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/google/uuid"
-	"go.temporal.io/sdk/activity"
-	"google.golang.org/protobuf/types/known/wrapperspb"
 	"io"
 	"io/fs"
 	"io/ioutil"
@@ -46,21 +43,26 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"peridot.resf.org/peridot/db/models"
-	peridotpb "peridot.resf.org/peridot/pb"
-	"peridot.resf.org/peridot/rpmbuild"
-	"peridot.resf.org/secparse/rpmutils"
-	"peridot.resf.org/servicecatalog"
 	"regexp"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/google/uuid"
+	"go.temporal.io/sdk/activity"
+	"google.golang.org/protobuf/types/known/wrapperspb"
+	"peridot.resf.org/peridot/db/models"
+	peridotpb "peridot.resf.org/peridot/pb"
+	"peridot.resf.org/peridot/rpmbuild"
+	"peridot.resf.org/secparse/rpmutils"
+	"peridot.resf.org/servicecatalog"
 )
 
 var (
 	releaseDistRegex = regexp.MustCompile(".+\\.(el[^. \\t\\n]+)")
-	BuildPkgGroup    = []string{
+	// defaults are for el9
+	DefaultBuildPkgGroup = []string{
 		"bash",
 		"bzip2",
 		"coreutils",
@@ -83,7 +85,8 @@ var (
 		"which",
 		"xz",
 	}
-	SrpmBuildPkgGroup = []string{
+	// defaults are for EL9
+	DefaultSrpmBuildPkgGroup = []string{
 		"bash",
 		"glibc-minimal-langpack",
 		"gnupg2",
@@ -659,8 +662,20 @@ func (c *Controller) BuildArchActivity(ctx context.Context, projectId string, pa
 		return err
 	}
 
+  var pkgGroup []string = DefaultBuildPkgGroup
+
+  if len(project.BuildStagePackages) != 0 {
+    pkgGroup = project.BuildStagePackages
+  }
+
+  if len(pkgEo.DependsOn) != 0 {
+    for _, pkg := range pkgEo.DependsOn {
+      pkgGroup = append(pkgGroup, pkg)
+    }
+  }
+
 	hostArch := os.Getenv("REAL_BUILD_ARCH")
-	err = c.writeMockConfig(&project, packageVersion, extraOptions, arch, hostArch, BuildPkgGroup)
+	err = c.writeMockConfig(&project, packageVersion, extraOptions, arch, hostArch, pkgGroup)
 	if err != nil {
 		return fmt.Errorf("could not write mock config: %v", err)
 	}

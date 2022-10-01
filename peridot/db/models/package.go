@@ -77,6 +77,7 @@ type ExtraOptions struct {
 	PackageName  string         `json:"packageName" db:"package_name"`
 	WithFlags    pq.StringArray `json:"withFlags" db:"with_flags"`
 	WithoutFlags pq.StringArray `json:"withoutFlags" db:"without_flags"`
+	DependsOn    pq.StringArray `json:"dependsOn" db:"depends_on"`
 }
 
 func (p *Package) ToProto() *peridotpb.Package {

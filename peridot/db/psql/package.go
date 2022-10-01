@@ -344,3 +344,21 @@ func (a *Access) GetExtraOptionsForPackage(projectId string, packageName string)
 	}
 	return &ret, nil
 }
+
+func (a *Access) SetGroupInstallOptionsForPackage(projectId string, packageName string, dependsOn pq.StringArray) error {
+	if dependsOn == nil {
+		dependsOn = pq.StringArray{}
+	}
+	_, err := a.query.Exec(
+		`
+        insert into extra_package_options (project_id, package_name, depends_on)
+        values ($1, $2, $3)
+        on conflict on constraint extra_package_options_uniq do
+            update set depends_on = $3, updated_at = now()
+        `,
+		projectId,
+		packageName,
+    dependsOn,
+	)
+	return err
+}

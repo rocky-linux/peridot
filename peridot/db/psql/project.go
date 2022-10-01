@@ -310,3 +310,16 @@ func (a *Access) SetProjectKeys(projectId string, username string, password stri
 	)
 	return err
 }
+
+func (a *Access) SetBuildRootPackages(projectId string, srpmPackages []string, buildPackages []string) error {
+	_, err := a.query.Exec(
+		`
+		update projects set srpm_stage_packages = $2, build_stage_packages = $3
+    where project_id = $1
+		`,
+		projectId,
+		srpmPackages,
+		buildPackages,
+	)
+	return err
+}

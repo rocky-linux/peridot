@@ -70,6 +70,9 @@ type Project struct {
 
 	VendorMacro   sql.NullString `json:"vendorMacro" db:"vendor_macro"`
 	PackagerMacro sql.NullString `json:"packagerMacro" db:"packager_macro"`
+
+  SrpmStagePackages  pq.StringArray `json:"srpmStagePackages" db:"srpm_stage_packages"`
+  BuildStagePackages  pq.StringArray `json:"buildStagePackages" db:"build_stage_packages"`
 }
 
 type Projects []Project
