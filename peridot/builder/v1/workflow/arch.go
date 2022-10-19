@@ -662,17 +662,17 @@ func (c *Controller) BuildArchActivity(ctx context.Context, projectId string, pa
 		return err
 	}
 
-  var pkgGroup []string = DefaultBuildPkgGroup
+	var pkgGroup = DefaultBuildPkgGroup
 
-  if len(project.BuildStagePackages) != 0 {
-    pkgGroup = project.BuildStagePackages
-  }
+	if len(project.BuildStagePackages) != 0 {
+		pkgGroup = project.BuildStagePackages
+	}
 
-  if len(pkgEo.DependsOn) != 0 {
-    for _, pkg := range pkgEo.DependsOn {
-      pkgGroup = append(pkgGroup, pkg)
-    }
-  }
+	if len(pkgEo.DependsOn) != 0 {
+		for _, pkg := range pkgEo.DependsOn {
+			pkgGroup = append(pkgGroup, pkg)
+		}
+	}
 
 	hostArch := os.Getenv("REAL_BUILD_ARCH")
 	err = c.writeMockConfig(&project, packageVersion, extraOptions, arch, hostArch, pkgGroup)

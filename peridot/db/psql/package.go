@@ -335,7 +335,7 @@ func (a *Access) GetExtraOptionsForPackage(projectId string, packageName string)
 	var ret models.ExtraOptions
 	err := a.query.Get(
 		&ret,
-		"select id, created_at, updated_at, project_id, package_name, with_flags, without_flags from extra_package_options where project_id = $1 and package_name = $2",
+		"select id, created_at, updated_at, project_id, package_name, with_flags, without_flags, depends_on from extra_package_options where project_id = $1 and package_name = $2",
 		projectId,
 		packageName,
 	)
@@ -358,7 +358,7 @@ func (a *Access) SetGroupInstallOptionsForPackage(projectId string, packageName 
         `,
 		projectId,
 		packageName,
-    dependsOn,
+		dependsOn,
 	)
 	return err
 }

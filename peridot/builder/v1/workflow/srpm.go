@@ -416,16 +416,16 @@ func (c *Controller) BuildSRPMActivity(ctx context.Context, upstreamPrefix strin
 		return fmt.Errorf("could not find spec file: %v", err)
 	}
 
-  var pkgGroup []string = DefaultSrpmBuildPkgGroup
+	var pkgGroup = DefaultSrpmBuildPkgGroup
 
-  if len(project.SrpmStagePackages) != 0 {
-    pkgGroup = project.SrpmStagePackages
-  }
-  if len(pkgEo.DependsOn) != 0 {
-    for _, pkg := range pkgEo.DependsOn {
-      pkgGroup = append(pkgGroup, pkg)
-    }
-  }
+	if len(project.SrpmStagePackages) != 0 {
+		pkgGroup = project.SrpmStagePackages
+	}
+	if len(pkgEo.DependsOn) != 0 {
+		for _, pkg := range pkgEo.DependsOn {
+			pkgGroup = append(pkgGroup, pkg)
+		}
+	}
 
 	hostArch := os.Getenv("REAL_BUILD_ARCH")
 	extraOptions.EnableNetworking = true
