@@ -119,5 +119,6 @@ func Bool(b bool) *bool {
 }
 
 func Pointer[T any](t T) *T {
-	return &t
+	s := t
+	return &s
 }

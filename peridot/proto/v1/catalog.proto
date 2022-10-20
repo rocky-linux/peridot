@@ -55,6 +55,23 @@ message CatalogExtraPackageOptions {
   repeated string without = 3 [(validate.rules).repeated = {unique: true}];
 }
 
+message CatalogGroupInstallScopedPackage {
+    string name = 1 [(validate.rules).string.min_bytes = 1];
+    repeated string depends_on = 2 [(validate.rules).repeated = {unique: true}];
+}
+
+message CatalogGroupInstallOption {
+  // list of all packages required to be installed in the build root per project
+  repeated string name = 1 [(validate.rules).repeated.items.string.min_bytes = 1];
+  // Scoped packages allow for dynamically injecting build requirements into the build root e.g. when building SCLs
+  repeated CatalogGroupInstallScopedPackage scoped_package = 2;
+}
+
+message CatalogGroupInstallOptions {
+  CatalogGroupInstallOption srpm  = 1;
+  CatalogGroupInstallOption build = 2;
+}
+
 message CatalogExtraOptions {
   repeated CatalogExtraPackageOptions package_options = 1;
 }
@@ -71,8 +88,15 @@ message KindCatalogExtraOptions {
   repeated string modified_packages = 1;
 }
 
+message KindCatalogGroupInstallOptions {
+  repeated string srpm_packages  = 1;
+  repeated string build_packages = 2;
+  repeated CatalogGroupInstallScopedPackage scoped_package = 3;
+}
+
 message SyncCatalogTask {
   KindCatalogSync catalog_sync = 1;
   KindCatalogExtraOptions extra_options = 2;
+  KindCatalogGroupInstallOptions group_install_options = 4;
   repeated string reprocess_build_ids = 3;
 }

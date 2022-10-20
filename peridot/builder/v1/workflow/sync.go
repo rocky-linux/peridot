@@ -35,6 +35,15 @@ import (
 	"encoding/base64"
 	"encoding/xml"
 	"fmt"
+	"github.com/gobwas/glob"
+	"io/ioutil"
+	"os"
+	"path"
+	"path/filepath"
+	"regexp"
+	"strings"
+	"time"
+
 	"github.com/go-git/go-billy/v5"
 	"github.com/go-git/go-billy/v5/memfs"
 	"github.com/go-git/go-git/v5"
@@ -47,19 +56,12 @@ import (
 	"go.temporal.io/sdk/workflow"
 	"google.golang.org/protobuf/encoding/prototext"
 	"google.golang.org/protobuf/types/known/wrapperspb"
-	"io/ioutil"
-	"os"
-	"path"
-	"path/filepath"
 	peridotdb "peridot.resf.org/peridot/db"
 	"peridot.resf.org/peridot/db/models"
 	peridotpb "peridot.resf.org/peridot/pb"
 	"peridot.resf.org/peridot/yummeta"
 	yumrepofspb "peridot.resf.org/peridot/yumrepofs/pb"
 	"peridot.resf.org/utils"
-	"regexp"
-	"strings"
-	"time"
 )
 
 var (
@@ -450,6 +452,97 @@ func kindCatalogSync(tx peridotdb.Access, req *peridotpb.SyncCatalogRequest, cat
 	return &ret, nil
 }
 
+func processGroupInstallScopedPackageOptions(tx peridotdb.Access, req *peridotpb.SyncCatalogRequest, groupInstallOptionSet *peridotpb.CatalogGroupInstallOption) (scopedPackages *peridotpb.CatalogGroupInstallScopedPackage, err error) {
+	// handle scoped packages relationships on packages for injection into build root
+	for _, scopedPackage := range groupInstallOptionSet.ScopedPackage {
+		filters := &peridotpb.PackageFilters{NameExact: wrapperspb.String(scopedPackage.Name)}
+		isGlob := false
+		if strings.HasPrefix(scopedPackage.Name, "*") || strings.HasSuffix(scopedPackage.Name, "*") {
+			filters.Name = wrapperspb.String(strings.TrimSuffix(strings.TrimPrefix(scopedPackage.Name, "*"), "*"))
+			filters.NameExact = nil
+			isGlob = true
+		}
+
+		pkgs, err := tx.GetPackagesInProject(filters, req.ProjectId.Value, 0, -1)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get package %s: %w", scopedPackage.Name, err)
+		}
+		if len(pkgs) == 0 {
+			return nil, fmt.Errorf("package %s not found in project %s (scoped package)", scopedPackage.Name, req.ProjectId.Value)
+		}
+
+		var dbPkgs []models.Package
+		if isGlob {
+			for _, p := range pkgs {
+				g, err := glob.Compile(scopedPackage.Name)
+				if err != nil {
+					return nil, fmt.Errorf("failed to compile glob %s: %w", scopedPackage.Name, err)
+				}
+				if g.Match(p.Name) {
+					dbPkgs = append(dbPkgs, p)
+				}
+			}
+		} else {
+			if scopedPackage.Name != pkgs[0].Name {
+				return nil, fmt.Errorf("package %s not found in project %s (cannot set extra options, not glob)", scopedPackage.Name, req.ProjectId.Value)
+			}
+			dbPkgs = append(dbPkgs, pkgs[0])
+		}
+		if len(dbPkgs) == 0 {
+			return nil, fmt.Errorf("package %s not found in project %s (cannot set extra options, glob)", scopedPackage.Name, req.ProjectId.Value)
+		}
+
+		for _, dbPkg := range dbPkgs {
+			err = tx.SetGroupInstallOptionsForPackage(req.ProjectId.Value, dbPkg.Name, scopedPackage.DependsOn)
+			if err != nil {
+				return nil, fmt.Errorf("failed to set scoped package options for package %s", scopedPackage.Name)
+			}
+		}
+	}
+	return scopedPackages, nil
+}
+
+func processGroupInstallOptionSet(groupInstallOptionSet *peridotpb.CatalogGroupInstallOption) (packages []string, err error) {
+	for _, name := range groupInstallOptionSet.Name {
+		packages = append(packages, name)
+	}
+	if len(packages) == 0 {
+		return nil, fmt.Errorf("failed to parse packages from GroupInstall options")
+	}
+
+	return packages, nil
+}
+
+func kindCatalogGroupInstallOptions(tx peridotdb.Access, req *peridotpb.SyncCatalogRequest, groupInstallOptions []*peridotpb.CatalogGroupInstallOptions) (*peridotpb.KindCatalogGroupInstallOptions, error) {
+	ret := &peridotpb.KindCatalogGroupInstallOptions{}
+
+	for _, groupInstallOption := range groupInstallOptions {
+
+		// Proces scoped packages
+		scopedPackages, err := processGroupInstallScopedPackageOptions(tx, req, groupInstallOption.Srpm)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse srpm groupinstall options: %s", err.Error())
+		}
+		ret.ScopedPackage = append(ret.ScopedPackage, scopedPackages)
+
+		// Process build root packages
+		srpmPackages, err := processGroupInstallOptionSet(groupInstallOption.Srpm)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse srpm groupinstall options: %w", err)
+		}
+		buildPackages, err := processGroupInstallOptionSet(groupInstallOption.Build)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse build groupinstall options: %w", err)
+		}
+		err = tx.SetBuildRootPackages(req.ProjectId.Value, srpmPackages, buildPackages)
+
+		ret.SrpmPackages = append(ret.SrpmPackages, srpmPackages...)
+		ret.BuildPackages = append(ret.BuildPackages, buildPackages...)
+	}
+
+	return ret, nil
+}
+
 func kindCatalogExtraOptions(tx peridotdb.Access, req *peridotpb.SyncCatalogRequest, extraOptions []*peridotpb.CatalogExtraOptions) (*peridotpb.KindCatalogExtraOptions, error) {
 	ret := &peridotpb.KindCatalogExtraOptions{}
 
@@ -704,6 +797,7 @@ func (c *Controller) SyncCatalogActivity(req *peridotpb.SyncCatalogRequest) (*pe
 
 	var catalogs []*peridotpb.CatalogSync
 	var extraOptions []*peridotpb.CatalogExtraOptions
+	var groupInstallOptions []*peridotpb.CatalogGroupInstallOptions
 
 	files, err := recursiveSearchBillyFs(w.Filesystem, ".", ".cfg")
 	if err != nil {
@@ -745,6 +839,13 @@ func (c *Controller) SyncCatalogActivity(req *peridotpb.SyncCatalogRequest) (*pe
 				return nil, fmt.Errorf("failed to parse kind resf.peridot.v1.CatalogExtraOptions: %w", err)
 			}
 			extraOptions = append(extraOptions, ce1)
+		case "resf.peridot.v1.CatalogGroupInstallOptions":
+			cg1 := &peridotpb.CatalogGroupInstallOptions{}
+			err = prototext.Unmarshal(bts, cg1)
+			if err != nil {
+				return nil, fmt.Errorf("failed to parse kind resf.peridot.v1.CatalogGroupInstallOptions: %w", err)
+			}
+			groupInstallOptions = append(groupInstallOptions, cg1)
 		default:
 			return nil, fmt.Errorf("unknown format %s", format)
 		}
@@ -767,6 +868,12 @@ func (c *Controller) SyncCatalogActivity(req *peridotpb.SyncCatalogRequest) (*pe
 		return nil, fmt.Errorf("failed to process kind CatalogSyncExtraOptions: %w", err)
 	}
 	ret.ExtraOptions = resKindCatalogExtraOptions
+
+	resKindCatalogGroupInstallOptions, err := kindCatalogGroupInstallOptions(tx, req, groupInstallOptions)
+	if err != nil {
+		return nil, fmt.Errorf("failed to process kind CatalogSyncGroupInstallOptions: %w", err)
+	}
+	ret.GroupInstallOptions = resKindCatalogGroupInstallOptions
 
 	var buildIDs []string
 	var newBuildPackages []string

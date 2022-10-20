@@ -39,6 +39,14 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"io"
+	"io/fs"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"strings"
+	"time"
+
 	"github.com/cavaliergopher/rpm"
 	"github.com/go-git/go-billy/v5/osfs"
 	"github.com/go-git/go-git/v5"
@@ -48,16 +56,9 @@ import (
 	"go.temporal.io/sdk/activity"
 	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
-	"io"
-	"io/fs"
-	"os"
-	"os/exec"
-	"path/filepath"
 	"peridot.resf.org/peridot/db/models"
 	peridotpb "peridot.resf.org/peridot/pb"
 	"peridot.resf.org/peridot/rpmbuild"
-	"strings"
-	"time"
 )
 
 func gitlabify(str string) string {
@@ -415,9 +416,20 @@ func (c *Controller) BuildSRPMActivity(ctx context.Context, upstreamPrefix strin
 		return fmt.Errorf("could not find spec file: %v", err)
 	}
 
+	var pkgGroup = DefaultSrpmBuildPkgGroup
+
+	if len(project.SrpmStagePackages) != 0 {
+		pkgGroup = project.SrpmStagePackages
+	}
+	if len(pkgEo.DependsOn) != 0 {
+		for _, pkg := range pkgEo.DependsOn {
+			pkgGroup = append(pkgGroup, pkg)
+		}
+	}
+
 	hostArch := os.Getenv("REAL_BUILD_ARCH")
 	extraOptions.EnableNetworking = true
-	err = c.writeMockConfig(&project, packageVersion, extraOptions, "noarch", hostArch, SrpmBuildPkgGroup)
+	err = c.writeMockConfig(&project, packageVersion, extraOptions, "noarch", hostArch, pkgGroup)
 	if err != nil {
 		return fmt.Errorf("could not write mock config: %v", err)
 	}
