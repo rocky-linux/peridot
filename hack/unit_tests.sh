@@ -3,4 +3,6 @@
 set -o errexit
 set -x
 
-bazel test --config=ci //...
+source hack/bazel_setup.sh
+
+$BAZEL_T //...

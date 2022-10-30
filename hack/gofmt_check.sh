@@ -2,7 +2,9 @@
 
 set -o errexit
 
-bazel build --config=ci @go_sdk//...
+source hack/bazel_setup.sh
+
+$BAZEL_B @go_sdk//...
 
 GO_BIN="$(bazel info output_base)/external/go_sdk/bin/go"
 
