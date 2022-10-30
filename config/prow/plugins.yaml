@@ -17,13 +17,6 @@ plugins:
       - wip
       - yuks
 
-external_plugins:
-  rocky-linux/peridot:
-    - name: needs-rebase
-      events:
-        - issue_comment
-        - pull_request
-
 config_updater:
   maps:
     config/prow/config.yaml:
