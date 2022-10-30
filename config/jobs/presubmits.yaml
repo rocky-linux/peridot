@@ -35,3 +35,14 @@ presubmits:
           - image: quay.io/peridot/ci:v0.3.16
             command:
               - hack/non_manual_build.sh
+
+    - name: pull-peridot-gofmt-check
+      branches:
+        - main
+      always_run: true
+      decorate: true
+      spec:
+        containers:
+          - image: quay.io/peridot/ci:v0.3.16
+            command:
+              - hack/gofmt_check.sh
