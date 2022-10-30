@@ -20,6 +20,13 @@ presubmits:
       always_run: true
       decorate: true
       spec:
+        tolerations:
+          - key: peridot.rockylinux.org/workflow-tolerates-arch
+            operator: Equal
+            value: amd64
+            effect: NoSchedule
+        nodeSelector:
+          peridot.rockylinux.org/workflow-tolerates-arch: amd64
         containers:
           - image: quay.io/peridot/ci:v0.3.16
             command:
@@ -31,6 +38,13 @@ presubmits:
       always_run: true
       decorate: true
       spec:
+        tolerations:
+          - key: peridot.rockylinux.org/workflow-tolerates-arch
+            operator: Equal
+            value: amd64
+            effect: NoSchedule
+        nodeSelector:
+          peridot.rockylinux.org/workflow-tolerates-arch: amd64
         containers:
           - image: quay.io/peridot/ci:v0.3.16
             command:

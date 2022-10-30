@@ -1,0 +1,20 @@
+postsubmits:
+  rocky-linux/peridot:
+    - name: post-peridot-unit-test
+      always_run: true
+      decorate: true
+      branches:
+        - main
+      spec:
+        tolerations:
+          - key: peridot.rockylinux.org/workflow-tolerates-arch
+            operator: Equal
+            value: amd64
+            effect: NoSchedule
+        nodeSelector:
+          peridot.rockylinux.org/workflow-tolerates-arch: amd64
+        containers:
+          - image: quay.io/peridot/ci:v0.3.16
+            command:
+              - hack/unit_tests.sh
+
