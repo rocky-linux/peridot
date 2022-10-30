@@ -3,7 +3,7 @@ workspace(
     managed_directories = {"@npm": ["node_modules"]},
 )
 
-load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive", "http_jar")
 
 # --start python--
 load("//wrksp:python_download.bzl", "python_download")
@@ -40,10 +40,10 @@ http_archive(
 
 http_archive(
     name = "bazel_gazelle",
-    sha256 = "5982e5463f171da99e3bdaeff8c0f48283a7a5f396ec5282910b9e8a49c0dd7e",
+    sha256 = "de69a09dc70417580aabf20a28619bb3ef60d038470c7cf8442fafcf627c21cb",
     urls = [
-        "https://mirror.bazel.build/github.com/bazelbuild/bazel-gazelle/releases/download/v0.25.0/bazel-gazelle-v0.25.0.tar.gz",
-        "https://github.com/bazelbuild/bazel-gazelle/releases/download/v0.25.0/bazel-gazelle-v0.25.0.tar.gz",
+        "https://mirror.bazel.build/github.com/bazelbuild/bazel-gazelle/releases/download/v0.24.0/bazel-gazelle-v0.24.0.tar.gz",
+        "https://github.com/bazelbuild/bazel-gazelle/releases/download/v0.24.0/bazel-gazelle-v0.24.0.tar.gz",
     ],
 )
 
@@ -99,23 +99,6 @@ go_repository(
     sum = "h1:pkQiBZBvdos9qq4wBAHqlzuZHEXo07pqV06ef90u1WI=",
     version = "v0.0.0-20210514164344-f6687ab2804c",
 )
-
-# --start target-determinator--
-http_archive(
-    name = "bazel_contrib_target_determinator",
-    sha256 = "1245f255cf5b857181adb7606a45a738ac4404278f33b3dc0ce0097ec70ccbb3",
-    strip_prefix = "target-determinator-61d25f5e13a4b2205b338531b929464e3ed5eb3d",
-    urls = ["https://github.com/bazel-contrib/target-determinator/archive/61d25f5e13a4b2205b338531b929464e3ed5eb3d.tar.gz"],
-)
-
-load("@bazel_contrib_target_determinator//:third_party/go/deps.bzl", td_go_dependencies = "go_dependencies")
-
-td_go_dependencies()
-
-load("@bazel_contrib_target_determinator//:third_party/go/bazel_differ_deps.bzl", td_differ_go_dependencies = "go_dependencies")
-
-td_differ_go_dependencies()
-# --end target-determinator--
 
 gazelle_dependencies()
 
@@ -223,6 +206,17 @@ load("//wrksp:atlassian_deps.bzl", "atlassian_deps")
 
 atlassian_deps()
 # --end atlassian--
+
+# --start bazel-diff--
+
+http_jar(
+    name = "bazel_diff",
+    sha256 = "59f2a614f90b4c2a6c83f1e6146d8722dfaac3a1d8f42734dcbb6ccf373a1cbd",
+    urls = [
+        "https://github.com/Tinder/bazel-diff/releases/download/4.0.5/bazel-diff_deploy.jar",
+    ],
+)
+# --end bazel-diff--
 
 new_local_repository(
     name = "raw_ts_library",
