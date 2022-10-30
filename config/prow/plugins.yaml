@@ -10,6 +10,7 @@ plugins:
       - help
       - heart
       - hold
+      - needs-rebase
       - label
       - lgtm
       - trigger

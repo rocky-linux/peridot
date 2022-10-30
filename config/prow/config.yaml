@@ -1,26 +1,30 @@
 prowjob_namespace: prow
 pod_namespace: test-pods
 
+allowed_clusters:
+  rocky-linux/peridot:
+    - default
+
 deck:
   spyglass:
     lenses:
       - lens:
           name: metadata
-          required_files:
-            - started.json|finished.json
+        required_files:
+          - started.json|finished.json
       - lens:
           config:
           name: buildlog
-          required_files:
-            - build-log.txt
+        required_files:
+          - build-log.txt
       - lens:
           name: junit
-          required_files:
-            - bazel-testlogs/.*/test.xml
+        required_files:
+          - bazel-testlogs/.*/test.xml
       - lens:
           name: podinfo
-          required_files:
-            - podinfo.json
+        required_files:
+          - podinfo.json
 
 plank:
   job_url_prefix_config:
