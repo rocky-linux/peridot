@@ -16,8 +16,9 @@ build:toplevel --config=inmemory
 build:toplevel --remote_download_outputs=toplevel
 
 build:remote --config=toplevel
-build:remote --remote_cache=grpc://buildcache.default.svc.cluster.local:9092
-build:remote --experimental_remote_downloader=grpc://buildcache.default.svc.cluster.local:9092
+build:remote --remote_cache=grpc://buildcache.default.svc.cluster.local:9092 --experimental_remote_downloader=grpc://buildcache.default.svc.cluster.local:9092
+query:remote --remote_cache=grpc://buildcache.default.svc.cluster.local:9092 --experimental_remote_downloader=grpc://buildcache.default.svc.cluster.local:9092
+fetch:remote --remote_cache=grpc://buildcache.default.svc.cluster.local:9092 --experimental_remote_downloader=grpc://buildcache.default.svc.cluster.local:9092
 build:remote --noremote_upload_local_results
 build:remote --remote_timeout=3600
 build:remote --bes_results_url=https://bz.build.resf.org/invocation/
