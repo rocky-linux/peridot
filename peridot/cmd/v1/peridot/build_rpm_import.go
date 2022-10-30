@@ -32,13 +32,12 @@ package main
 
 import (
 	"encoding/base64"
+	"github.com/spf13/cobra"
 	"io/ioutil"
 	"log"
+	"openapi.peridot.resf.org/peridotopenapi"
 	"os"
 	"time"
-
-	"github.com/spf13/cobra"
-	"openapi.peridot.resf.org/peridotopenapi"
 )
 
 type LookasideUploadTask struct {

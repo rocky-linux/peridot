@@ -148,7 +148,6 @@ export default async function(opts) {
     // Bypassing auth here doesn't accomplish anything.
     let middlewares = [];
 
-
     // If requireEmailSuffix is present, let's validate post callback
     // that the signed in email ends with a suffix in the allowlist
     // Again, a bypass here doesn't accomplish anything.
@@ -248,8 +247,11 @@ export default async function(opts) {
         const prodEnvName = `URL_${x.substr(1).replace('/',
           '_').toUpperCase()}`;
 
-        const apiUrl = prod ? (process.env[prodEnvName]
-          || opts.apis[x].prodApiUrl) : opts.apis[x].devApiUrl;
+        const apiUrl = process.env[prodEnvName]
+          ? process.env[prodEnvName]
+          : prod
+            ? opts.apis[x].prodApiUrl
+            : opts.apis[x].devApiUrl;
 
         createProxyMiddleware({
           target: apiUrl,

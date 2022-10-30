@@ -6,11 +6,12 @@ go_library(
     importpath = "peridot.resf.org/publisher/updateinfo/legacy",
     visibility = ["//visibility:public"],
     deps = [
+        "//apollo/db",
+        "//apollo/proto/v1:pb",
+        "//apollo/rpmutils",
         "//publisher/updateinfo",
-        "//secparse/db",
-        "//secparse/proto/v1:proto",
-        "//secparse/rpmutils",
-        "//vendor/github.com/go-git/go-billy/v5:go-billy",
+        "//utils",
         "//vendor/github.com/sirupsen/logrus",
+        "@org_golang_google_protobuf//types/known/wrapperspb:go_default_library",
     ],
 )

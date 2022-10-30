@@ -18,6 +18,7 @@ go_library(
     importpath = "peridot.resf.org/peridot/builder/v1/workflow",
     visibility = ["//visibility:public"],
     deps = [
+        "//apollo/rpmutils",
         "//modulemd",
         "//peridot/composetools",
         "//peridot/db",
@@ -29,7 +30,6 @@ go_library(
         "//peridot/proto/v1/yumrepofs:pb",
         "//peridot/rpmbuild",
         "//peridot/yummeta",
-        "//secparse/rpmutils",
         "//servicecatalog",
         "//utils",
         "//vendor/cirello.io/dynamolock",
@@ -58,7 +58,6 @@ go_library(
         "//vendor/go.temporal.io/sdk/client",
         "//vendor/go.temporal.io/sdk/temporal",
         "//vendor/go.temporal.io/sdk/workflow",
-        "//vendor/golang.org/x/sys/unix",
         "//vendor/gopkg.in/yaml.v3:yaml_v3",
         "//vendor/k8s.io/api/core/v1:core",
         "//vendor/k8s.io/apimachinery/pkg/api/resource",

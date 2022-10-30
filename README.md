@@ -6,8 +6,7 @@ __Other components pending__
 
 * publisher - `Composer for Peridot (currently only includes legacy mode)`
 * peridot - `Modern build system`
-* secparse - `Errata mirroring and publishing platform`
-* ui - `Product Errata UI`
+* apollo - `Errata mirroring and publishing platform`
 * utils - `Common utilities`
 * modulemd - `Modulemd parser in Go`
 
@@ -50,6 +49,6 @@ For best experience use IntelliJ+Bazel but `govendor` creates structure that is 
 #### Vendor Go dependencies
 `./hack/govendor`
 #### Run UI in development mode
-`ibazel run //TARGET:TARGET.server` - example: `ibazel run //secparse/ui:secparse.server`
+`ibazel run //TARGET:TARGET.server` - example: `ibazel run //apollo/ui:apollo.server`
 #### Find UI server targets
 `bazel query 'attr(tags, "byc_frontend_server", //...)'`

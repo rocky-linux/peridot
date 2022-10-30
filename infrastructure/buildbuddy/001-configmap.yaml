@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: buildbuddy
+  namespace: default
+data:
+  config.yaml: |
+    app:
+      build_buddy_url: "https://bz.build.resf.org"
+      default_to_dense_mode: true
+    database:
+      data_source: "sqlite3:///data/buildbuddy.db"
+    storage:
+      aws_s3:
+        region: us-east-2
+        bucket: resf-prod-buildbuddy-bz

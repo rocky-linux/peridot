@@ -21,6 +21,17 @@ presubmits:
       decorate: true
       spec:
         containers:
-          - image: alpine
+          - image: quay.io/peridot/ci:v0.3.16
             command:
-              - /bin/date
+              - hack/unit_tests.sh
+
+    - name: pull-peridot-non-manual-build
+      branches:
+        - main
+      always_run: true
+      decorate: true
+      spec:
+        containers:
+          - image: quay.io/peridot/ci:v0.3.16
+            command:
+              - hack/non_manual_build.sh

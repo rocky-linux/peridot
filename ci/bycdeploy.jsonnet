@@ -37,8 +37,14 @@ local labels = {
 
     local envs = [stageNoDash];
 
+    local ports = info.ports + (if std.objectHas(info, 'disableMetrics') && info.disableMetrics then [] else [{
+      name: 'metrics',
+      containerPort: 7332,
+      protocol: 'TCP',
+    }]);
+
     local services = if std.objectHas(info, 'services') then info.services else
-      [{ name: '%s-%s-%s' % [metadata.name, port.name, env], port: port.containerPort, portName: port.name, expose: if std.objectHas(port, 'expose') then port.expose else false } for env in envs for port in info.ports];
+      [{ name: '%s-%s-%s' % [metadata.name, port.name, env], port: port.containerPort, portName: port.name, expose: if std.objectHas(port, 'expose') then port.expose else false } for env in envs for port in ports];
 
     local nssa = '001-ns-sa.yaml';
     local migrate = '002-migrate.yaml';
@@ -176,6 +182,7 @@ local labels = {
             ],
             annotations: {
               'sidecar.istio.io/inject': 'false',
+              'linkerd.io/inject': 'disabled',
             },
           }) else {},
         ]),
@@ -191,12 +198,15 @@ local labels = {
             fsUser: if std.objectHas(info, 'fsUser') then info.fsUser else null,
             imagePullSecrets: imagePullSecrets,
             labels: db.label(),
-            annotations: if std.objectHas(info, 'annotations') then info.annotations,
+            annotations: (if std.objectHas(info, 'annotations') then info.annotations else {}) + {
+              'prometheus.io/scrape': 'true',
+              'prometheus.io/port': '7332',
+            },
             initContainers: if !legacyDb && info.backend then [kubernetes.request_cdb_certs('%s%s' % [metadata.name, stageNoDash]) + {
               serviceAccount: '%s-%s-serviceaccount' % [stageNoDash, fixed.name],
             }],
             volumes: (if std.objectHas(info, 'volumes') then info.volumes(metadata) else []) + (if !legacyDb then kubernetes.request_cdb_certs_volumes() else []),
-            ports: std.map(function(x) x { expose: null, external: null }, info.ports),
+            ports: std.map(function(x) x { expose: null, external: null }, ports),
             health: if std.objectHas(info, 'health') then info.health,
             env: env + (if dbname != '' && info.backend then ([dbPassEnv]) else []) + [
               {
@@ -218,7 +228,20 @@ local labels = {
       ]),
       [svcVsDr]:
         std.manifestYamlStream(
-          [kubernetes.define_service(metadata { name: srv.name }, srv.port, srv.port, portName=srv.portName, selector=metadata.name, env=mappings.get_env_from_svc(srv.name)) for srv in services] +
+          [kubernetes.define_service(
+            metadata {
+              name: srv.name,
+              annotations: {
+                'konghq.com/protocol': std.strReplace(std.strReplace(std.strReplace(srv.name, metadata.name, ''), stage, ''), '-', ''),
+                'ingress.kubernetes.io/service-upstream': 'true',
+              }
+            },
+            srv.port,
+            srv.port,
+            portName=srv.portName,
+            selector=metadata.name,
+            env=mappings.get_env_from_svc(srv.name),
+          ) for srv in services] +
           [kubernetes.define_virtual_service(metadata { name: srv.name + '-internal' }, {
             hosts: [vshost(srv)],
             gateways: [],

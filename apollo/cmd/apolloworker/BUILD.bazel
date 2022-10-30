@@ -1,0 +1,27 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "apolloworker_lib",
+    srcs = ["main.go"],
+    importpath = "peridot.resf.org/apollo/cmd/apolloworker",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//apollo/db/connector",
+        "//apollo/rherrata",
+        "//apollo/rhsecurity",
+        "//apollo/worker",
+        "//apollo/workflow",
+        "//proto:common",
+        "//temporalutils",
+        "//utils",
+        "//vendor/github.com/sirupsen/logrus",
+        "//vendor/github.com/spf13/cobra",
+        "//vendor/go.temporal.io/sdk/client",
+    ],
+)
+
+go_binary(
+    name = "apolloworker",
+    embed = [":apolloworker_lib"],
+    visibility = ["//visibility:public"],
+)

@@ -1,0 +1,22 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "rhsecurity",
+    srcs = [
+        "api_default.go",
+        "client.go",
+        "configuration.go",
+        "gen.go",
+        "model_cve.go",
+        "model_cve_detailed.go",
+        "model_cve_detailed_affected_release.go",
+        "model_cve_detailed_bugzilla.go",
+        "model_cve_detailed_cvss3.go",
+        "model_cve_detailed_package_state.go",
+        "response.go",
+        "utils.go",
+    ],
+    importpath = "peridot.resf.org/apollo/rhsecurity",
+    visibility = ["//visibility:public"],
+    deps = ["//vendor/golang.org/x/oauth2"],
+)

@@ -39,5 +39,13 @@
       id: 'id',
       external: true,
     },
+    'apollo-http': {
+      id: 'apollo',
+      external: true,
+    },
+    'apollo-frontend-http': {
+      id: 'errata',
+      external: true,
+    },
   }
 }

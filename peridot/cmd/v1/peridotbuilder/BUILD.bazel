@@ -29,10 +29,17 @@ go_library(
 )
 
 go_binary(
+    name = "peridotbuilder",
+    embed = [":peridotbuilder_lib"],
+    visibility = ["//visibility:public"],
+)
+
+go_binary(
     name = "peridotbuilder_amd64",
     embed = [":peridotbuilder_lib"],
     goarch = "amd64",
     goos = "linux",
+    tags = ["manual"],
     visibility = ["//visibility:public"],
 )
 
@@ -41,6 +48,7 @@ go_binary(
     embed = [":peridotbuilder_lib"],
     goarch = "arm64",
     goos = "linux",
+    tags = ["manual"],
     visibility = ["//visibility:public"],
 )
 
@@ -49,6 +57,7 @@ go_binary(
     embed = [":peridotbuilder_lib"],
     goarch = "s390x",
     goos = "linux",
+    tags = ["manual"],
     visibility = ["//visibility:public"],
 )
 
@@ -57,5 +66,6 @@ go_binary(
     embed = [":peridotbuilder_lib"],
     goarch = "ppc64le",
     goos = "linux",
+    tags = ["manual"],
     visibility = ["//visibility:public"],
 )

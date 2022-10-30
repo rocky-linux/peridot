@@ -1,0 +1,161 @@
+syntax = "proto3";
+
+package resf.apollo.v1;
+
+import "google/api/annotations.proto";
+import "google/api/httpbody.proto";
+import "google/protobuf/wrappers.proto";
+import "google/protobuf/timestamp.proto";
+import "validate/validate.proto";
+import "apollo/proto/v1/advisory.proto";
+
+option go_package = "peridot.resf.org/apollo/pb;apollopb";
+
+service ApolloService {
+  // ListAdvisories
+  //
+  // Return a list of advisories by given filters.
+  // No filters returns all advisories
+  // This method is paginated
+  rpc ListAdvisories (ListAdvisoriesRequest) returns (ListAdvisoriesResponse) {
+    option (google.api.http) = {
+      get: "/v2/advisories"
+    };
+  }
+
+  // ListAdvisoriesRSS
+  //
+  // Same as ListAdvisories but returns an RSS feed
+  // Only returns 25 latest advisories
+  // Supports filters
+  rpc ListAdvisoriesRSS (ListAdvisoriesRSSRequest) returns (google.api.HttpBody) {
+    option (google.api.http) = {
+      get: "/v2/advisories:rss"
+    };
+  }
+
+  // GetAdvisory
+  //
+  // Returns an advisory with given ID if found, else returns NotFound
+  rpc GetAdvisory (GetAdvisoryRequest) returns (GetAdvisoryResponse) {
+    option (google.api.http) = {
+      get: "/v2/advisories/{id=*}"
+    };
+  }
+}
+
+message AdvisoryFilters {
+  // Product
+  //
+  // The product to fetch advisories for
+  // For example: Rocky Linux 8
+  google.protobuf.StringValue product = 1;
+
+  // Before
+  //
+  // Advisories published before timestamp
+  google.protobuf.Timestamp before = 2;
+
+  // After
+  //
+  // Advisories published after timestamp
+  google.protobuf.Timestamp after = 3;
+
+  // Include unpublished
+  //
+  // Whether to include unpublished advisories
+  // apollo/impl never respects this, but internal services
+  // may rely on this
+  google.protobuf.BoolValue include_unpublished = 4;
+
+  // CVE
+  //
+  // Only return advisories with given CVE
+  google.protobuf.StringValue cve = 5;
+
+  // Synopsis
+  //
+  // Only return advisories if synopsis contains given text
+  google.protobuf.StringValue synopsis = 6;
+
+  // Include RPMs
+  //
+  // Includes RPMs in list response (slow)
+  google.protobuf.BoolValue include_rpms = 7;
+
+  // Keyword
+  //
+  // Searches all fields for given keyword
+  google.protobuf.StringValue keyword = 8;
+
+  // Severity
+  //
+  // Only return advisories with given severity
+  Advisory.Severity severity = 9;
+
+  // Type
+  //
+  // Only return advisories with given type
+  Advisory.Type type = 10;
+}
+
+// ListAdvisoriesRequest
+//
+// Request body for `ListAdvisories`
+// All fields are optional
+message ListAdvisoriesRequest {
+  // Filters for the given query
+  // No filters returns all advisories
+  AdvisoryFilters filters = 1;
+
+  int32 page = 2;
+  int32 limit = 3 [(validate.rules).int32.lte = 100];
+}
+
+// ListAdvisoriesResponse
+//
+// Response body for `ListAdvisories`
+message ListAdvisoriesResponse {
+  repeated Advisory advisories = 1;
+
+  // Total packages from server
+  int64 total = 2;
+
+  // Limit from request
+  int32 size = 3;
+
+  // Current page
+  int32 page = 4;
+
+  // Last updated
+  google.protobuf.Timestamp last_updated = 5;
+}
+
+// ListAdvisoriesRSSRequest
+// Request body for `ListAdvisoriesRSS`
+// All fields are optional
+message ListAdvisoriesRSSRequest {
+  // Filters for the given query
+  // No filters returns all advisories
+  AdvisoryFilters filters = 1;
+}
+
+// GetAdvisoryRequest
+//
+// Request body for `GetAdvisory`
+message GetAdvisoryRequest {
+  // ID
+  //
+  // Errata ID
+  // Example: RLSA:2021-1515
+  string id = 1 [(validate.rules).string = {
+    pattern: "^(.+)([SEB]A)-([0-9]{4}):([0-9]+)$",
+  }];
+}
+
+// GetAdvisoryResponse
+//
+// Response body for `GetAdvisory`
+message GetAdvisoryResponse {
+  Advisory advisory = 1;
+}

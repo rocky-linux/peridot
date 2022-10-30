@@ -98,7 +98,6 @@ func (a *Access) GetLatestImportRevisionsForPackageInProject(packageName string,
 			p.name = $1
 			and ppv.project_id = $2
 			and ppv.active = true
-			and ir.active = true
 		order by ir.created_at desc
 		`,
 		packageName,

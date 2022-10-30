@@ -7,10 +7,9 @@ go_library(
     importpath = "peridot.resf.org/publisher/cmd/publisher-legacy-errata",
     visibility = ["//visibility:private"],
     deps = [
+        "//apollo/db/connector",
         "//publisher/updateinfo/legacy",
-        "//secparse/db/connector",
         "//utils",
-        "//vendor/github.com/go-git/go-billy/v5/osfs",
         "//vendor/github.com/sirupsen/logrus",
         "//vendor/github.com/spf13/cobra",
     ],

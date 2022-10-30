@@ -45,6 +45,32 @@ func (a *Access) GetExternalRepositoriesForProject(projectId string) (ret models
 	return ret, nil
 }
 
+func (a *Access) DeleteExternalRepositoryForProject(projectId string, id string) error {
+	_, err := a.query.Exec("delete from external_repositories where project_id = $1 and id = $2", projectId, id)
+	return err
+}
+
+func (a *Access) CreateExternalRepositoryForProject(projectId string, repoURL string, priority *int32, moduleHotfixes bool) (*models.ExternalRepository, error) {
+	var ret models.ExternalRepository
+	err := a.query.Get(
+		&ret,
+		`
+        insert into external_repositories (project_id, url, priority)
+        values ($1, $2, $3, $4)
+        returning id, created_at, project_id, url, priority, module_hotfixes
+        `,
+		projectId,
+		repoURL,
+		priority,
+		moduleHotfixes,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &ret, nil
+}
+
 func (a *Access) FindRepositoriesForPackage(projectId string, pkg string, internalOnly bool) (ret models.Repositories, err error) {
 	err = a.query.Select(
 		&ret,

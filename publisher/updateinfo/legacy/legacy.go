@@ -39,28 +39,31 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
-	"github.com/go-git/go-billy/v5"
 	"github.com/sirupsen/logrus"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 	"io"
+	"io/fs"
+	"io/ioutil"
 	"os"
 	"path/filepath"
+	apollodb "peridot.resf.org/apollo/db"
+	apollopb "peridot.resf.org/apollo/pb"
+	"peridot.resf.org/apollo/rpmutils"
 	"peridot.resf.org/publisher/updateinfo"
-	"peridot.resf.org/secparse/db"
-	secparsepb "peridot.resf.org/secparse/proto/v1"
-	"peridot.resf.org/secparse/rpmutils"
+	"peridot.resf.org/utils"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
 type Scanner struct {
-	DB db.Access
-	FS billy.Filesystem
+	DB apollodb.Access
 }
 
 type internalAdvisory struct {
-	Pb *secparsepb.Advisory
-	Db *db.Advisory
+	Pb *apollopb.Advisory
+	Db *apollodb.Advisory
 }
 
 type rpm struct {
@@ -68,47 +71,76 @@ type rpm struct {
 	Src      string
 	Sha256   string
 	Epoch    string
+	Repo     string
+	Err      error
 	Advisory *internalAdvisory
 }
 
-func (s *Scanner) recursiveRPMScan(rootDir string) (map[string][]*rpm, error) {
-	infos, err := s.FS.ReadDir(rootDir)
-	if err != nil {
-		return nil, err
-	}
+func (s *Scanner) recursiveRPMScan(rootDir string, cache map[string]string) (<-chan rpm, <-chan error) {
+	res := make(chan rpm)
+	errc := make(chan error, 1)
 
-	ret := map[string][]*rpm{}
-
-	for _, fi := range infos {
-		if fi.IsDir() {
-			nRpms, err := s.recursiveRPMScan(filepath.Join(rootDir, fi.Name()))
+	go func() {
+		var wg sync.WaitGroup
+		err := filepath.WalkDir(rootDir, func(path string, d fs.DirEntry, err error) error {
 			if err != nil {
-				// Ignore paths we can't access
-				continue
+				return err
+			}
+			if d.IsDir() {
+				return nil
+			}
+			if !strings.HasSuffix(d.Name(), ".rpm") {
+				return nil
+			}
+			if strings.Contains(path, "kickstart/Packages") {
+				return nil
 			}
 
-			for k, v := range nRpms {
-				if ret[k] == nil {
-					ret[k] = []*rpm{}
+			wg.Add(1)
+			go func() {
+				k, err := s.findRepoData(filepath.Join(path, ".."))
+				if err != nil {
+					logrus.Errorf("could not find repodata for %s: %s", path, err)
+					k = filepath.Join(path, "..")
+				}
+				k = filepath.Join(k, "..")
+
+				var sum string
+				if s := cache[d.Name()]; s != "" {
+					sum = s
+				} else {
+					f, _ := os.Open(path)
+					defer f.Close()
+					hasher := sha256.New()
+					_, err = io.Copy(hasher, f)
+					sum = hex.EncodeToString(hasher.Sum(nil))
 				}
 
-				ret[k] = append(ret[k], v...)
-			}
-		} else {
-			if strings.HasSuffix(fi.Name(), ".rpm") {
-				k := filepath.Join(rootDir, "..")
-				if ret[k] == nil {
-					ret[k] = []*rpm{}
+				select {
+				case res <- rpm{
+					Name:   d.Name(),
+					Sha256: sum,
+					Repo:   k,
+					Err:    err,
+				}:
 				}
 
-				ret[k] = append(ret[k], &rpm{
-					Name: fi.Name(),
-				})
-			}
-		}
-	}
+				wg.Done()
+			}()
 
-	return ret, nil
+			select {
+			default:
+				return nil
+			}
+		})
+		go func() {
+			wg.Wait()
+			close(res)
+		}()
+		errc <- err
+	}()
+
+	return res, errc
 }
 
 func (s *Scanner) findRepoData(rootDir string) (string, error) {
@@ -117,7 +149,7 @@ func (s *Scanner) findRepoData(rootDir string) (string, error) {
 	}
 
 	repoDataPath := filepath.Join(rootDir, "repodata")
-	stat, err := s.FS.Stat(repoDataPath)
+	stat, err := os.Stat(repoDataPath)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return s.findRepoData(filepath.Join(rootDir, ".."))
@@ -133,15 +165,80 @@ func (s *Scanner) findRepoData(rootDir string) (string, error) {
 	}
 }
 
-func (s *Scanner) ScanAndPublish(from string, composeName string, productName string, productShort string, republish bool) error {
-	_, err := s.FS.Stat(composeName)
+func (s *Scanner) ScanAndPublish(from string, composeName string, productName string, productShort string, productID int64, scanAndStop bool) error {
+	logrus.Infof("using %s as root directory", composeName)
+
+	realPathCompose, err := filepath.EvalSymlinks(composeName)
 	if err != nil {
 		return err
 	}
 
-	rpms, err := s.recursiveRPMScan(composeName)
+	logrus.Infof("real path is %s", realPathCompose)
+
+	_, err = os.Stat(realPathCompose)
 	if err != nil {
+		return fmt.Errorf("could not find compose %s: %w", realPathCompose, err)
+	}
+
+	// Read cache file if exists, so we can skip hashing on known artifacts
+	cacheFile := filepath.Join(realPathCompose, fmt.Sprintf("apollocache_%d", productID))
+	cache := map[string]string{}
+	if _, err := os.Stat(cacheFile); err == nil {
+		cacheBts, err := ioutil.ReadFile(cacheFile)
+		if err != nil {
+			return err
+		}
+		cacheLines := strings.Split(string(cacheBts), "\n")
+		for _, line := range cacheLines {
+			if line == "" {
+				continue
+			}
+			parts := strings.Split(line, " ")
+			cache[parts[0]] = parts[1]
+		}
+	}
+
+	rpms := map[string][]*rpm{}
+	rpmsChan, errChan := s.recursiveRPMScan(realPathCompose, cache)
+	for r := range rpmsChan {
+		rpmCopy := r
+		if rpmCopy.Err != nil {
+			return rpmCopy.Err
+		}
+
+		if rpms[rpmCopy.Repo] == nil {
+			rpms[rpmCopy.Repo] = []*rpm{}
+		}
+
+		rpms[rpmCopy.Repo] = append(rpms[rpmCopy.Repo], &rpmCopy)
+	}
+	if err := <-errChan; err != nil {
 		return err
+	}
+
+	if len(rpms) == 0 {
+		return errors.New("no rpms found")
+	}
+
+	// Cache hashes in {REPO_DIR}/apollocache_{PRODUCT_ID}
+	var newCacheEntries []string
+	for _, v := range rpms {
+		for _, rpm := range v {
+			entry := fmt.Sprintf("%s %s", rpm.Name, rpm.Sha256)
+			if !utils.StrContains(entry, newCacheEntries) {
+				newCacheEntries = append(newCacheEntries, entry)
+			}
+		}
+	}
+	if err := ioutil.WriteFile(cacheFile, []byte(strings.Join(newCacheEntries, "\n")), 0644); err != nil {
+		return err
+	}
+
+	if scanAndStop {
+		for k := range rpms {
+			logrus.Infof("repo %s", k)
+		}
+		return nil
 	}
 
 	published := map[string][]*rpm{}
@@ -153,16 +250,14 @@ func (s *Scanner) ScanAndPublish(from string, composeName string, productName st
 	tx := s.DB.UseTransaction(beginTx)
 	rollback := false
 
-	advisories, err := tx.GetAllAdvisories(false)
+	advisories, err := tx.GetAllAdvisories(&apollopb.AdvisoryFilters{
+		IncludeUnpublished: wrapperspb.Bool(true),
+	}, 0, -1)
 	if err != nil {
 		return err
 	}
 	for _, advisory := range advisories {
-		// Skip already published advisories if republish is disabled
-		if advisory.PublishedAt.Valid && !republish {
-			continue
-		}
-		advisoryPb := db.DTOAdvisoryToPB(advisory)
+		advisoryPb := apollodb.DTOAdvisoryToPB(advisory)
 
 		touchedOnce := false
 		for _, artifactWithSrpm := range advisory.BuildArtifacts {
@@ -180,34 +275,14 @@ func (s *Scanner) ScanAndPublish(from string, composeName string, productName st
 
 				for _, repoRpm := range repoRpms {
 					if repoRpm.Name == rpmutils.Epoch().ReplaceAllString(artifact, "") {
-						hasher := sha256.New()
-						f, err := s.FS.Open(filepath.Join(repo, "Packages", repoRpm.Name))
-						if err != nil {
-							// If not found, then try sorted directory
-							f, err = s.FS.Open(filepath.Join(repo, "Packages", strings.ToLower(string(repoRpm.Name[0])), repoRpm.Name))
-							if err != nil {
-								logrus.Errorf("Could not open affected package: %v", err)
-								rollback = true
-								break
-							}
-						}
-						_, err = io.Copy(hasher, f)
-						_ = f.Close()
-						if err != nil {
-							logrus.Errorf("Could not hash affected package: %v", err)
-							rollback = true
-							break
-						}
-
 						logrus.Infof("Advisory %s affects %s", advisoryPb.Name, artifact)
-						err = tx.AddAdvisoryRPM(advisory.ID, artifact)
+						err = tx.AddAdvisoryRPM(advisory.ID, artifact, productID)
 						if err != nil {
 							logrus.Errorf("Could not add advisory RPM: %v", err)
 							rollback = true
 							break
 						}
 						touchedOnce = true
-						repoRpm.Sha256 = hex.EncodeToString(hasher.Sum(nil))
 						repoRpm.Epoch = strings.TrimSuffix(rpmutils.Epoch().FindStringSubmatch(artifact)[0], ":")
 						repoRpm.Advisory = &internalAdvisory{
 							Pb: advisoryPb,
@@ -230,7 +305,7 @@ func (s *Scanner) ScanAndPublish(from string, composeName string, productName st
 			advisory.PublishedAt = sql.NullTime{Valid: true, Time: time.Now()}
 			_, err = tx.UpdateAdvisory(advisory)
 			if err != nil {
-				logrus.Errorf("Could not update advisory %s: %v", advisoryPb.Name, err)
+				logrus.Errorf("could not update advisory %s: %v", advisoryPb.Name, err)
 				rollback = true
 				break
 			}
@@ -265,7 +340,7 @@ func (s *Scanner) ScanAndPublish(from string, composeName string, productName st
 		}
 		repoMdPath := filepath.Join(repoDataDir, "repomd.xml")
 
-		f, err := s.FS.Open(repoMdPath)
+		f, err := os.Open(repoMdPath)
 		if err != nil {
 			logrus.Errorf("Could not open repomd.xml: %v", err)
 			rollback = true
@@ -289,50 +364,8 @@ func (s *Scanner) ScanAndPublish(from string, composeName string, productName st
 			}
 		}
 
-		var updateInfo *updateinfo.UpdatesRoot
-		if olderUpdateInfo == "" {
-			updateInfo = &updateinfo.UpdatesRoot{
-				Updates: []*updateinfo.Update{},
-			}
-		} else {
-			if republish {
-				updateInfo = &updateinfo.UpdatesRoot{
-					Updates: []*updateinfo.Update{},
-				}
-			} else {
-				olderF, err := s.FS.Open(filepath.Join(repoDataDir, "..", olderUpdateInfo))
-				if err != nil {
-					logrus.Errorf("Could not open older updateinfo: %v", err)
-					rollback = true
-					break
-				}
-
-				var decoded bytes.Buffer
-				r, err := gzip.NewReader(olderF)
-				if err != nil {
-					logrus.Errorf("Could not create new gzip reader: %v", err)
-					rollback = true
-					break
-				}
-				if _, err := io.Copy(&decoded, r); err != nil {
-					logrus.Errorf("Could not copy gzip data: %v", err)
-					rollback = true
-					break
-				}
-				_ = r.Close()
-
-				err = xml.NewDecoder(&decoded).Decode(&updateInfo)
-				if err != nil {
-					logrus.Errorf("Could not decode older updateinfo: %v", err)
-					rollback = true
-					break
-				}
-				_ = olderF.Close()
-
-				if updateInfo.Updates == nil {
-					updateInfo.Updates = []*updateinfo.Update{}
-				}
-			}
+		updateInfo := &updateinfo.UpdatesRoot{
+			Updates: []*updateinfo.Update{},
 		}
 
 		for advisoryName, publishedRpms := range advisories {
@@ -340,16 +373,16 @@ func (s *Scanner) ScanAndPublish(from string, composeName string, productName st
 
 			updateType := "enhancement"
 			switch advisory.Pb.Type {
-			case secparsepb.Advisory_BugFix:
+			case apollopb.Advisory_TYPE_BUGFIX:
 				updateType = "bugfix"
 				break
-			case secparsepb.Advisory_Security:
+			case apollopb.Advisory_TYPE_SECURITY:
 				updateType = "security"
 				break
 			}
 
 			severity := advisory.Pb.Severity.String()
-			if advisory.Pb.Severity == secparsepb.Advisory_UnknownSeverity {
+			if advisory.Pb.Severity == apollopb.Advisory_SEVERITY_UNKNOWN {
 				severity = "None"
 			}
 
@@ -366,12 +399,12 @@ func (s *Scanner) ScanAndPublish(from string, composeName string, productName st
 				Updated: &updateinfo.UpdateDate{
 					Date: advisory.Db.RedHatIssuedAt.Time.Format(updateinfo.TimeFormat),
 				},
-				Rights:      "Copyright (C) 2021 Rocky Enterprise Software Foundation",
+				Rights:      "Copyright (C) 2022 Rocky Enterprise Software Foundation",
 				Release:     productName,
 				PushCount:   "1",
 				Severity:    severity,
 				Summary:     advisory.Pb.Topic,
-				Description: fmt.Sprintf("For more information visit https://errata.rockylinux.org/%s", advisory.Pb.Name),
+				Description: advisory.Pb.Description,
 				References: &updateinfo.UpdateReferenceRoot{
 					References: []*updateinfo.UpdateReference{},
 				},
@@ -387,10 +420,9 @@ func (s *Scanner) ScanAndPublish(from string, composeName string, productName st
 			}
 
 			for _, cve := range advisory.Pb.Cves {
-				sourceCve := strings.Split(cve, ":::")
-				sourceBy := sourceCve[0]
-				sourceLink := sourceCve[1]
-				id := sourceCve[2]
+				sourceBy := cve.SourceBy
+				sourceLink := cve.SourceLink
+				id := cve.Name
 
 				referenceType := "erratum"
 				if strings.HasPrefix(id, "CVE") {
@@ -398,10 +430,10 @@ func (s *Scanner) ScanAndPublish(from string, composeName string, productName st
 				}
 
 				reference := &updateinfo.UpdateReference{
-					Href:  sourceLink,
+					Href:  sourceLink.Value,
 					ID:    id,
 					Type:  referenceType,
-					Title: fmt.Sprintf("Update information for %s is retrieved from %s", id, sourceBy),
+					Title: fmt.Sprintf("Update information for %s is retrieved from %s", id, sourceBy.Value),
 				}
 
 				update.References.References = append(update.References.References, reference)
@@ -410,7 +442,7 @@ func (s *Scanner) ScanAndPublish(from string, composeName string, productName st
 			for _, publishedRpm := range publishedRpms {
 				nvr := rpmutils.NVR().FindStringSubmatch(publishedRpm.Name)
 
-				update.PkgList.Collections[0].Packages = append(update.PkgList.Collections[0].Packages, &updateinfo.UpdatePackage{
+				updPkg := &updateinfo.UpdatePackage{
 					Name:     nvr[1],
 					Version:  nvr[2],
 					Release:  nvr[3],
@@ -424,7 +456,11 @@ func (s *Scanner) ScanAndPublish(from string, composeName string, productName st
 							Value: publishedRpm.Sha256,
 						},
 					},
-				})
+				}
+				if advisory.Db.RebootSuggested {
+					updPkg.RebootSuggested = "True"
+				}
+				update.PkgList.Collections[0].Packages = append(update.PkgList.Collections[0].Packages, updPkg)
 			}
 			if rollback {
 				break
@@ -506,7 +542,7 @@ func (s *Scanner) ScanAndPublish(from string, composeName string, productName st
 			}
 		}
 
-		uif, err := s.FS.OpenFile(updateInfoPath, os.O_TRUNC|os.O_RDWR|os.O_CREATE, 0644)
+		uif, err := os.OpenFile(updateInfoPath, os.O_TRUNC|os.O_RDWR|os.O_CREATE, 0644)
 		if err != nil {
 			logrus.Errorf("Could not open updateinfo file %s: %v", updateInfoPath, err)
 			rollback = true
@@ -525,7 +561,7 @@ func (s *Scanner) ScanAndPublish(from string, composeName string, productName st
 			repomd.Rpm = ""
 		}
 
-		updateF, err := s.FS.OpenFile(repoMdPath, os.O_TRUNC|os.O_RDWR|os.O_CREATE, 0644)
+		updateF, err := os.OpenFile(repoMdPath, os.O_TRUNC|os.O_RDWR|os.O_CREATE, 0644)
 		if err != nil {
 			logrus.Errorf("Could not open repomd file for update: %v", err)
 			rollback = true
@@ -543,7 +579,7 @@ func (s *Scanner) ScanAndPublish(from string, composeName string, productName st
 		_ = updateF.Close()
 
 		if olderUpdateInfo != "" {
-			_ = s.FS.Remove(filepath.Join(repo, olderUpdateInfo))
+			_ = os.Remove(filepath.Join(repo, olderUpdateInfo))
 		}
 	}
 

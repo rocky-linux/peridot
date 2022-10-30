@@ -31,11 +31,11 @@
 package main
 
 import (
-	"github.com/go-git/go-billy/v5/osfs"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"path/filepath"
+	apolloconnector "peridot.resf.org/apollo/db/connector"
 	"peridot.resf.org/publisher/updateinfo/legacy"
-	"peridot.resf.org/secparse/db/connector"
 	"peridot.resf.org/utils"
 )
 
@@ -52,11 +52,12 @@ var (
 	composeName  string
 	productName  string
 	productShort string
-	republish    bool
+	productID    int64
+	scanAndStop  bool
 )
 
 func init() {
-	dname := "secparse"
+	dname := "apollo"
 	cnf.DatabaseName = &dname
 	cnf.Name = "publisher"
 
@@ -66,10 +67,12 @@ func init() {
 	pflags.StringVar(&composeName, "compose-name", "", "Compose to use")
 	pflags.StringVar(&productName, "product-name", "", "Product name")
 	pflags.StringVar(&productShort, "product-short", "", "Product name (short)")
-	pflags.BoolVar(&republish, "republish", false, "Republish (process published advisories as well, should be used if repodata is out of sync)")
+	pflags.Int64Var(&productID, "product-id", 0, "Product ID")
+	pflags.BoolVar(&scanAndStop, "scan-and-stop", false, "Scan RPMs and stop, used for debugging purposes")
 	_ = root.MarkPersistentFlagRequired("compose-name")
 	_ = root.MarkPersistentFlagRequired("product-name")
 	_ = root.MarkPersistentFlagRequired("product-short")
+	_ = root.MarkPersistentFlagRequired("product-id")
 
 	utils.AddDBFlagsOnly(pflags, cnf)
 	utils.BindOnly(pflags, cnf)
@@ -77,12 +80,11 @@ func init() {
 
 func mn(_ *cobra.Command, _ []string) {
 	scanner := &legacy.Scanner{
-		FS: osfs.New(repoDir),
-		DB: connector.MustAuto(),
+		DB: apolloconnector.MustAuto(),
 	}
-	err := scanner.ScanAndPublish(from, composeName, productName, productShort, republish)
+	err := scanner.ScanAndPublish(from, filepath.Join(repoDir, composeName), productName, productShort, productID, scanAndStop)
 	if err != nil {
-		logrus.Fatalf("Could not scan and publish: %v", err)
+		logrus.Fatalf("could not scan and publish: %v", err)
 	}
 }
 

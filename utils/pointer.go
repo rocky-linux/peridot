@@ -102,6 +102,17 @@ func NullTimeToTimestamppb(t sql.NullTime) *timestamppb.Timestamp {
 	return timestamppb.New(t.Time)
 }
 
+func TimestampToNullTime(t *timestamppb.Timestamp) sql.NullTime {
+	if t == nil {
+		return sql.NullTime{}
+	}
+
+	return sql.NullTime{
+		Time:  t.AsTime(),
+		Valid: true,
+	}
+}
+
 func NullStringToPointer(s sql.NullString) *string {
 	if !s.Valid {
 		return nil
@@ -121,4 +132,15 @@ func Bool(b bool) *bool {
 func Pointer[T any](t T) *T {
 	s := t
 	return &s
+}
+
+func Default[T any](t *T) T {
+	x := struct {
+		X T
+	}{}
+	if t != nil {
+		return *t
+	}
+
+	return x.X
 }

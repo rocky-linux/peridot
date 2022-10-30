@@ -1,0 +1,18 @@
+load("//rules_byc:defs.bzl", "BYCDEPLOY_OUTS_MIGRATE", "container", "peridot_k8s")
+
+container(
+    base = "//bases/bazel/go",
+    files = [
+        "//apollo/cmd/apolloworker",
+    ],
+    image_name = "apolloworker",
+)
+
+peridot_k8s(
+    name = "apolloworker",
+    src = "deploy.jsonnet",
+    outs = BYCDEPLOY_OUTS_MIGRATE,
+    deps = [
+        "//ci",
+    ],
+)

@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: buildcache
+  namespace: default
+  labels:
+    app: buildcache
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+      app: buildcache
+  template:
+    metadata:
+      labels:
+        app: buildcache
+    spec:
+      serviceAccountName: "buildcache"
+      terminationGracePeriodSeconds: 180
+      securityContext:
+        fsGroup: 1000
+      containers:
+        - name: buildcache
+          image: quay.io/bazel-remote/bazel-remote:v2.3.9
+          args:
+            - --s3.auth_method=iam_role
+            - --s3.region=us-east-2
+            - --s3.bucket=resf-prod-buildcache
+            - --s3.endpoint=s3.us-east-2.amazonaws.com
+            - --max_size=98
+            - --dir=/buildcache
+          ports:
+            - name: http
+              containerPort: 8080
+            - name: grpc
+              containerPort: 9092
+          volumeMounts:
+            - name: buildcache
+              mountPath: /buildcache
+          livenessProbe:
+            httpGet:
+              path: /status
+              port: 8080
+            initialDelaySeconds: 3
+            periodSeconds: 3
+          readinessProbe:
+            httpGet:
+              path: /status
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 3
+            timeoutSeconds: 600
+      volumes:
+        - name: buildcache
+          persistentVolumeClaim:
+            claimName: buildcache

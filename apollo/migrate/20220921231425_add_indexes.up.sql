@@ -1,0 +1,9 @@
+create index affected_products_advisoryx on affected_products (advisory);
+create index affected_products_product_idx on affected_products (product_id);
+create index advisory_fixes_advisory_idx on advisory_fixes (advisory_id);
+create index advisory_fixes_fix_idx on advisory_fixes (fix_id);
+create index advisory_cves_advisory_idx on advisory_cves (advisory_id);
+create index advisory_cves_cve_idx on advisory_cves (cve_id);
+create index advisory_references_advisory_idx on advisory_references (advisory_id);
+create index advisory_rpms_advisory_idx on advisory_rpms (advisory_id);
+create index advisory_rpms_product_idx on advisory_rpms (product_id);

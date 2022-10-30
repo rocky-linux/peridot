@@ -35,8 +35,8 @@ import (
 	"fmt"
 	"github.com/gobwas/glob"
 	"path/filepath"
+	"peridot.resf.org/apollo/rpmutils"
 	"peridot.resf.org/peridot/yummeta"
-	"peridot.resf.org/secparse/rpmutils"
 	"peridot.resf.org/utils"
 	"strings"
 )
@@ -82,6 +82,11 @@ func IsDebugPackage(name string) bool {
 func IsDebugPackageNvra(nvra string) (bool, error) {
 	if !rpmutils.NVR().MatchString(nvra) {
 		return false, ErrInvalidNVR
+	}
+
+	if rpmutils.NVRUnusualRelease().MatchString(nvra) {
+		match := rpmutils.NVRUnusualRelease().FindStringSubmatch(nvra)
+		return IsDebugPackage(match[1]), nil
 	}
 
 	match := rpmutils.NVR().FindStringSubmatch(nvra)

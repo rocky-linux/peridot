@@ -1,0 +1,24 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "apollostarter_lib",
+    srcs = ["main.go"],
+    importpath = "peridot.resf.org/apollo/cmd/apollostarter",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//apollo/db/connector",
+        "//apollo/worker",
+        "//proto:common",
+        "//temporalutils",
+        "//utils",
+        "//vendor/github.com/sirupsen/logrus",
+        "//vendor/github.com/spf13/cobra",
+        "//vendor/go.temporal.io/sdk/client",
+    ],
+)
+
+go_binary(
+    name = "apollostarter",
+    embed = [":apollostarter_lib"],
+    visibility = ["//visibility:public"],
+)

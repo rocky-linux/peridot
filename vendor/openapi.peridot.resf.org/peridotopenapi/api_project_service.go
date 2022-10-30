@@ -54,6 +54,21 @@ type ProjectServiceApi interface {
 	CreateProjectExecute(r ApiCreateProjectRequest) (V1CreateProjectResponse, *_nethttp.Response, error)
 
 	/*
+	 * DeleteExternalRepository Method for DeleteExternalRepository
+	 * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	 * @param projectId
+	 * @param id
+	 * @return ApiDeleteExternalRepositoryRequest
+	 */
+	DeleteExternalRepository(ctx _context.Context, projectId string, id string) ApiDeleteExternalRepositoryRequest
+
+	/*
+	 * DeleteExternalRepositoryExecute executes the request
+	 * @return map[string]interface{}
+	 */
+	DeleteExternalRepositoryExecute(r ApiDeleteExternalRepositoryRequest) (map[string]interface{}, *_nethttp.Response, error)
+
+	/*
 	 * GetProject Method for GetProject
 	 * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 	 * @param id
@@ -95,6 +110,20 @@ type ProjectServiceApi interface {
 	 * @return V1GetRepositoryResponse
 	 */
 	GetRepositoryExecute(r ApiGetRepositoryRequest) (V1GetRepositoryResponse, *_nethttp.Response, error)
+
+	/*
+	 * ListExternalRepositories Method for ListExternalRepositories
+	 * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	 * @param projectId
+	 * @return ApiListExternalRepositoriesRequest
+	 */
+	ListExternalRepositories(ctx _context.Context, projectId string) ApiListExternalRepositoriesRequest
+
+	/*
+	 * ListExternalRepositoriesExecute executes the request
+	 * @return V1ListExternalRepositoriesResponse
+	 */
+	ListExternalRepositoriesExecute(r ApiListExternalRepositoriesRequest) (V1ListExternalRepositoriesResponse, *_nethttp.Response, error)
 
 	/*
 	 * ListProjects Method for ListProjects
@@ -422,6 +451,122 @@ func (a *ProjectServiceApiService) CreateProjectExecute(r ApiCreateProjectReques
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
+type ApiDeleteExternalRepositoryRequest struct {
+	ctx _context.Context
+	ApiService ProjectServiceApi
+	projectId string
+	id string
+}
+
+
+func (r ApiDeleteExternalRepositoryRequest) Execute() (map[string]interface{}, *_nethttp.Response, error) {
+	return r.ApiService.DeleteExternalRepositoryExecute(r)
+}
+
+/*
+ * DeleteExternalRepository Method for DeleteExternalRepository
+ * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ * @param projectId
+ * @param id
+ * @return ApiDeleteExternalRepositoryRequest
+ */
+func (a *ProjectServiceApiService) DeleteExternalRepository(ctx _context.Context, projectId string, id string) ApiDeleteExternalRepositoryRequest {
+	return ApiDeleteExternalRepositoryRequest{
+		ApiService: a,
+		ctx: ctx,
+		projectId: projectId,
+		id: id,
+	}
+}
+
+/*
+ * Execute executes the request
+ * @return map[string]interface{}
+ */
+func (a *ProjectServiceApiService) DeleteExternalRepositoryExecute(r ApiDeleteExternalRepositoryRequest) (map[string]interface{}, *_nethttp.Response, error) {
+	var (
+		localVarHTTPMethod   = _nethttp.MethodDelete
+		localVarPostBody     interface{}
+		localVarFormFileName string
+		localVarFileName     string
+		localVarFileBytes    []byte
+		localVarReturnValue  map[string]interface{}
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "ProjectServiceApiService.DeleteExternalRepository")
+	if err != nil {
+		return localVarReturnValue, nil, GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/v1/projects/{projectId}/external_repositories/{id}"
+	localVarPath = strings.Replace(localVarPath, "{"+"projectId"+"}", _neturl.PathEscape(parameterToString(r.projectId, "")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", _neturl.PathEscape(parameterToString(r.id, "")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := _neturl.Values{}
+	localVarFormParams := _neturl.Values{}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+			var v RpcStatus
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
 type ApiGetProjectRequest struct {
 	ctx _context.Context
 	ApiService ProjectServiceApi
@@ -696,6 +841,118 @@ func (a *ProjectServiceApiService) GetRepositoryExecute(r ApiGetRepositoryReques
 	localVarPath := localBasePath + "/v1/projects/{projectId}/repositories/{id}"
 	localVarPath = strings.Replace(localVarPath, "{"+"projectId"+"}", _neturl.PathEscape(parameterToString(r.projectId, "")), -1)
 	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", _neturl.PathEscape(parameterToString(r.id, "")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := _neturl.Values{}
+	localVarFormParams := _neturl.Values{}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+			var v RpcStatus
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type ApiListExternalRepositoriesRequest struct {
+	ctx _context.Context
+	ApiService ProjectServiceApi
+	projectId string
+}
+
+
+func (r ApiListExternalRepositoriesRequest) Execute() (V1ListExternalRepositoriesResponse, *_nethttp.Response, error) {
+	return r.ApiService.ListExternalRepositoriesExecute(r)
+}
+
+/*
+ * ListExternalRepositories Method for ListExternalRepositories
+ * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ * @param projectId
+ * @return ApiListExternalRepositoriesRequest
+ */
+func (a *ProjectServiceApiService) ListExternalRepositories(ctx _context.Context, projectId string) ApiListExternalRepositoriesRequest {
+	return ApiListExternalRepositoriesRequest{
+		ApiService: a,
+		ctx: ctx,
+		projectId: projectId,
+	}
+}
+
+/*
+ * Execute executes the request
+ * @return V1ListExternalRepositoriesResponse
+ */
+func (a *ProjectServiceApiService) ListExternalRepositoriesExecute(r ApiListExternalRepositoriesRequest) (V1ListExternalRepositoriesResponse, *_nethttp.Response, error) {
+	var (
+		localVarHTTPMethod   = _nethttp.MethodGet
+		localVarPostBody     interface{}
+		localVarFormFileName string
+		localVarFileName     string
+		localVarFileBytes    []byte
+		localVarReturnValue  V1ListExternalRepositoriesResponse
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "ProjectServiceApiService.ListExternalRepositories")
+	if err != nil {
+		return localVarReturnValue, nil, GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/v1/projects/{projectId}/external_repositories"
+	localVarPath = strings.Replace(localVarPath, "{"+"projectId"+"}", _neturl.PathEscape(parameterToString(r.projectId, "")), -1)
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := _neturl.Values{}

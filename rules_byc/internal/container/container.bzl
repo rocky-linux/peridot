@@ -16,6 +16,7 @@ def container(image_name, files, tars_to_layer = [], base = "//bases/bazel/go", 
         name = "%s_bin" % image_name,
         directory = "/home/app/%s" % "bundle" if frontend else "bundle",
         files = files,
+        tags = ["manual"],
         visibility = [":__subpackages__"],
     )
 
@@ -24,10 +25,11 @@ def container(image_name, files, tars_to_layer = [], base = "//bases/bazel/go", 
         layer_name = "%s_tar_layer" % image_name
         container_layer(
             name = layer_name,
+            tags = ["manual"],
             tars = tars_to_layer,
             visibility = [":__subpackages__"],
         )
-        extra_layers += [layer_name]
+        extra_layers.append(layer_name)
 
     if not architecture:
         container_image(
@@ -40,6 +42,7 @@ def container(image_name, files, tars_to_layer = [], base = "//bases/bazel/go", 
             }),
             base = base,
             layers = [":%s_bin" % image_name] + extra_layers,
+            tags = ["manual"],
             visibility = ["//visibility:public"],
         )
     else:
@@ -48,6 +51,7 @@ def container(image_name, files, tars_to_layer = [], base = "//bases/bazel/go", 
             architecture = architecture,
             base = base,
             layers = [":%s_bin" % image_name] + extra_layers,
+            tags = ["manual"],
             visibility = ["//visibility:public"],
         )
 
@@ -67,6 +71,7 @@ def container(image_name, files, tars_to_layer = [], base = "//bases/bazel/go", 
             entry_point = server_entrypoint,
             data = server_files,
             base = ":%s_image" % image_name,
+            tags = ["manual"],
         )
 
     container_push(
@@ -86,5 +91,6 @@ def container(image_name, files, tars_to_layer = [], base = "//bases/bazel/go", 
             "//platforms:s390x": "%s_s390x-{STABLE_BUILD_TAG}" % image_name,
             "//platforms:ppc64le": "%s_ppc64le-{STABLE_BUILD_TAG}" % image_name,
         }) if should_use_aws_format and not disable_conditional else tag,
+        tags = ["manual"],
         visibility = ["//visibility:public"],
     )

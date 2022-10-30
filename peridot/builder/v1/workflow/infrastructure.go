@@ -708,12 +708,12 @@ func (c *Controller) CreateK8sPodActivity(ctx context.Context, req *ProvisionWor
 	// The privileges are dropped soon after
 	if req.Privileged {
 		podConfig.Spec.Containers[0].SecurityContext = &v1.SecurityContext{
-			RunAsUser:                utils.Int64(0),
-			RunAsGroup:               utils.Int64(0),
-			Privileged:               utils.Bool(true),
-			RunAsNonRoot:             utils.Bool(false),
-			ReadOnlyRootFilesystem:   utils.Bool(false),
-			AllowPrivilegeEscalation: utils.Bool(true),
+			RunAsUser:                utils.Pointer[int64](0),
+			RunAsGroup:               utils.Pointer[int64](0),
+			RunAsNonRoot:             utils.Pointer[bool](false),
+			ReadOnlyRootFilesystem:   utils.Pointer[bool](false),
+			AllowPrivilegeEscalation: utils.Pointer[bool](true),
+			Privileged:               utils.Pointer[bool](true),
 		}
 	}
 

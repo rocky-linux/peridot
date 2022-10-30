@@ -65,6 +65,7 @@ local define_volumes(volumes) = [
     emptyDir: if std.objectHas(vm, 'emptyDir') then {},
     secret: if std.objectHas(vm, 'secret') then vm.secret,
     configMap: if std.objectHas(vm, 'configMap') then vm.configMap,
+    hostPath: if std.objectHas(vm, 'hostPath') then vm.hostPath,
   }
   for vm in volumes
 ];
@@ -133,7 +134,7 @@ local dev() = stage == '-dev';
       env: if !std.objectHas(deporig, 'env') then [] else deporig.env,
       ports: if !std.objectHas(deporig, 'ports') then [{ containerPort: 80, protocol: 'TCP' }] else deporig.ports,
       initContainers: if !std.objectHas(deporig, 'initContainers') then [] else deporig.initContainers,
-      limits: if !std.objectHas(deporig, 'limits') || deporig.limits == null then { cpu: '0.1', memory: '256M' } else deporig.limits,
+      limits: if std.objectHas(deporig, 'limits') then deporig.limits,
       requests: if !std.objectHas(deporig, 'requests') || deporig.requests == null then { cpu: '0.001', memory: '128M' } else deporig.requests,
     };
 
@@ -275,11 +276,11 @@ local dev() = stage == '-dev';
     },
 
   // Ingress
-  define_ingress(metadataOrig, host, path='/', port=80)::
+  define_ingress(metadataOrig, host, srvName=null, path='/', port=80)::
     local metadata = fix_metadata(metadataOrig);
 
     {
-      apiVersion: 'extensions/v1beta1',
+      apiVersion: 'networking.k8s.io/v1',
       kind: 'Ingress',
       metadata: metadata {
         name: metadata.name + '-ingress',
@@ -291,15 +292,27 @@ local dev() = stage == '-dev';
             paths: [
               {
                 path: path,
+                pathType: 'Prefix',
                 backend: {
-                  serviceName: metadata.name + '-service',
-                  servicePort: port,
+                  service: {
+                    name: if srvName != null then srvName else metadata.name + '-service',
+                    port: {
+                      number: port,
+                    }
+                  }
                 },
               },
             ],
           },
         }],
-      },
+      } + ({
+        tls: [{
+          hosts: [
+            host,
+          ],
+          secretName: metadata.name + '-tls',
+        }],
+      }),
     },
 
   // Service
@@ -318,7 +331,12 @@ local dev() = stage == '-dev';
           port: externalPort,
           protocol: protocol,
           targetPort: internalPort,
-        }],
+        }] + (if portName == 'http' && externalPort != 80 then [{
+          name: portName + "-80",
+          port: 80,
+          protocol: protocol,
+          targetPort: internalPort,
+        }] else []),
         selector: {
           app: if selector != '' then selector else metadata.name,
           env: env,
@@ -611,7 +629,7 @@ local dev() = stage == '-dev';
 
   tag(name, extra=false)::
     '%s/%s%s%s%s' % [
-      std.strReplace(ociRegistry, 'host.docker.internal.local', 'host.docker.internal'),
+      std.strReplace(ociRegistry, 'host.docker.internal.local', 'registry'),
       ociRegistryRepo,
       if ociNoNestedSupport then ':' else '/',
       name,

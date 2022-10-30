@@ -21,8 +21,15 @@ go_library(
 go_binary(
     name = "initdb",
     embed = [":initdb_lib"],
+    visibility = ["//visibility:public"],
+)
+
+go_binary(
+    name = "initdb_amd64",
+    embed = [":initdb_lib"],
     goarch = "amd64",
     goos = "linux",
+    tags = ["manual"],
     visibility = ["//visibility:public"],
 )
 
@@ -31,6 +38,7 @@ go_binary(
     embed = [":initdb_lib"],
     goarch = "arm64",
     goos = "linux",
+    tags = ["manual"],
     visibility = ["//visibility:public"],
 )
 
@@ -39,6 +47,7 @@ go_binary(
     embed = [":initdb_lib"],
     goarch = "s390x",
     goos = "linux",
+    tags = ["manual"],
     visibility = ["//visibility:public"],
 )
 
@@ -47,6 +56,7 @@ go_binary(
     embed = [":initdb_lib"],
     goarch = "ppc64le",
     goos = "linux",
+    tags = ["manual"],
     visibility = ["//visibility:public"],
 )
 
@@ -54,7 +64,7 @@ container(
     architecture = "amd64",
     base = "//bases/bazel/go:go_amd64",
     files = [
-        ":initdb",
+        ":initdb_amd64",
     ],
     image_name = "initdb",
 )

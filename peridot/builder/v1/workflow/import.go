@@ -64,15 +64,14 @@ import (
 	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 	"io"
-	"io/ioutil"
 	http2 "net/http"
 	"net/url"
 	"os"
 	"path/filepath"
+	"peridot.resf.org/apollo/rpmutils"
 	"peridot.resf.org/peridot/db/models"
 	peridotpb "peridot.resf.org/peridot/pb"
 	"peridot.resf.org/peridot/rpmbuild"
-	"peridot.resf.org/secparse/rpmutils"
 	"peridot.resf.org/utils"
 	"regexp"
 	"strings"
@@ -171,10 +170,6 @@ func compressFolder(path string, stripHeaderName string, buf io.Writer, fs billy
 	return innerCompress(path, stripHeaderName, tw, fs)
 }
 
-func genRefSpec(bp string, mv int) config.RefSpec {
-	return config.RefSpec(fmt.Sprintf("+refs/heads/%s%d:refs/remotes/origin/%s%d", bp, mv, bp, mv))
-}
-
 func genPushBranch(bp string, suffix string, mv int) string {
 	return fmt.Sprintf("%s%d%s", bp, mv, suffix)
 }
@@ -195,157 +190,6 @@ func recursiveRemove(path string, fs billy.Filesystem) error {
 			}
 		} else {
 			err = fs.Remove(fullPath)
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
-}
-
-func copyFile(fromPath string, toPath string, fs billy.Filesystem) error {
-	from, err := fs.Open(fromPath)
-	if err != nil {
-		return err
-	}
-	defer from.Close()
-
-	to, err := fs.OpenFile(toPath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
-	if err != nil {
-		return err
-	}
-	defer to.Close()
-
-	_, err = io.Copy(to, from)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func recursiveCopy(fromPath string, toPath string, fs billy.Filesystem) error {
-	read, err := fs.ReadDir(fromPath)
-	if err != nil {
-		return fmt.Errorf("could not read dir: %v", err)
-	}
-
-	for _, fi := range read {
-		fullFromPath := filepath.Join(fromPath, fi.Name())
-		fullToPath := filepath.Join(toPath, fi.Name())
-
-		if fi.IsDir() {
-			err := os.MkdirAll(fullToPath, 0755)
-			if err != nil {
-				return err
-			}
-			err = recursiveCopy(fullFromPath, fullToPath, fs)
-			if err != nil {
-				return err
-			}
-		} else {
-			err = copyFile(fullFromPath, fullToPath, fs)
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
-}
-
-func recursiveCopyRpms(fromDir string, toDir string, fs billy.Filesystem) error {
-	read, err := fs.ReadDir(fromDir)
-	if err != nil {
-		return fmt.Errorf("could not read dir: %v", err)
-	}
-
-	for _, fi := range read {
-		fullFromPath := filepath.Join(fromDir, fi.Name())
-		fullToPath := filepath.Join(toDir, fi.Name())
-
-		if fi.IsDir() {
-			err = recursiveCopyRpms(fullFromPath, toDir, fs)
-			if err != nil {
-				return err
-			}
-		} else {
-			if strings.HasSuffix(fullFromPath, ".rpm") {
-				err = copyFile(fullFromPath, fullToPath, fs)
-				if err != nil {
-					return err
-				}
-			}
-		}
-	}
-
-	return nil
-}
-
-func recursiveChown(path string, uid int, gid int) error {
-	read, err := os.Open(path)
-	if err != nil {
-		return fmt.Errorf("could not open dir: %v", err)
-	}
-	defer read.Close()
-
-	files, err := read.Readdirnames(0)
-	if err != nil {
-		return fmt.Errorf("could not read dir: %v", err)
-	}
-
-	for _, file := range files {
-		fullPath := filepath.Join(path, file)
-
-		err = os.Chown(fullPath, uid, gid)
-		if err != nil {
-			continue
-		}
-
-		fi, err := os.Stat(fullPath)
-		if err != nil {
-			return err
-		}
-
-		if fi.IsDir() {
-			err = recursiveChown(fullPath, uid, gid)
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
-}
-
-func recursiveChmod(path string, num int) error {
-	read, err := os.Open(path)
-	if err != nil {
-		return fmt.Errorf("could not open dir: %v", err)
-	}
-	defer read.Close()
-
-	files, err := read.Readdirnames(0)
-	if err != nil {
-		return fmt.Errorf("could not read dir: %v", err)
-	}
-
-	for _, file := range files {
-		fullPath := filepath.Join(path, file)
-
-		err = os.Chmod(fullPath, os.FileMode(num))
-		if err != nil {
-			return err
-		}
-
-		fi, err := os.Stat(fullPath)
-		if err != nil {
-			return err
-		}
-
-		if fi.IsDir() {
-			err = recursiveChmod(fullPath, num)
 			if err != nil {
 				return err
 			}
@@ -391,64 +235,6 @@ func checkoutRepo(project *models.Project, sourceBranchPrefix string, remoteUrl 
 
 func GetTargetScmUrl(project *models.Project, packageName string, section OpenPatchSection) string {
 	return strings.Replace(strings.Replace(fmt.Sprintf("%s/%s/%s/%s.git", project.TargetGitlabHost, project.TargetPrefix, section, gitlabify(packageName)), "//", "/", -1), ":/", "://", 1)
-}
-
-func getVersionAndRelease(project *models.Project, fs billy.Filesystem) (string, string, error) {
-	ls, err := fs.ReadDir("SPECS")
-	if err != nil {
-		return "", "", err
-	}
-	if len(ls) != 1 {
-		return "", "", fmt.Errorf("only one spec file is allowed")
-	}
-
-	f, err := fs.Open(fmt.Sprintf("SPECS/%s", ls[0].Name()))
-	if err != nil {
-		return "", "", err
-	}
-
-	specBytes, err := ioutil.ReadAll(f)
-	if err != nil {
-		return "", "", err
-	}
-	specString := string(specBytes)
-
-	var version string
-	var release string
-
-	distTag := fmt.Sprintf(".el%d", project.MajorVersion)
-	if project.DistTagOverride.Valid {
-		distTag = fmt.Sprintf(".%s", project.DistTagOverride.String)
-	}
-
-	distReplacer := strings.NewReplacer("%{?dist}", distTag)
-
-	for _, line := range strings.Split(specString, "\n") {
-		if fieldValueRegex.MatchString(line) {
-			fieldValue := strings.SplitN(line, ":", 2)
-			field := strings.TrimSpace(fieldValue[0])
-			value := strings.TrimSpace(fieldValue[1])
-
-			if field == "Version" {
-				version = value
-			}
-
-			if field == "Release" {
-				release = distReplacer.Replace(value)
-			}
-		}
-	}
-
-	if version == "" {
-		return "", "", temporal.NewNonRetryableApplicationError("no version was found", "SRC_NO_VERSION", nil)
-	}
-	if release == "" {
-		return "", "", temporal.NewNonRetryableApplicationError("no release was found", "SRC_NO_RELEASE", nil)
-	}
-
-	normalizer := strings.NewReplacer("-", ".", "~", ".")
-
-	return normalizer.Replace(version), normalizer.Replace(release), nil
 }
 
 func (c *Controller) getAuthenticator(projectId string) (transport.AuthMethod, error) {
@@ -756,22 +542,6 @@ func (c *Controller) ImportPackageWorkflow(ctx workflow.Context, req *peridotpb.
 	// Loop through all revisions and deactivate previous import revisions (if exists)
 	// The latest import revisions should be the only one active
 	if !req.SetInactive {
-		for _, revision := range importRevisions {
-			packageVersionId, err := tx.GetPackageVersionId(pkg.ID.String(), revision.Vre.Version.Value, revision.Vre.Release.Value)
-			if err != nil {
-				if err != sql.ErrNoRows {
-					return nil, err
-				} else {
-					continue
-				}
-			}
-			err = tx.DeactivateImportRevisionsByPackageVersionId(packageVersionId)
-			if err != nil {
-				setInternalError(errorDetails, err)
-				return nil, err
-			}
-		}
-
 		// Deactivate previous package version (newer versions even if lower take precedent)
 		// todo(mustafa): Maybe we should add a config option later?
 		err = tx.DeactivateProjectPackageVersionByPackageIdAndProjectId(pkg.ID.String(), project.ID.String())

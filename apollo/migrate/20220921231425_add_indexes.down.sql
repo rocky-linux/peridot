@@ -1,0 +1,9 @@
+drop index affected_products_advisoryx;
+drop index affected_products_product_idx;
+drop index advisory_fixes_advisory_idx;
+drop index advisory_fixes_fix_idx;
+drop index advisory_cves_advisory_idx;
+drop index advisory_cves_cve_idx;
+drop index advisory_references_advisory_idx;
+drop index advisory_rpms_advisory_idx;
+drop index advisory_rpms_product_idx;

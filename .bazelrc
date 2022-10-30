@@ -13,11 +13,17 @@ build:inmemory --experimental_inmemory_dotd_files
 
 # Minimize what is downloaded
 build:toplevel --config=inmemory
-build:toplevel --experimental_remote_download_outputs=toplevel
+build:toplevel --remote_download_outputs=toplevel
 
 build:remote --config=toplevel
-build:remote --google_credentials=/tmp/credentials.json
-build:remote --remote_cache=https://storage.googleapis.com/resf-temporary-bazel-cache
+build:remote --remote_cache=grpc://buildcache.default.svc.cluster.local:9092
+build:remote --experimental_remote_downloader=grpc://buildcache.default.svc.cluster.local:9092
+build:remote --noremote_upload_local_results
+build:remote --remote_timeout=3600
+build:remote --bes_results_url=https://bz.build.resf.org/invocation/
+build:remote --bes_backend=grpc://buildbuddy-grpc.default.svc.cluster.local:1985
 run:remote --experimental_remote_download_outputs=all --noexperimental_inmemory_jdeps_files --noexperimental_inmemory_dotd_files
+
+common:ci --config=remote
 
 build --stamp=true

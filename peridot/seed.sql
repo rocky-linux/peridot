@@ -63,8 +63,8 @@ insert into projects (id, name, major_version, target_gitlab_host, target_prefix
 values (:rocky9Id, 'Rocky Linux 9', 9, 'https://gitlab.com',
         'rocky-9-test', 'r',
         'https://git.centos.org', '', 'c',
-        'el9', '-beta',
-        array ['x86_64', 'i686']);
+        'el9', '',
+        array ['x86_64', 'aarch64']);
 
 insert into projects (id, name, major_version, target_gitlab_host, target_prefix,
                       target_branch_prefix, source_git_host,
@@ -74,15 +74,6 @@ values (:rl8Id, 'Rocky Linux 8', 8, 'https://gitlab.com',
         'https://git.centos.org', '', 'c', 'https://rocky-linux-sources-staging.a1.rockylinux.org',
         'el8',
         array ['aarch64']);
-
-insert into projects (id, name, major_version, target_gitlab_host, target_prefix,
-                      target_branch_prefix, source_git_host,
-                      source_prefix, source_branch_prefix, cdn_url, dist_tag_override, archs)
-values (:supportedPackages8Id, 'SLES-TEST', 8, 'https://gitlab.com',
-        'peridot-sles153-buildtest', 'r',
-        'https://git.centos.org', '', 'c', 'https://rocky-linux-sources-staging.a1.rockylinux.org',
-        'sl15',
-        array ['x86_64']);
 
 -- the packages here are split into multiple queries
 -- so they get a unique created_at value

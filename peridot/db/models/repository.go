@@ -50,7 +50,22 @@ type ExternalRepository struct {
 	ModuleHotfixes bool   `json:"moduleHotfixes" db:"module_hotfixes"`
 }
 
+func (e *ExternalRepository) ToProto() *peridotpb.ExternalRepository {
+	return &peridotpb.ExternalRepository{
+		Url:      e.Url,
+		Priority: int32(e.Priority),
+	}
+}
+
 type ExternalRepositories []ExternalRepository
+
+func (e ExternalRepositories) ToProto() []*peridotpb.ExternalRepository {
+	var result []*peridotpb.ExternalRepository
+	for _, r := range e {
+		result = append(result, r.ToProto())
+	}
+	return result
+}
 
 type Repository struct {
 	ID        uuid.UUID `json:"id" db:"id"`

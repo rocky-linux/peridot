@@ -82,6 +82,18 @@ service ProjectService {
       body: "*"
     };
   }
+
+  rpc ListExternalRepositories(ListExternalRepositoriesRequest) returns (ListExternalRepositoriesResponse) {
+    option (google.api.http) = {
+      get: "/v1/projects/{project_id=*}/external_repositories"
+    };
+  }
+
+  rpc DeleteExternalRepository(DeleteExternalRepositoryRequest) returns (DeleteExternalRepositoryResponse) {
+    option (google.api.http) = {
+      delete: "/v1/projects/{project_id=*}/external_repositories/{id=*}"
+    };
+  }
 }
 
 // Project is a contained RPM distribution
@@ -305,3 +317,31 @@ message LookasideFileUploadRequest {
 message LookasideFileUploadResponse {
   string digest = 1;
 }
+
+message ExternalRepository {
+  string url = 1;
+  int32 priority = 2;
+  bool module_hotfixes = 3;
+}
+message ListExternalRepositoriesRequest {
+  google.protobuf.StringValue project_id = 1 [(validate.rules).message.required = true];
+}
+message ListExternalRepositoriesResponse {
+  repeated ExternalRepository repositories = 1;
+}
+
+message CreateExternalRepositoryRequest {
+  google.protobuf.StringValue project_id = 1 [(validate.rules).message.required = true];
+  google.protobuf.StringValue url = 2 [(validate.rules).message.required = true];
+  google.protobuf.Int32Value priority = 3;
+  bool module_hotfixes = 4;
+}
+message CreateExternalRepositoryResponse {
+  ExternalRepository repository = 1;
+}
+
+message DeleteExternalRepositoryRequest {
+  google.protobuf.StringValue project_id = 1 [(validate.rules).message.required = true];
+  google.protobuf.StringValue id = 2 [(validate.rules).message.required = true];
+}
+message DeleteExternalRepositoryResponse {}

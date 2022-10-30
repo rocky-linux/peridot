@@ -64,8 +64,6 @@ const fontSize = {
 };
 
 const rootDir = path.resolve(process.cwd());
-// const projectDir = segments[segments.length - 2].split('.')[0];
-// let projectPath = path.resolve(process.cwd(), projectDir);
 
 let projectDir = rootDir;
 let projectPath = rootDir;

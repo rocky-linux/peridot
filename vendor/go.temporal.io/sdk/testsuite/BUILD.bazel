@@ -1,0 +1,10 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "testsuite",
+    srcs = ["testsuite.go"],
+    importmap = "peridot.resf.org/vendor/go.temporal.io/sdk/testsuite",
+    importpath = "go.temporal.io/sdk/testsuite",
+    visibility = ["//visibility:public"],
+    deps = ["//vendor/go.temporal.io/sdk/internal"],
+)

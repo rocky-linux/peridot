@@ -1,0 +1,19 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "db",
+    srcs = [
+        "convert.go",
+        "db.go",
+    ],
+    importpath = "peridot.resf.org/apollo/db",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//apollo/proto/v1:pb",
+        "//utils",
+        "//vendor/github.com/jmoiron/sqlx/types",
+        "//vendor/github.com/lib/pq",
+        "@org_golang_google_protobuf//types/known/timestamppb:go_default_library",
+        "@org_golang_google_protobuf//types/known/wrapperspb:go_default_library",
+    ],
+)

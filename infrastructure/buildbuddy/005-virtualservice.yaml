@@ -1,0 +1,23 @@
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: buildbuddy
+  namespace: default
+  annotations:
+    external-dns.alpha.kubernetes.io/target: ingress.build.resf.org
+spec:
+  gateways:
+    - istio-system/base-gateway-public
+  hosts:
+    - bz.build.resf.org
+  http:
+    - name: buildbuddy
+      match:
+        - uri:
+            prefix: "/invocation"
+      route:
+        - destination:
+            host: buildbuddy.default.svc.cluster.local
+            port:
+              number: 8080
