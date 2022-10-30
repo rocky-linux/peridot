@@ -26,6 +26,8 @@ require (
 	github.com/gocolly/colly/v2 v2.1.0
 	github.com/gogo/status v1.1.0
 	github.com/google/uuid v1.3.0
+	github.com/gorilla/feeds v1.1.1 // indirect
+	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0 // indirect
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.6.0
 	github.com/imdario/mergo v0.3.11 // indirect
@@ -33,6 +35,7 @@ require (
 	github.com/lib/pq v1.10.2
 	github.com/ory/hydra-client-go v1.10.6
 	github.com/pelletier/go-toml v1.8.1 // indirect
+	github.com/pkg/errors v0.9.1 // indirect
 	github.com/prometheus/client_golang v1.13.0
 	github.com/rocky-linux/srpmproc v0.3.16
 	github.com/sirupsen/logrus v1.8.1
@@ -57,13 +60,12 @@ require (
 	k8s.io/apimachinery v0.22.1
 	k8s.io/client-go v0.22.1
 	openapi.peridot.resf.org/peridotopenapi v0.0.0-00010101000000-000000000000
+	peridot.resf.org/apollo/pb v0.0.0-00010101000000-000000000000 // indirect
 	peridot.resf.org/common v0.0.0-00010101000000-000000000000
 	peridot.resf.org/obsidian/pb v0.0.0-00010101000000-000000000000
 	peridot.resf.org/peridot/keykeeper/pb v0.0.0-00010101000000-000000000000
 	peridot.resf.org/peridot/pb v0.0.0-00010101000000-000000000000
 	peridot.resf.org/peridot/yumrepofs/pb v0.0.0-00010101000000-000000000000
-	peridot.resf.org/secparse/admin/proto v0.0.0-00010101000000-000000000000
-	peridot.resf.org/secparse/proto v0.0.0-00010101000000-000000000000
 )
 
 // Manual replace
@@ -74,6 +76,7 @@ replace (
 
 // sync-replace-start
 replace (
+	peridot.resf.org/apollo/pb => ./bazel-bin/apollo/proto/v1/apollopb_go_proto_/peridot.resf.org/apollo/pb
 	bazel.build/protobuf => ./bazel-bin/build/bazel/protobuf/bazelbuild_go_proto_/bazel.build/protobuf
 	bazel.build/remote/execution/v2 => ./bazel-bin/build/bazel/remote/execution/v2/remoteexecution_go_proto_/bazel.build/remote/execution/v2
 	bazel.build/semver => ./bazel-bin/build/bazel/semver/semver_go_proto_/bazel.build/semver
@@ -82,8 +85,6 @@ replace (
 	peridot.resf.org/peridot/keykeeper/pb => ./bazel-bin/peridot/proto/v1/keykeeper/keykeeperpb_go_proto_/peridot.resf.org/peridot/keykeeper/pb
 	peridot.resf.org/peridot/yumrepofs/pb => ./bazel-bin/peridot/proto/v1/yumrepofs/yumrepofspb_go_proto_/peridot.resf.org/peridot/yumrepofs/pb
 	peridot.resf.org/common => ./bazel-bin/proto/commonpb_go_proto_/peridot.resf.org/common
-	peridot.resf.org/secparse/admin/proto => ./bazel-bin/secparse/admin/proto/v1/secparseadminpb_go_proto_/peridot.resf.org/secparse/admin/proto
-	peridot.resf.org/secparse/proto => ./bazel-bin/secparse/proto/v1/secparsepb_go_proto_/peridot.resf.org/secparse/proto
 	github.com/envoyproxy/protoc-gen-validate/validate => ./bazel-bin/vendor/github.com/envoyproxy/protoc-gen-validate/validate/go_default_library_/github.com/envoyproxy/protoc-gen-validate/validate
 )
 // sync-replace-end

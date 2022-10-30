@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 set -o errexit
-set -x
 
-bazel build --config=ci $(bazel query "//... except attr(tags, 'manual', //...) except //vendor/...")
+source hack/bazel_setup.sh
+
+$BAZEL_B $($BAZEL_QR "//... except attr(tags, 'manual', //...) except //vendor/...")

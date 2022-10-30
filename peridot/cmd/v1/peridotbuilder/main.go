@@ -31,6 +31,8 @@
 package main
 
 import (
+	"log"
+
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -39,7 +41,6 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/anypb"
-	"log"
 	builderv1 "peridot.resf.org/peridot/builder/v1"
 	peridotcommon "peridot.resf.org/peridot/common"
 	serverconnector "peridot.resf.org/peridot/db/connector"

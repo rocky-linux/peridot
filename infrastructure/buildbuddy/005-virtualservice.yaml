@@ -13,9 +13,6 @@ spec:
     - bz.build.resf.org
   http:
     - name: buildbuddy
-      match:
-        - uri:
-            prefix: "/invocation"
       route:
         - destination:
             host: buildbuddy.default.svc.cluster.local
