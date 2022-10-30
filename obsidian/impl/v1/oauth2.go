@@ -34,6 +34,8 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"os"
+
 	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/ory/hydra-client-go/client/admin"
 	hydramodels "github.com/ory/hydra-client-go/models"
@@ -43,7 +45,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
-	"os"
 	"peridot.resf.org/obsidian/db/models"
 	obsidianpb "peridot.resf.org/obsidian/pb"
 	"peridot.resf.org/utils"
@@ -57,7 +58,7 @@ type NameClaim struct {
 }
 
 func callbackForwarder(callbackURL string) string {
-	env := os.Getenv("BYC_ENV")
+	env := os.Getenv("RESF_ENV")
 	// this section contained a callback forwarder, but cannot be published
 	// todo(mustafa): evaluate other ways to make it easier for dev
 	if env == "dev" || env == "" {

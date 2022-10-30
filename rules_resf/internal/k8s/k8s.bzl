@@ -59,7 +59,7 @@ k8s_apply = rule(
             default = Label("@bazel_tools//tools/bash/runfiles"),
         ),
         "_k8s_bash": attr.label(
-            default = Label("//rules_byc/internal/k8s:k8s.bash"),
+            default = Label("//rules_resf/internal/k8s:k8s.bash"),
             allow_single_file = True,
         ),
     },

@@ -31,11 +31,12 @@
 package utils
 
 import (
+	"os"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/spf13/viper"
-	"os"
 )
 
 func NewAwsSession(cfg *aws.Config) (*session.Session, error) {
@@ -63,7 +64,7 @@ func NewAwsSession(cfg *aws.Config) (*session.Session, error) {
 		cfg.Region = aws.String(os.Getenv("AWS_REGION"))
 	}
 
-	if os.Getenv("LOCALSTACK_ENDPOINT") != "" && os.Getenv("BYC_ENV") == "dev" {
+	if os.Getenv("LOCALSTACK_ENDPOINT") != "" && os.Getenv("RESF_ENV") == "dev" {
 		cfg.Endpoint = aws.String(os.Getenv("LOCALSTACK_ENDPOINT"))
 		cfg.Credentials = credentials.NewStaticCredentials("test", "test", "")
 	}

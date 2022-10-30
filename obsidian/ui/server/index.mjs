@@ -33,12 +33,16 @@
 // noinspection ES6PreferShortImport
 
 import server from '../../../common/frontend_server/index.mjs';
-import { endpointHttp, NS, svcNameHttp } from '../../../common/frontend_server/upstream.mjs';
+import {
+  endpointHttp,
+  NS,
+  svcNameHttp,
+} from '../../../common/frontend_server/upstream.mjs';
 
 export default async function run(webpackConfig) {
   const devFrontendUrl = 'http://obsidian.pdot.localhost:16000';
   const envPublicUrl = process.env['OBSIDIAN_FRONTEND_HTTP_PUBLIC_URL'];
-  const frontendUrl = process.env['BYC_NS'] ? envPublicUrl : devFrontendUrl;
+  const frontendUrl = process.env['RESF_NS'] ? envPublicUrl : devFrontendUrl;
 
   server({
     disableAuth: true,
@@ -46,11 +50,11 @@ export default async function run(webpackConfig) {
     apis: {
       '/api': {
         prodApiUrl: endpointHttp(svcNameHttp('obsidian'), NS('obsidian')),
-        devApiUrl: `https://id-api-dev.internal.pdev.resf.localhost`
-      }
+        devApiUrl: `https://id-api-dev.internal.pdev.resf.localhost`,
+      },
     },
     port: 16000,
-    webpackConfig
+    webpackConfig,
   }).then();
 }
 

@@ -37,7 +37,7 @@ import {
   svcNameHttp,
   endpointHttp,
   NS,
-  envOverridable
+  envOverridable,
 } from '../../../common/frontend_server/upstream.mjs';
 import pkg from '@ory/hydra-client';
 import os from 'os';
@@ -60,18 +60,18 @@ function hydraAdminUrl() {
 
 const hydraAdmin = new AdminApi(
   new Configuration({
-    basePath: hydraAdminUrl()
+    basePath: hydraAdminUrl(),
   })
 );
 
 export const hydraPublic = new PublicApi(
   new Configuration({
-    basePath: hydraPublicUrl()
+    basePath: hydraPublicUrl(),
   })
 );
 
 function secret() {
-  const env = process.env['BYC_ENV'];
+  const env = process.env['RESF_ENV'];
   if (!env || env === 'dev') {
     return 'dev-123-secret';
   }
@@ -85,7 +85,7 @@ function secret() {
 }
 
 export async function hydraAutoSignup(req) {
-  let ns = process.env['BYC_NS'];
+  let ns = process.env['RESF_NS'];
   if (!ns || ns === '') {
     ns = 'dev';
   }
@@ -109,7 +109,7 @@ export async function hydraAutoSignup(req) {
 
   const ret = {
     clientID: serviceName,
-    secret: secret()
+    secret: secret(),
   };
 
   try {

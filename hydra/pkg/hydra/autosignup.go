@@ -35,8 +35,9 @@ import (
 	"fmt"
 	"net/url"
 	"os"
-	"peridot.resf.org/servicecatalog"
 	"strings"
+
+	"peridot.resf.org/servicecatalog"
 
 	"github.com/ory/hydra-client-go/client"
 	"github.com/ory/hydra-client-go/client/admin"
@@ -64,7 +65,7 @@ func redirectUri(req *AutoSignupRequest) []string {
 }
 
 func secret() string {
-	env := os.Getenv("BYC_ENV")
+	env := os.Getenv("RESF_ENV")
 	if env == "" {
 		return "dev-123-secret"
 	}
@@ -92,7 +93,7 @@ func AutoSignup(req *AutoSignupRequest) *AutoSignupResponse {
 
 	ctx := context.TODO()
 
-	ns := os.Getenv("BYC_NS")
+	ns := os.Getenv("RESF_NS")
 	if ns == "" {
 		ns = "dev"
 	}

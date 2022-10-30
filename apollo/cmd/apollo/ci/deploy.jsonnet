@@ -1,10 +1,10 @@
-local bycdeploy = import 'ci/bycdeploy.jsonnet';
+local RESFDEPLOY = import 'ci/RESFDEPLOY.jsonnet';
 local db = import 'ci/db.jsonnet';
 local kubernetes = import 'ci/kubernetes.jsonnet';
 local temporal = import 'ci/temporal.jsonnet';
 local utils = import 'ci/utils.jsonnet';
 
-bycdeploy.new({
+RESFDEPLOY.new({
   name: 'apollo',
   replicas: 1,
   dbname: 'apollo',

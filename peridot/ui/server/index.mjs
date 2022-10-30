@@ -33,13 +33,20 @@
 // noinspection ES6PreferShortImport
 
 import server from '../../../common/frontend_server/index.mjs';
-import { svcNameHttp, endpointHttp, NS } from '../../../common/frontend_server/upstream.mjs';
-import { hydraAutoSignup, hydraPublic } from '../../../hydra/pkg/hydra/autosignup.mjs';
+import {
+  svcNameHttp,
+  endpointHttp,
+  NS,
+} from '../../../common/frontend_server/upstream.mjs';
+import {
+  hydraAutoSignup,
+  hydraPublic,
+} from '../../../hydra/pkg/hydra/autosignup.mjs';
 
 export default async function run(webpackConfig) {
   const devFrontendUrl = 'http://peridot.pdot.localhost:15000';
   const envPublicUrl = process.env['PERIDOT_FRONTEND_HTTP_PUBLIC_URL'];
-  const frontendUrl = process.env['BYC_NS'] ? envPublicUrl : devFrontendUrl;
+  const frontendUrl = process.env['RESF_NS'] ? envPublicUrl : devFrontendUrl;
 
   const wellKnown = await hydraPublic.discoverOpenIDConfiguration();
   const hdr = await hydraAutoSignup({
@@ -49,7 +56,7 @@ export default async function run(webpackConfig) {
     frontend: true,
     scopes: 'openid profile email offline_access',
     redirectUri: `${frontendUrl}/oauth2/callback`,
-    postLogoutRedirectUri: frontendUrl
+    postLogoutRedirectUri: frontendUrl,
   });
 
   server({
@@ -59,13 +66,16 @@ export default async function run(webpackConfig) {
     baseURL: frontendUrl,
     apis: {
       '/api': {
-        prodApiUrl: endpointHttp(svcNameHttp('peridotserver'), NS('peridotserver')),
-        devApiUrl: `https://peridot-api-dev.internal.pdev.resf.localhost`
-      }
+        prodApiUrl: endpointHttp(
+          svcNameHttp('peridotserver'),
+          NS('peridotserver')
+        ),
+        devApiUrl: `https://peridot-api-dev.internal.pdev.resf.localhost`,
+      },
     },
     port: 15000,
     disableAuthEnforce: true,
-    webpackConfig
+    webpackConfig,
   }).then();
 }
 

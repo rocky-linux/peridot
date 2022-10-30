@@ -16,16 +16,16 @@ local utils = import 'ci/utils.jsonnet';
 
 local defaultEnvs = [
   {
-    name: 'BYC_ENV',
+    name: 'RESF_ENV',
     value: stageNoDash,
   },
   {
-    name: 'BYC_NS',
+    name: 'RESF_NS',
     valueFrom: true,
     field: 'metadata.namespace',
   },
   {
-    name: 'BYC_SERVICE_ACCOUNT',
+    name: 'RESF_SERVICE_ACCOUNT',
     valueFrom: true,
     field: 'spec.serviceAccountName',
   },

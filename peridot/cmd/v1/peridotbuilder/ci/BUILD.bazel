@@ -1,4 +1,4 @@
-load("//rules_byc:defs.bzl", "BYCDEPLOY_OUTS_CUSTOM", "container")
+load("//rules_resf:defs.bzl", "RESFDEPLOY_OUTS_CUSTOM", "container")
 
 container(
     architecture = "amd64",

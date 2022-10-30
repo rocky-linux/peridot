@@ -51,4 +51,4 @@ For best experience use IntelliJ+Bazel but `govendor` creates structure that is 
 #### Run UI in development mode
 `ibazel run //TARGET:TARGET.server` - example: `ibazel run //apollo/ui:apollo.server`
 #### Find UI server targets
-`bazel query 'attr(tags, "byc_frontend_server", //...)'`
+`bazel query 'attr(tags, "resf_frontend_server", //...)'`

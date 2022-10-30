@@ -49,9 +49,6 @@ const resolve = path.resolve; // eslint-disable-line
 // Env variables
 const dev = process.env.NODE_ENV !== 'production';
 
-const bannerFile = TMPL_banner_file;
-const stampData = TMPL_stamp_data;
-const stableStampData = TMPL_stable_stamp_data;
 const title = 'TMPL_title';
 const moduleMappings = TMPL_module_mappings;
 const rawName = 'TMPL_global_name';
@@ -64,7 +61,6 @@ const inputs = [TMPL_inputs];
 const bodyScript = 'TMPL_body_script';
 const headStyle = 'TMPL_head_style';
 const typekit = 'TMPL_typekit';
-const noSuffixFrontend = TMPL_no_suffix_frontend;
 
 Object.keys(moduleMappings).forEach((k) => {
   moduleMappings[k] = resolve(process.cwd(), moduleMappings[k]);
@@ -80,31 +76,7 @@ const modules = [
   resolve(process.cwd()),
 ];
 
-const volatileStatus = {};
-if (!dev && stampData) {
-  const versionTag = fs.readFileSync(stampData, { encoding: 'utf-8' });
-  const vsSplit = versionTag.split('\n');
-  for (const vss of vsSplit) {
-    const vskp = vss.split(' ');
-    volatileStatus[vskp[0]] = vskp[1];
-  }
-}
-
-const stableStatus = {};
-if (!dev && stableStampData) {
-  const versionTag = fs.readFileSync(stableStampData, { encoding: 'utf-8' });
-  const vsSplit = versionTag.split('\n');
-  for (const vss of vsSplit) {
-    const vskp = vss.split(' ');
-    stableStatus[vskp[0]] = vskp[1];
-  }
-}
-
 const fileName = `${name}.bundle${dev ? '' : '.min'}`;
-
-const stage = stableStatus['STABLE_STAGE'] || '-qa';
-const stageNoDash = stage.replace(/^-/, '');
-const ns = `${rawName}${noSuffixFrontend ? '' : '-frontend'}`;
 
 const apiUrl = process.env.API_URL;
 const apiKey = process.env.API_KEY;
@@ -237,8 +209,6 @@ const webpackConfig = {
       'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
       'process.env.API_URL': JSON.stringify(apiUrl),
       'process.env.API_KEY': JSON.stringify(apiKey),
-      'process.env.BYC_ENV': JSON.stringify(stageNoDash),
-      'process.env.STABLE_STAGE': JSON.stringify(stage),
     }),
     ...devPlugins,
     ...prodPlugins,
@@ -254,7 +224,7 @@ const webpackConfig = {
             options: {
               configFile: resolve(
                 process.cwd(),
-                'rules_byc/internal/byc_bundle/babel.config.js'
+                'rules_resf/internal/resf_bundle/babel.config.js'
               ),
               plugins: [dev && require.resolve('react-refresh/babel')].filter(
                 Boolean

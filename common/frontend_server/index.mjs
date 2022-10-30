@@ -50,18 +50,18 @@ const { createProxyMiddleware } = httpProxyMiddleware;
 
 const { auth } = expressOidc;
 
-export default async function(opts) {
+export default async function (opts) {
   // Create a new app for health checks.
   const appZ = express();
-  appZ.get('/healthz', ((req, res) => {
+  appZ.get('/healthz', (req, res) => {
     res.end();
-  }));
-  appZ.get('/_/healthz', ((req, res) => {
+  });
+  appZ.get('/_/healthz', (req, res) => {
     res.end();
-  }));
+  });
 
   const app = express();
-  app.use(function(req, res, next) {
+  app.use(function (req, res, next) {
     // Including byc-internal-req: 1 should return the Z page
     if (req.header('byc-internal-req') === 'yes') {
       appZ(req, res, next);
@@ -71,9 +71,9 @@ export default async function(opts) {
   });
   const prod = process.env.NODE_ENV === 'production';
 
-  const port = prod ? (process.env.PORT || 8086) : opts.port;
+  const port = prod ? process.env.PORT || 8086 : opts.port;
 
-  opts.secret = process.env.BYC_SECRET;
+  opts.secret = process.env.RESF_SECRET;
 
   // If we're in prod, then a secret has to be present
   if (prod && (!opts.secret || opts.secret.length < 32)) {
@@ -86,9 +86,11 @@ export default async function(opts) {
     console.log(`Using clientID: ${opts.clientID}`);
     console.log(`Using baseURL: ${opts.baseURL}`);
 
-    if ((opts.issuerBaseURL.endsWith('.localhost')
-        || opts.issuerBaseURL.endsWith('.localhost/'))
-      && process.env['BYC_ENV']) {
+    if (
+      (opts.issuerBaseURL.endsWith('.localhost') ||
+        opts.issuerBaseURL.endsWith('.localhost/')) &&
+      process.env['RESF_ENV']
+    ) {
       const kong = 'kong-proxy.kong.svc.cluster.local';
       const urlObject = new URL(opts.issuerBaseURL);
       console.warn(`Forcing ${urlObject.hostname} to resolve to ${kong}`);
@@ -128,18 +130,18 @@ export default async function(opts) {
       idpLogout: true,
       authorizationParams: {
         response_type: 'code',
-        scope: 'openid profile email offline_access'
+        scope: 'openid profile email offline_access',
       },
       session: {
         rolling: true,
         rollingDuration: 86400,
-        absoluteDuration: 86400 * 7
+        absoluteDuration: 86400 * 7,
       },
       routes: {
         callback: '/oauth2/callback',
         logout: '/oauth2/logout',
-        login: '/oauth2/login'
-      }
+        login: '/oauth2/login',
+      },
     };
 
     // If we have a authentication prefix, only force redirect on paths with that prefix
@@ -153,8 +155,8 @@ export default async function(opts) {
     // Again, a bypass here doesn't accomplish anything.
     let requireEmailSuffix = opts.authOptions?.requireEmailSuffix;
     if (process.env['AUTH_OPTIONS_REQUIRE_EMAIL_SUFFIX']) {
-      requireEmailSuffix = process.env['AUTH_OPTIONS_REQUIRE_EMAIL_SUFFIX'].split(
-        ',');
+      requireEmailSuffix =
+        process.env['AUTH_OPTIONS_REQUIRE_EMAIL_SUFFIX'].split(',');
     }
     if (requireEmailSuffix) {
       middlewares.push((req, res, next) => {
@@ -174,21 +176,26 @@ export default async function(opts) {
         if (isAllowed) {
           next();
         } else {
-          res.redirect(process.env['AUTH_REJECT_REDIRECT_URL']
-            ? process.env['AUTH_REJECT_REDIRECT_URL']
-            : (opts.authOptions.authRejectRedirectUrl
-              || 'https://rockylinux.org'));
+          res.redirect(
+            process.env['AUTH_REJECT_REDIRECT_URL']
+              ? process.env['AUTH_REJECT_REDIRECT_URL']
+              : opts.authOptions.authRejectRedirectUrl ||
+                  'https://rockylinux.org'
+          );
         }
       });
     }
 
-    app.use((req, res, next) => {
-      try {
-        auth(config)(req, res, next);
-      } catch (err) {
-        next(err);
-      }
-    }, [middlewares]);
+    app.use(
+      (req, res, next) => {
+        try {
+          auth(config)(req, res, next);
+        } catch (err) {
+          next(err);
+        }
+      },
+      [middlewares]
+    );
   }
 
   // Currently in dev, webpack is handling all file serving
@@ -196,9 +203,11 @@ export default async function(opts) {
   let distDir = process.cwd() + '/dist';
   if (prod) {
     // Enable security hardening in prod
-    app.use(helmet({
-      contentSecurityPolicy: false
-    }));
+    app.use(
+      helmet({
+        contentSecurityPolicy: false,
+      })
+    );
 
     // Prod expects a certain container structure for all apps
     // Packaging this application with the web base should do
@@ -215,7 +224,7 @@ export default async function(opts) {
   app.use(express.static(distDir));
 
   if (opts.apis) {
-    Object.keys(opts.apis).forEach(x => {
+    Object.keys(opts.apis).forEach((x) => {
       app.use(x, async (req, res, next) => {
         let authorization = '';
 
@@ -244,23 +253,25 @@ export default async function(opts) {
         // Make it possible to override api url using an env variable.
         // Example: /api can be set with URL_API
         // Example 2: /manage/api can be set with URL_MANAGE_API
-        const prodEnvName = `URL_${x.substr(1).replace('/',
-          '_').toUpperCase()}`;
+        const prodEnvName = `URL_${x
+          .substr(1)
+          .replace('/', '_')
+          .toUpperCase()}`;
 
         const apiUrl = process.env[prodEnvName]
           ? process.env[prodEnvName]
           : prod
-            ? opts.apis[x].prodApiUrl
-            : opts.apis[x].devApiUrl;
+          ? opts.apis[x].prodApiUrl
+          : opts.apis[x].devApiUrl;
 
         createProxyMiddleware({
           target: apiUrl,
           changeOrigin: true,
           headers: {
             host: apiUrl,
-            authorization
+            authorization,
           },
-          pathRewrite: rewrite
+          pathRewrite: rewrite,
         })(req, res);
       });
     });
@@ -292,7 +303,7 @@ export default async function(opts) {
     return {
       email,
       name,
-      picture
+      picture,
     };
   };
 
@@ -314,7 +325,7 @@ export default async function(opts) {
     webpackMildCompile(compiler);
 
     const wdm = webpackDevMiddleware(compiler, {
-      publicPath: opts.webpackConfig.output.publicPath
+      publicPath: opts.webpackConfig.output.publicPath,
     });
 
     app.use(history());
@@ -322,14 +333,15 @@ export default async function(opts) {
       // Here we cache the old send function to re-use after we run the HTML through handlebars
       const oldSend = res.send;
 
-      res.send = data => {
+      res.send = (data) => {
         let newData;
         // Check if the request returned a HTML page
         // For SPAs, the only HTML page is the index page
         if (res.get('content-type').indexOf('text/html') !== -1) {
           // Run through handlebars compiler with our template parameters
           newData = hbs.handlebars.compile(data.toString())(
-            templateParams(req));
+            templateParams(req)
+          );
         } else {
           // No new data, just return old data
           newData = data;

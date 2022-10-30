@@ -33,6 +33,10 @@ package temporalutils
 import (
 	"context"
 	"crypto/tls"
+	"os"
+	"strings"
+	"time"
+
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
@@ -40,9 +44,6 @@ import (
 	"go.temporal.io/sdk/client"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
-	"os"
-	"strings"
-	"time"
 )
 
 func AddFlags(pflags *pflag.FlagSet) {
@@ -70,7 +71,7 @@ func NewClient(opts client.Options) (client.Client, error) {
 
 	opts.HostPort = temporalHostPort
 
-	bycNs := os.Getenv("BYC_NS")
+	bycNs := os.Getenv("RESF_NS")
 	temporalNamespace := os.Getenv("TEMPORAL_NAMESPACE")
 	if temporalNamespace != "" {
 		bycNs = temporalNamespace

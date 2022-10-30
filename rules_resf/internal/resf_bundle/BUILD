@@ -1,7 +1,7 @@
-package(default_visibility = ["//rules_byc/internal:__subpackages__"])
+package(default_visibility = ["//rules_resf/internal:__subpackages__"])
 
 load("@build_bazel_rules_nodejs//:index.bzl", "nodejs_binary")
-load(":byc_bundle.bzl", "WEBPACK_DATA")
+load(":resf_bundle.bzl", "WEBPACK_DATA")
 
 exports_files([
     "assembler.js",
@@ -15,7 +15,7 @@ exports_files([
     "index.hbs",
     "index_no_mobile.hbs",
     "index_internal.hbs",
-    "byc_bundle.bzl",
+    "resf_bundle.bzl",
     "run_child.mjs",
     "packserver.bash",
 ])

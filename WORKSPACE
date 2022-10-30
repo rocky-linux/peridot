@@ -100,6 +100,23 @@ go_repository(
     version = "v0.0.0-20210514164344-f6687ab2804c",
 )
 
+# --start target-determinator--
+http_archive(
+    name = "bazel_contrib_target_determinator",
+    sha256 = "1245f255cf5b857181adb7606a45a738ac4404278f33b3dc0ce0097ec70ccbb3",
+    strip_prefix = "target-determinator-61d25f5e13a4b2205b338531b929464e3ed5eb3d",
+    urls = ["https://github.com/bazel-contrib/target-determinator/archive/61d25f5e13a4b2205b338531b929464e3ed5eb3d.tar.gz"],
+)
+
+load("@bazel_contrib_target_determinator//:third_party/go/deps.bzl", td_go_dependencies = "go_dependencies")
+
+td_go_dependencies()
+
+load("@bazel_contrib_target_determinator//:third_party/go/bazel_differ_deps.bzl", td_differ_go_dependencies = "go_dependencies")
+
+td_differ_go_dependencies()
+# --end target-determinator--
+
 gazelle_dependencies()
 
 load("@io_bazel_rules_go//extras:embed_data_deps.bzl", "go_embed_data_dependencies")
