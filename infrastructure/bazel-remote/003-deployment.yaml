@@ -34,6 +34,7 @@ spec:
             - --s3.endpoint=s3.us-east-2.amazonaws.com
             - --max_size=98
             - --dir=/buildcache
+            - --experimental_remote_asset_api
           ports:
             - name: http
               containerPort: 8080
