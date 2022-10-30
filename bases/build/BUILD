@@ -3,24 +3,28 @@ load("@io_bazel_rules_docker//container:container.bzl", "container_image")
 container_image(
     name = "build_arm64",
     base = "@build_base_arm64//image",
+    tags = ["manual"],
     visibility = ["//visibility:public"],
 )
 
 container_image(
     name = "build_amd64",
     base = "@build_base_amd64//image",
+    tags = ["manual"],
     visibility = ["//visibility:public"],
 )
 
 container_image(
     name = "build_s390x",
     base = "@build_base_s390x//image",
+    tags = ["manual"],
     visibility = ["//visibility:public"],
 )
 
 container_image(
     name = "build_ppc64le",
     base = "@build_base_ppc64le//image",
+    tags = ["manual"],
     visibility = ["//visibility:public"],
 )
 
@@ -32,5 +36,6 @@ container_image(
         "//platforms:s390x": "@build_base_s390x//image",
         "//platforms:ppc64le": "@build_base_ppc64le//image",
     }),
+    tags = ["manual"],
     visibility = ["//visibility:public"],
 )

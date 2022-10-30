@@ -29,7 +29,7 @@ def container(image_name, files, tars_to_layer = [], base = "//bases/bazel/go", 
             tars = tars_to_layer,
             visibility = [":__subpackages__"],
         )
-        extra_layers += [layer_name]
+        extra_layers.append(layer_name)
 
     if not architecture:
         container_image(
