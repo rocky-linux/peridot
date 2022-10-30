@@ -1,0 +1,127 @@
+# Updated using inrepoconfig, initial should be uncommented
+# ---
+# apiVersion: v1
+# kind: ConfigMap
+# metadata:
+#   namespace: prow
+#   name: plugins
+# data:
+#   plugins.yaml: |
+#     plugins:
+#       rocky-linux/peridot:
+#         plugins:
+#         - approve
+#         - assign
+#         - blunderbuss
+#         - cat
+#         - config-updater
+#         - dog
+#         - help
+#         - heart
+#         - hold
+#         - label
+#         - lgtm
+#         - trigger
+#         - verify-owners
+#         - wip
+#         - yuks
+#     config_updater:
+#       maps:
+#         config/prow/config.yaml:
+#           name: config
+#         config/prow/plugins.yaml:
+#           name: plugins
+#         config/jobs/**/*.{yaml,yml}:
+#           name: job-config
+#           gzip: true
+# ---
+# apiVersion: v1
+# kind: ConfigMap
+# metadata:
+#   namespace: prow
+#   name: config
+# data:
+#   config.yaml: |
+#     prowjob_namespace: prow
+#     pod_namespace: test-pods
+#     allowed_clusters:
+#       rocky-linux/peridot:
+#         - default
+#     deck:
+#      spyglass:
+#        lenses:
+#        - lens:
+#            name: metadata
+#          required_files:
+#          - started.json|finished.json
+#        - lens:
+#            config:
+#            name: buildlog
+#          required_files:
+#          - build-log.txt
+#        - lens:
+#            name: junit
+#          required_files:
+#          - bazel-testlogs/.*/test.xml
+#        - lens:
+#            name: podinfo
+#          required_files:
+#          - podinfo.json
+#     plank:
+#       job_url_prefix_config:
+#         "*": https://prow.build.resf.org/view/
+#       report_templates:
+#         '*': >-
+#             [Full PR test history](https://prow.build.resf.org/pr-history?org={{.Spec.Refs.Org}}&repo={{.Spec.Refs.Repo}}&pr={{with index .Spec.Refs.Pulls 0}}{{.Number}}{{end}}).
+#             [Your PR dashboard](https://prow.build.resf.org/pr?query=is:pr+state:open+author:{{with
+#             index .Spec.Refs.Pulls 0}}{{.Author}}{{end}}).
+#       default_decoration_configs:
+#         "*":
+#           gcs_configuration:
+#             bucket: s3://resf-prod-prow-logs
+#             path_strategy: explicit
+#           s3_credentials_secret: s3-credentials
+#           utility_images:
+#             clonerefs: gcr.io/k8s-prow/clonerefs:v20221028-a8625c1f93
+#             entrypoint: gcr.io/k8s-prow/entrypoint:v20221028-a8625c1f93
+#             initupload: gcr.io/k8s-prow/initupload:v20221028-a8625c1f93
+#             sidecar: gcr.io/k8s-prow/sidecar:v20221028-a8625c1f93
+#     tide:
+#       queries:
+#       - labels:
+#         - lgtm
+#         - approved
+#         missingLabels:
+#         - needs-rebase
+#         - do-not-merge/hold
+#         - do-not-merge/work-in-progress
+#         - do-not-merge/invalid-owners-file
+#         repos:
+#         - rocky-linux/peridot
+#     decorate_all_jobs: true
+#     presubmits:
+#       rocky-linux/peridot:
+#         - name: pull-peridot-validate-prow-yaml
+#           run_if_changed: '^(config/prow/(config|plugins).yaml$|config/jobs/.*.yaml$)'
+#           decorate: true
+#           spec:
+#             containers:
+#               - image: gcr.io/k8s-prow/checkconfig:v20221028-a8625c1f93
+#                 command:
+#                   - checkconfig
+#                 args:
+#                   - --config-path=config/prow/config.yaml
+#                   - --job-config-path=config/jobs
+#                   - --plugin-config=config/prow/plugins.yaml
+#                   - --strict
+#
+#         - name: pull-peridot-unit-test
+#           branches:
+#             - main
+#           always_run: true
+#           decorate: true
+#           spec:
+#             containers:
+#               - image: alpine
+#                 command:
+#                   - /bin/date

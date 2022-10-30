@@ -1,0 +1,29 @@
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: prow
+  namespace: prow
+  annotations:
+    external-dns.alpha.kubernetes.io/target: ingress.build.resf.org
+spec:
+  gateways:
+    - istio-system/base-gateway-public
+  hosts:
+    - prow.build.resf.org
+  http:
+    - name: hook
+      match:
+        - uri:
+            prefix: "/hook"
+      route:
+        - destination:
+            host: hook.prow.svc.cluster.local
+            port:
+              number: 8888
+    - name: deck
+      route:
+        - destination:
+            host: deck.prow.svc.cluster.local
+            port:
+              number: 80
