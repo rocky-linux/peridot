@@ -40,6 +40,7 @@ import { packageApi, taskApi } from 'peridot/ui/src/api';
 import {
   V1GetTaskResponse,
   V1TaskType,
+  V1TaskStatus,
 } from 'bazel-bin/peridot/proto/v1/client_typescript';
 import { ToolbarHeader } from 'common/mui/ToolbarHeader';
 import Divider from '@mui/material/Divider';
@@ -54,12 +55,14 @@ import TabContext from '@mui/lab/TabContext';
 import TabList from '@mui/lab/TabList';
 import Box from '@mui/material/Box';
 import Tab from '@mui/material/Tab';
+import Button from '@mui/material/Button';
 import TabPanel from '@mui/lab/TabPanel';
 import ProjectTaskFullLog from 'peridot/ui/src/components/ProjectTaskFullLog';
 import { RemoteErrors } from 'common/ui/types';
 import Tabs from '@mui/material/Tabs';
 import Toolbar from '@mui/material/Toolbar';
 import { ProjectTasksSubtasks } from 'peridot/ui/src/components/ProjectTasksSubtasks';
+import { reqap } from 'common/ui/reqap';
 
 export interface ProjectPackageDetailsRouteProps {
   id: string;
@@ -77,6 +80,7 @@ export default function (
     V1GetTaskResponse | undefined | null | RemoteErrors
   >(undefined);
   const [tabValue, setTabValue] = React.useState('1');
+  const [submitting, setSubmitting] = React.useState(false);
 
   const handleTabValueChange = (event, newValue) => {
     setTabValue(newValue);
@@ -90,6 +94,26 @@ export default function (
       }),
     setTaskRes
   );
+
+  const cancelTask = async () => {
+    if (!confirm('Are you sure you want to cancel this task?')) {
+      return;
+    }
+    setSubmitting(true);
+    const [err, res] = await reqap(() =>
+      taskApi.cancelTask({
+        id: props.match.params.id,
+        projectId: project.id || '',
+      })
+    );
+    if (err) {
+      alert(err);
+      setSubmitting(false);
+      return;
+    }
+
+    window.location.reload();
+  };
 
   return (
     <>
@@ -119,31 +143,46 @@ export default function (
                 </div>
               </ToolbarHeader>
               <Divider />
-              <div className="w-full bg-white flex divide-x divide-gray-100">
-                <div className="p-5 w-128 space-y-1">
-                  <h2 className="font-bold text-lg">Type</h2>
-                  <div className="flex space-x-2 h-6">
-                    {translateTaskTypeToText(
-                      parentTask.type || V1TaskType.Unspecified
-                    )}
-                  </div>
-                </div>
-                <div className="p-5 w-128 space-y-1">
-                  <h2 className="font-bold text-lg">Status</h2>
-                  <div className="flex space-x-2 h-6">
-                    {transformTaskStatusToIcon(parentTask.status, true)}
-                  </div>
-                </div>
-                {[V1TaskType.Import, V1TaskType.Build].includes(
-                  parentTask.type || V1TaskType.Unspecified
-                ) && (
+              <div className="w-full flex items-center justify-between bg-white">
+                <div className="w-full bg-white flex divide-x divide-gray-100">
                   <div className="p-5 w-128 space-y-1">
-                    <h2 className="font-bold text-lg">Package</h2>
+                    <h2 className="font-bold text-lg">Type</h2>
                     <div className="flex space-x-2 h-6">
-                      {parentTaskMetadata?.packageName}
+                      {translateTaskTypeToText(
+                        parentTask.type || V1TaskType.Unspecified
+                      )}
                     </div>
                   </div>
-                )}
+                  <div className="p-5 w-128 space-y-1">
+                    <h2 className="font-bold text-lg">Status</h2>
+                    <div className="flex space-x-2 h-6">
+                      {transformTaskStatusToIcon(parentTask.status, true)}
+                    </div>
+                  </div>
+                  {[V1TaskType.Import, V1TaskType.Build].includes(
+                    parentTask.type || V1TaskType.Unspecified
+                  ) && (
+                    <div className="p-5 w-128 space-y-1">
+                      <h2 className="font-bold text-lg">Package</h2>
+                      <div className="flex space-x-2 h-6">
+                        {parentTaskMetadata?.packageName}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                {!parentTask.parentTaskId &&
+                  parentTask.status == V1TaskStatus.Running && (
+                    <div className="p-5">
+                      <Button
+                        variant="contained"
+                        disabled={submitting}
+                        color="error"
+                        onClick={cancelTask}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  )}
               </div>
               <Divider />
               <Box className="bg-white">
