@@ -1,9 +1,9 @@
-local RESFDEPLOY = import 'ci/RESFDEPLOY.jsonnet';
+local resfdeploy = import 'ci/resfdeploy.jsonnet';
 local db = import 'ci/db.jsonnet';
 local kubernetes = import 'ci/kubernetes.jsonnet';
 local common = import 'hydra/deploy/common.jsonnet';
 
-RESFDEPLOY.new({
+resfdeploy.new({
   name: 'hydra-admin',
   replicas: 1,
   dbname: 'hydra',

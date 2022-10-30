@@ -1,10 +1,10 @@
-local RESFDEPLOY = import 'ci/RESFDEPLOY.jsonnet';
+local resfdeploy = import 'ci/resfdeploy.jsonnet';
 local db = import 'ci/db.jsonnet';
 local kubernetes = import 'ci/kubernetes.jsonnet';
 local temporal = import 'ci/temporal.jsonnet';
 local utils = import 'ci/utils.jsonnet';
 
-RESFDEPLOY.new({
+resfdeploy.new({
   name: 'keykeeper',
   replicas: if kubernetes.prod() then 3 else 1,
   dbname: 'peridot',
