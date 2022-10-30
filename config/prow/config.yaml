@@ -1,10 +1,6 @@
 prowjob_namespace: prow
 pod_namespace: test-pods
 
-allowed_clusters:
-  rocky-linux/peridot:
-    - default
-
 deck:
   spyglass:
     lenses:
