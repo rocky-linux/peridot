@@ -1,0 +1,26 @@
+presubmits:
+  rocky-linux/peridot:
+    - name: pull-peridot-validate-prow-yaml
+      run_if_changed: '^(config/prow/(config|plugins).yaml$|config/jobs/.*.yaml$)'
+      decorate: true
+      spec:
+        containers:
+          - image: gcr.io/k8s-prow/checkconfig:v20221028-a8625c1f93
+            command:
+              - checkconfig
+            args:
+              - --config-path=config/prow/config.yaml
+              - --job-config-path=config/jobs
+              - --plugin-config=config/prow/plugins.yaml
+              - --strict
+
+    - name: pull-peridot-unit-test
+      branches:
+        - main
+      always_run: true
+      decorate: true
+      spec:
+        containers:
+          - image: alpine
+            command:
+              - /bin/date

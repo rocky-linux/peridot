@@ -1,0 +1,28 @@
+plugins:
+  rocky-linux/peridot:
+    plugins:
+      - approve
+      - assign
+      - blunderbuss
+      - cat
+      - config-updater
+      - dog
+      - help
+      - heart
+      - hold
+      - label
+      - lgtm
+      - trigger
+      - verify-owners
+      - wip
+      - yuks
+
+config_updater:
+  maps:
+    config/prow/config.yaml:
+      name: config
+    config/prow/plugins.yaml:
+      name: plugins
+    config/jobs/**/*.{yaml,yml}:
+      name: job-config
+      gzip: true
