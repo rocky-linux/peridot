@@ -67,6 +67,14 @@ bycdeploy.new({
       name: 'PERIDOT_S3_FORCE_PATH_STYLE',
       value: 'true'
     },
+    if kubernetes.prod() then {
+      name: 'PERIDOT_S3_REGION',
+      value: 'us-east-2',
+    },
+    if kubernetes.prod() then {
+      name: 'PERIDOT_S3_BUCKET',
+      value: 'resf-peridot-prod',
+    },
     $.dsn,
   ] + temporal.kube_env('PERIDOT'),
 })

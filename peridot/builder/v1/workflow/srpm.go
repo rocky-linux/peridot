@@ -421,9 +421,11 @@ func (c *Controller) BuildSRPMActivity(ctx context.Context, upstreamPrefix strin
 	if len(project.SrpmStagePackages) != 0 {
 		pkgGroup = project.SrpmStagePackages
 	}
-	if len(pkgEo.DependsOn) != 0 {
-		for _, pkg := range pkgEo.DependsOn {
-			pkgGroup = append(pkgGroup, pkg)
+	if pkgEo != nil {
+		if len(pkgEo.DependsOn) != 0 {
+			for _, pkg := range pkgEo.DependsOn {
+				pkgGroup = append(pkgGroup, pkg)
+			}
 		}
 	}
 

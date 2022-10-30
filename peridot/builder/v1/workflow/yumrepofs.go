@@ -55,6 +55,7 @@ import (
 	"io"
 	"io/ioutil"
 	"path/filepath"
+	"peridot.resf.org/apollo/rpmutils"
 	"peridot.resf.org/modulemd"
 	"peridot.resf.org/peridot/composetools"
 	peridotdb "peridot.resf.org/peridot/db"
@@ -63,7 +64,6 @@ import (
 	peridotpb "peridot.resf.org/peridot/pb"
 	"peridot.resf.org/peridot/yummeta"
 	yumrepofspb "peridot.resf.org/peridot/yumrepofs/pb"
-	"peridot.resf.org/secparse/rpmutils"
 	"peridot.resf.org/utils"
 	"regexp"
 	"strings"
@@ -1227,8 +1227,12 @@ func (c *Controller) makeRepoChanges(tx peridotdb.Access, req *UpdateRepoRequest
 				}
 
 				var name string
-				if rpmutils.NVR().MatchString(filepath.Base(artifact.Name)) {
-					nvr := rpmutils.NVR().FindStringSubmatch(filepath.Base(artifact.Name))
+				base := strings.TrimSuffix(filepath.Base(artifact.Name), ".rpm")
+				if rpmutils.NVRUnusualRelease().MatchString(base) {
+					nvr := rpmutils.NVRUnusualRelease().FindStringSubmatch(base)
+					name = nvr[1]
+				} else if rpmutils.NVR().MatchString(base) {
+					nvr := rpmutils.NVR().FindStringSubmatch(base)
 					name = nvr[1]
 				}
 

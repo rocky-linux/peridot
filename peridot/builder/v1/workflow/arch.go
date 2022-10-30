@@ -52,10 +52,10 @@ import (
 	"github.com/google/uuid"
 	"go.temporal.io/sdk/activity"
 	"google.golang.org/protobuf/types/known/wrapperspb"
+	"peridot.resf.org/apollo/rpmutils"
 	"peridot.resf.org/peridot/db/models"
 	peridotpb "peridot.resf.org/peridot/pb"
 	"peridot.resf.org/peridot/rpmbuild"
-	"peridot.resf.org/secparse/rpmutils"
 	"peridot.resf.org/servicecatalog"
 )
 
@@ -668,9 +668,11 @@ func (c *Controller) BuildArchActivity(ctx context.Context, projectId string, pa
 		pkgGroup = project.BuildStagePackages
 	}
 
-	if len(pkgEo.DependsOn) != 0 {
-		for _, pkg := range pkgEo.DependsOn {
-			pkgGroup = append(pkgGroup, pkg)
+	if pkgEo != nil {
+		if len(pkgEo.DependsOn) != 0 {
+			for _, pkg := range pkgEo.DependsOn {
+				pkgGroup = append(pkgGroup, pkg)
+			}
 		}
 	}
 
@@ -736,11 +738,16 @@ func (c *Controller) UploadArchActivity(ctx context.Context, projectId string, p
 	var ret []*UploadActivityResult
 
 	for _, rpm := range rpms {
-		rpmFilename := filepath.Base(rpm)
-		if !rpmutils.NVR().MatchString(rpmFilename) {
+		var nvr []string
+		base := strings.TrimSuffix(filepath.Base(rpm), ".rpm")
+		if rpmutils.NVRUnusualRelease().MatchString(base) {
+			nvr = rpmutils.NVRUnusualRelease().FindStringSubmatch(base)
+		} else if rpmutils.NVR().MatchString(base) {
+			nvr = rpmutils.NVR().FindStringSubmatch(base)
+		}
+		if !rpmutils.NVR().MatchString(base) {
 			return nil, errors.New("invalid rpm")
 		}
-		nvr := rpmutils.NVR().FindStringSubmatch(rpmFilename)
 		res, err := c.uploadArtifact(projectId, parentTaskId, rpm, nvr[4], peridotpb.TaskType_TASK_TYPE_BUILD_ARCH_UPLOAD)
 		if err != nil {
 			return nil, err

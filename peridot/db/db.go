@@ -45,7 +45,7 @@ type Access interface {
 	CreateProject(project *peridotpb.Project) (*models.Project, error)
 	UpdateProject(id string, project *peridotpb.Project) (*models.Project, error)
 	SetProjectKeys(projectId string, username string, password string) error
-  SetBuildRootPackages(projectId string, srpmPackages []string, buildPackages []string) error
+	SetBuildRootPackages(projectId string, srpmPackages []string, buildPackages []string) error
 
 	CreateBuild(packageId string, packageVersionId string, taskId string, projectId string) (*models.Build, error)
 	GetArtifactsForBuild(buildId string) (models.TaskArtifacts, error)
@@ -97,7 +97,7 @@ type Access interface {
 	GetPackageID(name string) (string, error)
 	SetExtraOptionsForPackage(projectId string, packageName string, withFlags pq.StringArray, withoutFlags pq.StringArray) error
 	GetExtraOptionsForPackage(projectId string, packageName string) (*models.ExtraOptions, error)
-  SetGroupInstallOptionsForPackage(projectId string, packageName string, dependsOn pq.StringArray) error
+	SetGroupInstallOptionsForPackage(projectId string, packageName string, dependsOn pq.StringArray) error
 
 	CreateTask(user *utils.ContextUser, arch string, taskType peridotpb.TaskType, projectId *string, parentTaskId *string) (*models.Task, error)
 	SetTaskStatus(id string, status peridotpb.TaskStatus) error
@@ -120,6 +120,8 @@ type Access interface {
 	GetPluginsForProject(projectId string) (models.Plugins, error)
 
 	GetExternalRepositoriesForProject(projectId string) (models.ExternalRepositories, error)
+	DeleteExternalRepositoryForProject(projectId string, externalRepositoryId string) error
+	CreateExternalRepositoryForProject(projectId string, repoURL string, priority *int32, moduleHotfixes bool) (*models.ExternalRepository, error)
 	FindRepositoriesForPackage(projectId string, pkg string, internalOnly bool) (models.Repositories, error)
 	FindRepositoriesForProject(projectId string, id *string, internalOnly bool) (models.Repositories, error)
 	GetRepositoryRevision(revisionId string) (*models.RepositoryRevision, error)

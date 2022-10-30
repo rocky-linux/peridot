@@ -62,14 +62,15 @@ type UpdatePackageSum struct {
 }
 
 type UpdatePackage struct {
-	Name     string              `xml:"name,attr"`
-	Version  string              `xml:"version,attr"`
-	Release  string              `xml:"release,attr"`
-	Epoch    string              `xml:"epoch,attr"`
-	Arch     string              `xml:"arch,attr"`
-	Src      string              `xml:"src,attr"`
-	Filename string              `xml:"filename"`
-	Sum      []*UpdatePackageSum `xml:"sum"`
+	Name            string              `xml:"name,attr"`
+	Version         string              `xml:"version,attr"`
+	Release         string              `xml:"release,attr"`
+	Epoch           string              `xml:"epoch,attr"`
+	Arch            string              `xml:"arch,attr"`
+	Src             string              `xml:"src,attr"`
+	Filename        string              `xml:"filename"`
+	RebootSuggested string              `xml:"reboot_suggested"`
+	Sum             []*UpdatePackageSum `xml:"sum"`
 }
 
 type UpdateCollection struct {

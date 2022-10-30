@@ -13,11 +13,13 @@ build:inmemory --experimental_inmemory_dotd_files
 
 # Minimize what is downloaded
 build:toplevel --config=inmemory
-build:toplevel --experimental_remote_download_outputs=toplevel
+build:toplevel --remote_download_outputs=toplevel
 
 build:remote --config=toplevel
 build:remote --google_credentials=/tmp/credentials.json
 build:remote --remote_cache=https://storage.googleapis.com/resf-temporary-bazel-cache
 run:remote --experimental_remote_download_outputs=all --noexperimental_inmemory_jdeps_files --noexperimental_inmemory_dotd_files
+
+common:ci --config=toplevel
 
 build --stamp=true

@@ -97,9 +97,11 @@ Class | Method | HTTP request | Description
 *PackageServiceApi* | [**ListPackages**](docs/PackageServiceApi.md#listpackages) | **Get** /v1/projects/{projectId}/packages | ListPackages returns all packages with filters applied
 *ProjectServiceApi* | [**CreateHashedRepositories**](docs/ProjectServiceApi.md#createhashedrepositories) | **Post** /v1/projects/{projectId}/repositories/hashed | 
 *ProjectServiceApi* | [**CreateProject**](docs/ProjectServiceApi.md#createproject) | **Post** /v1/projects | 
+*ProjectServiceApi* | [**DeleteExternalRepository**](docs/ProjectServiceApi.md#deleteexternalrepository) | **Delete** /v1/projects/{projectId}/external_repositories/{id} | 
 *ProjectServiceApi* | [**GetProject**](docs/ProjectServiceApi.md#getproject) | **Get** /v1/projects/{id} | 
 *ProjectServiceApi* | [**GetProjectCredentials**](docs/ProjectServiceApi.md#getprojectcredentials) | **Get** /v1/projects/{projectId}/credentials | 
 *ProjectServiceApi* | [**GetRepository**](docs/ProjectServiceApi.md#getrepository) | **Get** /v1/projects/{projectId}/repositories/{id} | 
+*ProjectServiceApi* | [**ListExternalRepositories**](docs/ProjectServiceApi.md#listexternalrepositories) | **Get** /v1/projects/{projectId}/external_repositories | 
 *ProjectServiceApi* | [**ListProjects**](docs/ProjectServiceApi.md#listprojects) | **Get** /v1/projects | 
 *ProjectServiceApi* | [**ListRepositories**](docs/ProjectServiceApi.md#listrepositories) | **Get** /v1/projects/{projectId}/repositories | 
 *ProjectServiceApi* | [**LookasideFileUpload**](docs/ProjectServiceApi.md#lookasidefileupload) | **Post** /v1/lookaside | 
@@ -137,6 +139,7 @@ Class | Method | HTTP request | Description
  - [V1BuildFilters](docs/V1BuildFilters.md)
  - [V1CreateProjectRequest](docs/V1CreateProjectRequest.md)
  - [V1CreateProjectResponse](docs/V1CreateProjectResponse.md)
+ - [V1ExternalRepository](docs/V1ExternalRepository.md)
  - [V1GetBuildBatchResponse](docs/V1GetBuildBatchResponse.md)
  - [V1GetBuildResponse](docs/V1GetBuildResponse.md)
  - [V1GetImportBatchResponse](docs/V1GetImportBatchResponse.md)
@@ -154,6 +157,7 @@ Class | Method | HTTP request | Description
  - [V1ImportRevision](docs/V1ImportRevision.md)
  - [V1ListBuildBatchesResponse](docs/V1ListBuildBatchesResponse.md)
  - [V1ListBuildsResponse](docs/V1ListBuildsResponse.md)
+ - [V1ListExternalRepositoriesResponse](docs/V1ListExternalRepositoriesResponse.md)
  - [V1ListImportBatchesResponse](docs/V1ListImportBatchesResponse.md)
  - [V1ListImportsResponse](docs/V1ListImportsResponse.md)
  - [V1ListPackagesResponse](docs/V1ListPackagesResponse.md)

@@ -188,60 +188,93 @@ func (s *Server) SignArtifactActivity(ctx context.Context, artifactId string, ke
 
 	switch ext {
 	case ".rpm":
-		var outBuf bytes.Buffer
-		opts := []string{
-			"--define", "_gpg_name " + keyName,
-			"--define", "_peridot_keykeeper_key " + key.keyUuid.String(),
-			"--addsign", localPath,
-		}
-		cmd := gpgCmdEnv(exec.Command("rpm", opts...))
-		cmd.Stdout = &outBuf
-		cmd.Stderr = &outBuf
-		err := cmd.Run()
-		if err != nil {
-			s.log.Errorf("failed to sign artifact %s: %v", artifact.Name, err)
-			statusErr := status.New(codes.Internal, "failed to sign artifact")
-			statusErr, err2 := statusErr.WithDetails(&errdetails.ErrorInfo{
-				Reason: "rpmsign-failed",
-				Domain: "keykeeper.peridot.resf.org",
-				Metadata: map[string]string{
-					"logs": outBuf.String(),
-					"err":  err.Error(),
-				},
-			})
-			if err2 != nil {
-				s.log.Errorf("failed to add error details to status: %v", err2)
+		rpmSign := func() (*keykeeperpb.SignedArtifact, error) {
+			var outBuf bytes.Buffer
+			opts := []string{
+				"--define", "_gpg_name " + keyName,
+				"--define", "_peridot_keykeeper_key " + key.keyUuid.String(),
+				"--addsign", localPath,
 			}
-			return nil, statusErr.Err()
-		}
-		_, err = s.storage.PutObject(newObjectKey, localPath)
-		if err != nil {
-			s.log.Errorf("failed to upload artifact %s: %v", newObjectKey, err)
-			return nil, fmt.Errorf("failed to upload artifact %s: %v", newObjectKey, err)
-		}
+			cmd := gpgCmdEnv(exec.Command("rpm", opts...))
+			cmd.Stdout = &outBuf
+			cmd.Stderr = &outBuf
+			err := cmd.Run()
+			if err != nil {
+				s.log.Errorf("failed to sign artifact %s: %v", artifact.Name, err)
+				statusErr := status.New(codes.Internal, "failed to sign artifact")
+				statusErr, err2 := statusErr.WithDetails(&errdetails.ErrorInfo{
+					Reason: "rpmsign-failed",
+					Domain: "keykeeper.peridot.resf.org",
+					Metadata: map[string]string{
+						"logs": outBuf.String(),
+						"err":  err.Error(),
+					},
+				})
+				if err2 != nil {
+					s.log.Errorf("failed to add error details to status: %v", err2)
+				}
+				return nil, statusErr.Err()
+			}
+			_, err = s.storage.PutObject(newObjectKey, localPath)
+			if err != nil {
+				s.log.Errorf("failed to upload artifact %s: %v", newObjectKey, err)
+				return nil, fmt.Errorf("failed to upload artifact %s: %v", newObjectKey, err)
+			}
 
-		f, err := os.Open(localPath)
+			f, err := os.Open(localPath)
+			if err != nil {
+				return nil, err
+			}
+
+			hasher := sha256.New()
+			_, err = io.Copy(hasher, f)
+			if err != nil {
+				return nil, err
+			}
+			hash := hex.EncodeToString(hasher.Sum(nil))
+
+			err = s.db.CreateTaskArtifactSignature(artifact.ID.String(), key.keyUuid.String(), hash)
+			if err != nil {
+				s.log.Errorf("failed to create task artifact signature: %v", err)
+				return nil, fmt.Errorf("failed to create task artifact signature: %v", err)
+			}
+
+			return &keykeeperpb.SignedArtifact{
+				Path:       newObjectKey,
+				HashSha256: hash,
+			}, nil
+		}
+		verifySig := func() error {
+			var outBuf bytes.Buffer
+			opts := []string{
+				"--define", "_gpg_name " + keyName,
+				"--define", "_peridot_keykeeper_key " + key.keyUuid.String(),
+				"--checksig", localPath,
+			}
+			cmd := gpgCmdEnv(exec.Command("rpm", opts...))
+			cmd.Stdout = &outBuf
+			cmd.Stderr = &outBuf
+			err := cmd.Run()
+			if err != nil {
+				s.log.Errorf("failed to verify artifact %s: %v", artifact.Name, err)
+				return fmt.Errorf("failed to verify artifact %s: %v", artifact.Name, err)
+			}
+			if !strings.Contains(outBuf.String(), "digest signatures OK") {
+				s.log.Errorf("artifact %s not signed(?), retrying", artifact.Name)
+				return fmt.Errorf("artifact %s not signed(?), retrying", artifact.Name)
+			}
+			return nil
+		}
+		res, err := rpmSign()
+		if err != nil {
+			return nil, err
+		}
+		err = verifySig()
 		if err != nil {
 			return nil, err
 		}
 
-		hasher := sha256.New()
-		_, err = io.Copy(hasher, f)
-		if err != nil {
-			return nil, err
-		}
-		hash := hex.EncodeToString(hasher.Sum(nil))
-
-		err = s.db.CreateTaskArtifactSignature(artifact.ID.String(), key.keyUuid.String(), hash)
-		if err != nil {
-			s.log.Errorf("failed to create task artifact signature: %v", err)
-			return nil, fmt.Errorf("failed to create task artifact signature: %v", err)
-		}
-
-		return &keykeeperpb.SignedArtifact{
-			Path:       newObjectKey,
-			HashSha256: hash,
-		}, nil
+		return res, nil
 	default:
 		s.log.Infof("skipping artifact %s, extension %s not supported", artifact.Name, ext)
 		return nil, ErrUnsupportedExtension

@@ -317,7 +317,11 @@ github.com/googleapis/gnostic/compiler
 github.com/googleapis/gnostic/extensions
 github.com/googleapis/gnostic/jsonschema
 github.com/googleapis/gnostic/openapiv2
+# github.com/gorilla/feeds v1.1.1
+## explicit
+github.com/gorilla/feeds
 # github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
+## explicit
 github.com/grpc-ecosystem/go-grpc-middleware
 github.com/grpc-ecosystem/go-grpc-middleware/auth
 github.com/grpc-ecosystem/go-grpc-middleware/retry
@@ -399,6 +403,8 @@ github.com/matttproud/golang_protobuf_extensions/pbutil
 github.com/mitchellh/go-homedir
 # github.com/mitchellh/mapstructure v1.4.1
 github.com/mitchellh/mapstructure
+# github.com/mmcdole/gofeed v1.1.3
+## explicit
 # github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd
 github.com/modern-go/concurrent
 # github.com/modern-go/reflect2 v1.0.2
@@ -422,6 +428,7 @@ github.com/pborman/uuid
 ## explicit
 github.com/pelletier/go-toml
 # github.com/pkg/errors v0.9.1
+## explicit
 github.com/pkg/errors
 # github.com/pmezard/go-difflib v1.0.0
 github.com/pmezard/go-difflib/difflib
@@ -440,6 +447,8 @@ github.com/prometheus/common/model
 github.com/prometheus/procfs
 github.com/prometheus/procfs/internal/fs
 github.com/prometheus/procfs/internal/util
+# github.com/quay/goval-parser v0.8.7
+## explicit
 # github.com/rivo/uniseg v0.2.0
 github.com/rivo/uniseg
 # github.com/robfig/cron v1.2.0
@@ -563,6 +572,7 @@ go.temporal.io/sdk/internal/common/util
 go.temporal.io/sdk/internal/log
 go.temporal.io/sdk/log
 go.temporal.io/sdk/temporal
+go.temporal.io/sdk/testsuite
 go.temporal.io/sdk/worker
 go.temporal.io/sdk/workflow
 # go.uber.org/atomic v1.9.0
@@ -1008,6 +1018,9 @@ k8s.io/utils/integer
 # openapi.peridot.resf.org/peridotopenapi v0.0.0-00010101000000-000000000000 => ./bazel-bin/peridot/proto/v1/client_go
 ## explicit
 openapi.peridot.resf.org/peridotopenapi
+# peridot.resf.org/apollo/pb v0.0.0-00010101000000-000000000000 => ./bazel-bin/apollo/proto/v1/apollopb_go_proto_/peridot.resf.org/apollo/pb
+## explicit
+peridot.resf.org/apollo/pb
 # peridot.resf.org/common v0.0.0-00010101000000-000000000000 => ./bazel-bin/proto/commonpb_go_proto_/peridot.resf.org/common
 ## explicit
 peridot.resf.org/common
@@ -1023,12 +1036,6 @@ peridot.resf.org/peridot/pb
 # peridot.resf.org/peridot/yumrepofs/pb v0.0.0-00010101000000-000000000000 => ./bazel-bin/peridot/proto/v1/yumrepofs/yumrepofspb_go_proto_/peridot.resf.org/peridot/yumrepofs/pb
 ## explicit
 peridot.resf.org/peridot/yumrepofs/pb
-# peridot.resf.org/secparse/admin/proto v0.0.0-00010101000000-000000000000 => ./bazel-bin/secparse/admin/proto/v1/secparseadminpb_go_proto_/peridot.resf.org/secparse/admin/proto
-## explicit
-peridot.resf.org/secparse/admin/proto/v1
-# peridot.resf.org/secparse/proto v0.0.0-00010101000000-000000000000 => ./bazel-bin/secparse/proto/v1/secparsepb_go_proto_/peridot.resf.org/secparse/proto
-## explicit
-peridot.resf.org/secparse/proto/v1
 # sigs.k8s.io/structured-merge-diff/v4 v4.1.2
 sigs.k8s.io/structured-merge-diff/v4/fieldpath
 sigs.k8s.io/structured-merge-diff/v4/schema
@@ -1038,6 +1045,7 @@ sigs.k8s.io/structured-merge-diff/v4/value
 sigs.k8s.io/yaml
 # github.com/dgrijalva/jwt-go v3.2.0+incompatible => github.com/golang-jwt/jwt/v4 v4.4.2
 # openapi.peridot.resf.org/peridotopenapi => ./bazel-bin/peridot/proto/v1/client_go
+# peridot.resf.org/apollo/pb => ./bazel-bin/apollo/proto/v1/apollopb_go_proto_/peridot.resf.org/apollo/pb
 # bazel.build/protobuf => ./bazel-bin/build/bazel/protobuf/bazelbuild_go_proto_/bazel.build/protobuf
 # bazel.build/remote/execution/v2 => ./bazel-bin/build/bazel/remote/execution/v2/remoteexecution_go_proto_/bazel.build/remote/execution/v2
 # bazel.build/semver => ./bazel-bin/build/bazel/semver/semver_go_proto_/bazel.build/semver
@@ -1046,6 +1054,4 @@ sigs.k8s.io/yaml
 # peridot.resf.org/peridot/keykeeper/pb => ./bazel-bin/peridot/proto/v1/keykeeper/keykeeperpb_go_proto_/peridot.resf.org/peridot/keykeeper/pb
 # peridot.resf.org/peridot/yumrepofs/pb => ./bazel-bin/peridot/proto/v1/yumrepofs/yumrepofspb_go_proto_/peridot.resf.org/peridot/yumrepofs/pb
 # peridot.resf.org/common => ./bazel-bin/proto/commonpb_go_proto_/peridot.resf.org/common
-# peridot.resf.org/secparse/admin/proto => ./bazel-bin/secparse/admin/proto/v1/secparseadminpb_go_proto_/peridot.resf.org/secparse/admin/proto
-# peridot.resf.org/secparse/proto => ./bazel-bin/secparse/proto/v1/secparsepb_go_proto_/peridot.resf.org/secparse/proto
 # github.com/envoyproxy/protoc-gen-validate/validate => ./bazel-bin/vendor/github.com/envoyproxy/protoc-gen-validate/validate/go_default_library_/github.com/envoyproxy/protoc-gen-validate/validate

@@ -6,7 +6,7 @@ local utils = import 'ci/utils.jsonnet';
 
 bycdeploy.new({
   name: 'keykeeper',
-  replicas: if kubernetes.prod() then 20 else 3,
+  replicas: if kubernetes.prod() then 3 else 1,
   dbname: 'peridot',
   backend: true,
   migrate: true,
@@ -52,6 +52,15 @@ bycdeploy.new({
   health: {
     port: 46002,
   },
+  volumes(metadata): [
+    {
+      name: 'urandom',
+      path: '/dev/random',
+      hostPath: {
+        path: '/dev/random',
+      },
+    }
+  ],
   env: [
     {
       name: 'KEYKEEPER_PRODUCTION',

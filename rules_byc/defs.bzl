@@ -57,6 +57,7 @@ def peridot_k8s(name, src, tags = [], outs = [], static = False, prod_only = Fal
         src = src,
         outs = outs,
         tags = tags + [
+            "manual",
             "peridot_k8s",
         ],
         ext_strs = select({
@@ -86,11 +87,13 @@ def peridot_k8s(name, src, tags = [], outs = [], static = False, prod_only = Fal
     k8s_apply(
         name = "%s.apply" % name,
         srcs = [":%s" % name],
+        tags = ["manual"],
         visibility = ["//visibility:public"],
     )
     multirun(
-      name = "%s.push" % name,
-      commands = dependent_push + [":%s_container" % name],
+        name = "%s.push" % name,
+        commands = dependent_push + [":%s_container" % name],
+        tags = ["manual"],
     )
     multirun(
         name = "%s.push_apply" % name,
@@ -98,6 +101,7 @@ def peridot_k8s(name, src, tags = [], outs = [], static = False, prod_only = Fal
             ":%s.push" % name,
             ":%s.apply" % name,
         ],
+        tags = ["manual"],
     )
 
 def byc_frontend(name, tags = [], **kwargs):
@@ -105,6 +109,7 @@ def byc_frontend(name, tags = [], **kwargs):
         name = "{}.bundle".format(name),
         build = True,
         tags = tags + [
+            "manual",
             "byc_frontend_bundle",
         ],
         **kwargs
@@ -114,6 +119,7 @@ def byc_frontend(name, tags = [], **kwargs):
         name = "{}.server".format(name),
         build = False,
         tags = tags + [
+            "manual",
             "byc_frontend_server",
             "ibazel_notify_changes",
             "ibazel_live_reload",

@@ -1,0 +1,21 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "apollo_lib",
+    srcs = ["main.go"],
+    importpath = "peridot.resf.org/apollo/cmd/apollo",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//apollo/db/connector",
+        "//apollo/impl/v1:impl",
+        "//utils",
+        "//vendor/github.com/sirupsen/logrus",
+        "//vendor/github.com/spf13/cobra",
+    ],
+)
+
+go_binary(
+    name = "apollo",
+    embed = [":apollo_lib"],
+    visibility = ["//visibility:public"],
+)
