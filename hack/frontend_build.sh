@@ -18,7 +18,7 @@ git checkout "$PULL_PULL_SHA" --quiet
 bazel-bin/bazel-diff generate-hashes -w "$workspace_dir" -b "$bazel_bin" ending_hashes_json
 
 # Get impacted targets
-bazel-bin/bazel-diff get-impacted-targets -sh starting_hashes_json -fh ending_hashes_json impacted_targets
+bazel-bin/bazel-diff get-impacted-targets -sh starting_hashes_json -fh ending_hashes_json -o impacted_targets
 
 # Build impacted targets
 hack/build_impacted_frontend.sh

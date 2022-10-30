@@ -34,6 +34,6 @@ import * as apollo from 'bazel-bin/apollo/proto/v1/client_typescript';
 
 export const api = new apollo.ApolloServiceApi(
   new apollo.Configuration({
-    basePath: '/api',
+    basePath: '/api', // Points to frontend API proxy
   })
 );
