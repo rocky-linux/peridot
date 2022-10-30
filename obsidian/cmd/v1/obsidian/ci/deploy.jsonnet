@@ -1,8 +1,8 @@
-local bycdeploy = import 'ci/bycdeploy.jsonnet';
+local resfdeploy = import 'ci/resfdeploy.jsonnet';
 local db = import 'ci/db.jsonnet';
 local kubernetes = import 'ci/kubernetes.jsonnet';
 
-bycdeploy.new({
+resfdeploy.new({
   name: 'obsidian',
   dbname: 'obsidian',
   backend: true,

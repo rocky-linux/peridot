@@ -1,5 +1,5 @@
 load("@io_bazel_rules_jsonnet//jsonnet:jsonnet.bzl", "jsonnet_library")
-load("//rules_byc:defs.bzl", "BYCDEPLOY_OUTS_MIGRATE", "peridot_k8s")
+load("//rules_resf:defs.bzl", "RESFDEPLOY_OUTS_MIGRATE", "peridot_k8s")
 
 jsonnet_library(
     name = "common",
@@ -11,7 +11,7 @@ jsonnet_library(
 peridot_k8s(
     name = "spicedb",
     src = "deploy.jsonnet",
-    outs = BYCDEPLOY_OUTS_MIGRATE,
+    outs = RESFDEPLOY_OUTS_MIGRATE,
     force_normal_tags = True,
     deps = [
         ":common",

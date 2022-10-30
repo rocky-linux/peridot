@@ -1,4 +1,4 @@
-local bycdeploy = import 'ci/bycdeploy.jsonnet';
+local resfdeploy = import 'ci/resfdeploy.jsonnet';
 local db = import 'ci/db.jsonnet';
 local kubernetes = import 'ci/kubernetes.jsonnet';
 local temporal = import 'ci/temporal.jsonnet';
@@ -14,7 +14,7 @@ local provisionWorkerRole(metadata) = kubernetes.define_role_v2(metadata, 'provi
   }
 ]);
 
-bycdeploy.new({
+resfdeploy.new({
   name: 'peridotephemeral',
   replicas: if kubernetes.prod() then if site == 'extarches' then 5 else 10 else 1,
   dbname: 'peridot',

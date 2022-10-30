@@ -1,4 +1,4 @@
-load("//rules_byc:defs.bzl", "BYCDEPLOY_OUTS_BASE", "byc_frontend", "container", "peridot_k8s")
+load("//rules_resf:defs.bzl", "RESFDEPLOY_OUTS_BASE", "container", "peridot_k8s", "resf_frontend")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -10,14 +10,14 @@ server_entrypoint = "server/index.mjs"
 
 server_srcs = glob(["server/**/*.mjs"])
 
-byc_frontend(
+resf_frontend(
     name = "obsidian",
     srcs = glob([
         "src/**/*.tsx",
         "src/**/*.ts",
     ]),
     entrypoint = "obsidian/ui/src/entrypoint.tsx",
-    index_html = "//rules_byc/internal/byc_bundle:index_no_mobile.hbs",
+    index_html = "//rules_resf/internal/resf_bundle:index_no_mobile.hbs",
     server_deps = server_deps,
     server_entrypoint = server_entrypoint,
     server_srcs = server_srcs,
@@ -30,6 +30,8 @@ byc_frontend(
         "//tailwind:css",
         "@npm//@mui/icons-material",
         "@npm//@mui/material",
+        "@npm//@mui/styles",
+        "@npm//@mui/system",
         "@npm//await-to-js",
         "@npm//react-router",
         "@npm//react-router-dom",
@@ -51,6 +53,6 @@ container(
 peridot_k8s(
     name = "obsidian-frontend",
     src = "deploy.jsonnet",
-    outs = BYCDEPLOY_OUTS_BASE,
+    outs = RESFDEPLOY_OUTS_BASE,
     deps = ["//ci"],
 )

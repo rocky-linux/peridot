@@ -34,5 +34,5 @@ import "os"
 
 // GetKubeNS only works when the apps run in Kubernetes
 func GetKubeNS() string {
-	return os.Getenv("BYC_NS")
+	return os.Getenv("RESF_NS")
 }

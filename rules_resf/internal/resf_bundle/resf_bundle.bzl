@@ -109,11 +109,6 @@ def get_inputs(ctx, config, dep_files_attr, dep_attr, index_html = None, extra =
 
     if ctx.file.license_banner:
         direct_inputs += [ctx.file.license_banner]
-    if ctx.version_file:
-        direct_inputs += [ctx.version_file]
-
-    if ctx.info_file:
-        direct_inputs += [ctx.info_file]
 
     return direct_inputs
 
@@ -209,8 +204,6 @@ def write_webpack_config(ctx, plugins = [], root_dir = None, filename = "_%s.web
             "TMPL_module_mappings": str(mappings),
             "TMPL_output_format": output_format,
             "TMPL_indexHtml": index_html.short_path if index_html != None else "null",
-            "TMPL_stamp_data": "\"%s\"" % ctx.version_file.path if ctx.version_file else "undefined",
-            "TMPL_stable_stamp_data": "\"%s\"" % ctx.info_file.path if ctx.info_file else "undefined",
             "TMPL_target": str(ctx.label),
             "TMPL_title": ctx.attr.title if ctx.attr.title else "Peridot",
             "TMPL_body_script": ctx.attr.script,
@@ -272,7 +265,7 @@ def packserver(ctx, webpack_config, webpack_inputs):
         executable = out_file,
     )]
 
-def _byc_bundle(ctx):
+def _resf_bundle(ctx):
     index_html = ctx.file.index_html
     config = write_webpack_config(ctx, index_html = index_html)
     webpack_config = config["webpack"]
@@ -298,10 +291,10 @@ def _byc_bundle(ctx):
         return packserver(ctx, webpack_config, direct_inputs)
 
 WEBPACK_DATA = [
-    "//rules_byc/internal/byc_bundle:babel.config.js",
-    "//rules_byc/internal/byc_bundle:tailwind.config.js",
-    "//rules_byc/internal/byc_bundle:index.hbs",
-    "//rules_byc/internal/byc_bundle:tsconfig.json",
+    "//rules_resf/internal/resf_bundle:babel.config.js",
+    "//rules_resf/internal/resf_bundle:tailwind.config.js",
+    "//rules_resf/internal/resf_bundle:index.hbs",
+    "//rules_resf/internal/resf_bundle:tsconfig.json",
     "@npm//@babel/plugin-transform-modules-commonjs",
     "@npm//@babel/preset-env",
     "@npm//@babel/preset-react",
@@ -338,7 +331,7 @@ WEBPACK_DATA = [
     "@npm//core-js-pure",
 ]
 
-BYC_BUNDLE_ATTRS = {
+resf_bundle_ATTRS = {
     "title": attr.string(),
     "script": attr.string(
         default = "",
@@ -351,7 +344,7 @@ BYC_BUNDLE_ATTRS = {
         default = "https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap",
     ),
     "index_html": attr.label(
-        default = Label("//rules_byc/internal/byc_bundle:index.hbs"),
+        default = Label("//rules_resf/internal/resf_bundle:index.hbs"),
         allow_single_file = True,
     ),
     "prefix": attr.string(
@@ -390,11 +383,11 @@ BYC_BUNDLE_ATTRS = {
         aspects = [module_mappings_aspect, node_modules_aspect],
     ),
     "_webpack_config_tmpl": attr.label(
-        default = Label("//rules_byc/internal/byc_bundle:webpack.config.js"),
+        default = Label("//rules_resf/internal/resf_bundle:webpack.config.js"),
         allow_single_file = True,
     ),
     "_webpack": attr.label(
-        default = Label("//rules_byc/internal/byc_bundle:webpack"),
+        default = Label("//rules_resf/internal/resf_bundle:webpack"),
         executable = True,
         cfg = "host",
         allow_files = True,
@@ -414,21 +407,21 @@ BYC_BUNDLE_ATTRS = {
         allow_files = True,
     ),
     "_run_child": attr.label(
-        default = Label("//rules_byc/internal/byc_bundle:run_child"),
+        default = Label("//rules_resf/internal/resf_bundle:run_child"),
         executable = True,
         cfg = "host",
         allow_files = True,
     ),
     "_run_child_script": attr.label(
-        default = Label("//rules_byc/internal/byc_bundle:run_child.mjs"),
+        default = Label("//rules_resf/internal/resf_bundle:run_child.mjs"),
         allow_single_file = True,
     ),
     "_packserver": attr.label(
-        default = Label("//rules_byc/internal/byc_bundle:packserver.bash"),
+        default = Label("//rules_resf/internal/resf_bundle:packserver.bash"),
         allow_single_file = True,
     ),
     "_tsconfig": attr.label(
-        default = Label("//rules_byc/internal/byc_bundle:tsconfig.json"),
+        default = Label("//rules_resf/internal/resf_bundle:tsconfig.json"),
         allow_single_file = True,
     ),
     "entrypoint": attr.string(
@@ -438,15 +431,15 @@ BYC_BUNDLE_ATTRS = {
         mandatory = False,
     ),
     "_babel_config": attr.label(
-        default = Label("//rules_byc/internal/byc_bundle:babel.config.js"),
+        default = Label("//rules_resf/internal/resf_bundle:babel.config.js"),
         allow_single_file = True,
     ),
     "tailwind_config": attr.label(
-        default = Label("//rules_byc/internal/byc_bundle:tailwind.config.js"),
+        default = Label("//rules_resf/internal/resf_bundle:tailwind.config.js"),
         allow_single_file = True,
     ),
     "_base_tailwind_config": attr.label(
-        default = Label("//rules_byc/internal/byc_bundle:tailwind.config.js"),
+        default = Label("//rules_resf/internal/resf_bundle:tailwind.config.js"),
         allow_single_file = True,
     ),
     "_bash_runfiles": attr.label(
@@ -457,13 +450,13 @@ BYC_BUNDLE_ATTRS = {
     ),
 }
 
-byc_bundle = rule(
-    implementation = _byc_bundle,
-    attrs = BYC_BUNDLE_ATTRS,
+resf_bundle = rule(
+    implementation = _resf_bundle,
+    attrs = resf_bundle_ATTRS,
 )
 
-byc_bundle_run = rule(
-    implementation = _byc_bundle,
-    attrs = BYC_BUNDLE_ATTRS,
+resf_bundle_run = rule(
+    implementation = _resf_bundle,
+    attrs = resf_bundle_ATTRS,
     executable = True,
 )

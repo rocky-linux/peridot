@@ -38,19 +38,7 @@ import CssBaseline from '@mui/material/CssBaseline';
 import { Root } from './components/Root';
 
 import 'tailwind/tailwind.css';
-import { createMuiTheme, ThemeProvider } from '@mui/material';
 import { PeridotThemeProvider } from 'common/mui/theme';
-
-const theme = createMuiTheme({
-  palette: {
-    primary: {
-      main: '#18181b',
-    },
-    secondary: {
-      main: '#10b981',
-    },
-  },
-});
 
 export const app = () => {
   ReactDOM.render(

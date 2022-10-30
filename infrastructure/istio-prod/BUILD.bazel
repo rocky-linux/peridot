@@ -1,4 +1,4 @@
-load("//rules_byc:defs.bzl", "k8s_apply")
+load("//rules_resf:defs.bzl", "k8s_apply")
 
 k8s_apply(
     name = "istio-prod",

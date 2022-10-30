@@ -1,10 +1,10 @@
-local bycdeploy = import 'ci/bycdeploy.jsonnet';
+local resfdeploy = import 'ci/resfdeploy.jsonnet';
 local kubernetes = import 'ci/kubernetes.jsonnet';
 local frontend = import 'ci/frontend.jsonnet';
 
 local tag = std.extVar('tag');
 
-bycdeploy.new({
+resfdeploy.new({
   name: 'apollo-frontend',
   backend: false,
   migrate: false,

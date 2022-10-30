@@ -37,7 +37,7 @@ import (
 )
 
 func SvcName(svc string, protocol string) string {
-	env := os.Getenv("BYC_ENV")
+	env := os.Getenv("RESF_ENV")
 	return fmt.Sprintf("%s-%s-%s-service", svc, protocol, env)
 }
 
@@ -50,7 +50,7 @@ func SvcNameGrpc(svc string) string {
 }
 
 func Endpoint(svcName string, ns string, port string) string {
-	if forceNs := os.Getenv("BYC_FORCE_NS"); forceNs != "" {
+	if forceNs := os.Getenv("RESF_FORCE_NS"); forceNs != "" {
 		ns = forceNs
 	}
 	return fmt.Sprintf("%s.%s.svc.cluster.local%s", svcName, ns, port)
@@ -62,8 +62,8 @@ func EndpointHttp(svcName string, ns string) string {
 }
 
 func NS(ns string) string {
-	if os.Getenv("BYC_ENV") == "dev" {
-		return os.Getenv("BYC_NS")
+	if os.Getenv("RESF_ENV") == "dev" {
+		return os.Getenv("RESF_NS")
 	}
 	return ns
 }

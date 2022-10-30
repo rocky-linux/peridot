@@ -31,24 +31,28 @@
  */
 
 import server from '../../../common/frontend_server/index.mjs';
-import { svcNameHttp, endpointHttp, NS } from '../../../common/frontend_server/upstream.mjs';
+import {
+  svcNameHttp,
+  endpointHttp,
+  NS,
+} from '../../../common/frontend_server/upstream.mjs';
 
 export default async function run(webpackConfig) {
   const devFrontendUrl = 'http://errata.pdot.localhost:9007';
   const envPublicUrl = process.env['APOLLO_FRONTEND_HTTP_PUBLIC_URL'];
-  const frontendUrl = process.env['BYC_NS'] ? envPublicUrl : devFrontendUrl;
+  const frontendUrl = process.env['RESF_NS'] ? envPublicUrl : devFrontendUrl;
 
   server({
     baseURL: frontendUrl,
     apis: {
       '/api': {
         prodApiUrl: endpointHttp(svcNameHttp('apollo'), NS('apollo')),
-        devApiUrl: `https://apollo-dev.internal.rdev.ciq.localhost`
+        devApiUrl: `https://apollo-dev.internal.rdev.ciq.localhost`,
       },
     },
     port: 9007,
     disableAuth: true,
-    webpackConfig
+    webpackConfig,
   }).then();
 }
 

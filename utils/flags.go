@@ -35,10 +35,11 @@ import (
 	"math/rand"
 	"net/url"
 	"os"
-	"peridot.resf.org/servicecatalog"
 	"strconv"
 	"strings"
 	"time"
+
+	"peridot.resf.org/servicecatalog"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
@@ -93,10 +94,10 @@ func AddFlags(f *pflag.FlagSet, config *FlagConfig) {
 
 	issuer := "https://hdr.build.resf.org/"
 	jwks := fmt.Sprintf("%s/.well-known/jwks.json", servicecatalog.HydraPublic())
-	if os.Getenv("BYC_ENV") == "" || (os.Getenv("BYC_ENV") == "dev" && os.Getenv("LOCALSTACK_ENDPOINT") != "") {
+	if os.Getenv("RESF_ENV") == "" || (os.Getenv("RESF_ENV") == "dev" && os.Getenv("LOCALSTACK_ENDPOINT") != "") {
 		issuer = "https://hdr-dev.internal.pdev.resf.localhost/"
-	} else if os.Getenv("BYC_ENV") != "prod" {
-		issuer = fmt.Sprintf("https://hdr-%s.internal.build.resf.org/", os.Getenv("BYC_ENV"))
+	} else if os.Getenv("RESF_ENV") != "prod" {
+		issuer = fmt.Sprintf("https://hdr-%s.internal.build.resf.org/", os.Getenv("RESF_ENV"))
 	}
 
 	f.String("oidc.issuer", issuer, "OpenID Connect Issuer for the authentication interceptor")

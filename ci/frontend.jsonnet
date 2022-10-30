@@ -9,7 +9,7 @@
       value: 'production',
     },
     {
-      name: 'BYC_SECRET',
+      name: 'RESF_SECRET',
       valueFrom: true,
       secret: {
         name: 'server',

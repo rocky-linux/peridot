@@ -1,4 +1,4 @@
-load("//rules_byc:defs.bzl", "BYCDEPLOY_OUTS_MIGRATE", "container", "peridot_k8s")
+load("//rules_resf:defs.bzl", "RESFDEPLOY_OUTS_MIGRATE", "container", "peridot_k8s")
 
 container(
     base = "//bases/bazel/go",
@@ -14,6 +14,6 @@ container(
 peridot_k8s(
     name = "peridotserver",
     src = "deploy.jsonnet",
-    outs = BYCDEPLOY_OUTS_MIGRATE,
+    outs = RESFDEPLOY_OUTS_MIGRATE,
     deps = ["//ci"],
 )

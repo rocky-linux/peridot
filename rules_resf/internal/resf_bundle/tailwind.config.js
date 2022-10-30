@@ -73,9 +73,9 @@ module.exports = {
   mode: 'jit',
   purge: [
     path.join(projectPath, '**/*.{jsx,tsx,vue}'),
-    path.join(projectPath, '../rules_byc/internal/byc_bundle/*.hbs'),
+    path.join(projectPath, '../rules_resf/internal/resf_bundle/*.hbs'),
     path.resolve(path.join('.', projectDir, '**/*.{jsx,tsx,vue}')),
-    path.resolve('./rules_byc/internal/byc_bundle/*.hbs'),
+    path.resolve('./rules_resf/internal/resf_bundle/*.hbs'),
   ],
   plugins: [require('@tailwindcss/forms')],
   theme: {

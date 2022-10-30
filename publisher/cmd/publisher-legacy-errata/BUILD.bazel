@@ -1,5 +1,5 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
-load("//rules_byc:defs.bzl", "container")
+load("//rules_resf:defs.bzl", "container")
 
 go_library(
     name = "publisher-legacy-errata_lib",

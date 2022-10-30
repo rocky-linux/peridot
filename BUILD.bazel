@@ -29,6 +29,12 @@ gazelle(
     name = "gazelle",
 )
 
+java_binary(
+    name = "bazel-diff",
+    main_class = "com.bazel_diff.Main",
+    runtime_deps = ["@bazel_diff//jar"],
+)
+
 nogo(
     name = "nogo",
     config = "nogo.json",

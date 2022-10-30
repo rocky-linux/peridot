@@ -42,7 +42,7 @@ export function envOverridable(svcName, protocol, x) {
 }
 
 export function svcName(svc, protocol) {
-  let env = process.env['BYC_ENV'];
+  let env = process.env['RESF_ENV'];
   if (!env) {
     env = 'dev';
   }
@@ -54,7 +54,7 @@ export function svcNameHttp(svc) {
 }
 
 export function endpoint(generatedServiceName, ns, port) {
-  const forceNs = process.env['BYC_FORCE_NS'];
+  const forceNs = process.env['RESF_FORCE_NS'];
   if (forceNs) {
     ns = forceNs;
   }
@@ -67,9 +67,9 @@ export function endpointHttp(generatedServiceName, ns, port = '') {
 }
 
 export function NS(ns) {
-  const env = process.env['BYC_ENV'];
+  const env = process.env['RESF_ENV'];
   if (!env || env === 'dev') {
-    const bycNs = process.env['BYC_NS'];
+    const bycNs = process.env['RESF_NS'];
     if (!bycNs) {
       return `${os.userInfo().username}-dev`;
     }

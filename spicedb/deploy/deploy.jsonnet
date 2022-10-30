@@ -1,8 +1,8 @@
-local bycdeploy = import 'ci/bycdeploy.jsonnet';
+local resfdeploy = import 'ci/resfdeploy.jsonnet';
 local kubernetes = import 'ci/kubernetes.jsonnet';
 local common = import 'spicedb/deploy/common.jsonnet';
 
-bycdeploy.new({
+resfdeploy.new({
   name: 'spicedb',
   replicas: 1,
   dbname: 'spicedb',

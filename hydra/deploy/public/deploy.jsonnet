@@ -1,9 +1,9 @@
-local bycdeploy = import 'ci/bycdeploy.jsonnet';
+local resfdeploy = import 'ci/resfdeploy.jsonnet';
 local db = import 'ci/db.jsonnet';
 local kubernetes = import 'ci/kubernetes.jsonnet';
 local common = import 'hydra/deploy/common.jsonnet';
 
-bycdeploy.new({
+resfdeploy.new({
   name: 'hydra-public',
   replicas: 1,
   dbname: 'hydra',

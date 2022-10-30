@@ -36,6 +36,12 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"math/rand"
+	"os"
+	"runtime"
+	"strings"
+	"time"
+
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"go.temporal.io/api/enums/v1"
@@ -49,14 +55,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
-	"math/rand"
-	"os"
 	"peridot.resf.org/peridot/db/models"
 	peridotpb "peridot.resf.org/peridot/pb"
 	"peridot.resf.org/utils"
-	"runtime"
-	"strings"
-	"time"
 )
 
 type ProvisionWorkerRequest struct {
@@ -583,7 +584,7 @@ func (c *Controller) CreateK8sPodActivity(ctx context.Context, req *ProvisionWor
 			},
 		},
 		Spec: v1.PodSpec{
-			ServiceAccountName: os.Getenv("BYC_SERVICE_ACCOUNT"),
+			ServiceAccountName: os.Getenv("RESF_SERVICE_ACCOUNT"),
 			ImagePullSecrets:   imagePullSecrets,
 			Containers: []v1.Container{
 				{
@@ -592,16 +593,16 @@ func (c *Controller) CreateK8sPodActivity(ctx context.Context, req *ProvisionWor
 					Args:  []string{command},
 					Env: []v1.EnvVar{
 						{
-							Name:  "BYC_ENV",
-							Value: os.Getenv("BYC_ENV"),
+							Name:  "RESF_ENV",
+							Value: os.Getenv("RESF_ENV"),
 						},
 						{
-							Name:  "BYC_NS",
-							Value: os.Getenv("BYC_NS"),
+							Name:  "RESF_NS",
+							Value: os.Getenv("RESF_NS"),
 						},
 						{
-							Name:  "BYC_FORCE_NS",
-							Value: os.Getenv("BYC_FORCE_NS"),
+							Name:  "RESF_FORCE_NS",
+							Value: os.Getenv("RESF_FORCE_NS"),
 						},
 						{
 							Name:  "LOCALSTACK_ENDPOINT",

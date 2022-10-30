@@ -1,10 +1,10 @@
-local bycdeploy = import 'ci/bycdeploy.jsonnet';
+local resfdeploy = import 'ci/resfdeploy.jsonnet';
 local db = import 'ci/db.jsonnet';
 local kubernetes = import 'ci/kubernetes.jsonnet';
 local temporal = import 'ci/temporal.jsonnet';
 local utils = import 'ci/utils.jsonnet';
 
-bycdeploy.new({
+resfdeploy.new({
   name: 'yumrepofsupdater',
   replicas: if kubernetes.prod() then 4 else 1,
   dbname: 'peridot',

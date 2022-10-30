@@ -81,8 +81,8 @@ func mn(_ *cobra.Command, _ []string) {
 		log.Fatal("no target db")
 	}
 
-	env := os.Getenv("BYC_ENV")
-	namespace := os.Getenv("BYC_NS")
+	env := os.Getenv("RESF_ENV")
+	namespace := os.Getenv("RESF_NS")
 	roleName := fmt.Sprintf("%s-%s", namespace, targetDB)
 	secretName := fmt.Sprintf("%s-database-password", targetDB)
 

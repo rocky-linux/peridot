@@ -1,30 +1,30 @@
-load("//rules_byc/internal/byc_bundle:byc_bundle.bzl", _byc_bundle = "byc_bundle", _byc_bundle_run = "byc_bundle_run")
-load("//rules_byc/internal/k8s:k8s.bzl", _k8s_apply = "k8s_apply")
-load("//rules_byc/internal/container:container.bzl", _container = "container", _migration_tar = "migration_tar")
+load("//rules_resf/internal/resf_bundle:resf_bundle.bzl", _resf_bundle = "resf_bundle", _resf_bundle_run = "resf_bundle_run")
+load("//rules_resf/internal/k8s:k8s.bzl", _k8s_apply = "k8s_apply")
+load("//rules_resf/internal/container:container.bzl", _container = "container", _migration_tar = "migration_tar")
 load("@io_bazel_rules_jsonnet//jsonnet:jsonnet.bzl", "jsonnet_to_json")
 load("@build_bazel_rules_nodejs//:index.bzl", "nodejs_binary")
 load("@com_github_atlassian_bazel_tools//:multirun/def.bzl", "multirun")
 
-byc_bundle = _byc_bundle
+resf_bundle = _resf_bundle
 k8s_apply = _k8s_apply
 container = _container
 migration_tar = _migration_tar
 
-BYCDEPLOY_OUTS_BASE = [
+RESFDEPLOY_OUTS_BASE = [
     "001-ns-sa.yaml",
     "003-deployment.yaml",
     "004-svc-vs-dr.yaml",
 ]
 
-BYCDEPLOY_OUTS_MIGRATE = BYCDEPLOY_OUTS_BASE + [
+RESFDEPLOY_OUTS_MIGRATE = RESFDEPLOY_OUTS_BASE + [
     "002-migrate.yaml",
 ]
 
-BYCDEPLOY_OUTS_CUSTOM = BYCDEPLOY_OUTS_BASE + [
+RESFDEPLOY_OUTS_CUSTOM = RESFDEPLOY_OUTS_BASE + [
     "005-custom.yaml",
 ]
 
-BYCDEPLOY_OUTS_MIGRATE_CUSTOM = BYCDEPLOY_OUTS_BASE + [
+RESFDEPLOY_OUTS_MIGRATE_CUSTOM = RESFDEPLOY_OUTS_BASE + [
     "002-migrate.yaml",
     "005-custom.yaml",
 ]
@@ -104,23 +104,23 @@ def peridot_k8s(name, src, tags = [], outs = [], static = False, prod_only = Fal
         tags = ["manual"],
     )
 
-def byc_frontend(name, tags = [], **kwargs):
-    _byc_bundle(
+def resf_frontend(name, tags = [], **kwargs):
+    _resf_bundle(
         name = "{}.bundle".format(name),
         build = True,
         tags = tags + [
             "manual",
-            "byc_frontend_bundle",
+            "resf_frontend_bundle",
         ],
         **kwargs
     )
 
-    _byc_bundle_run(
+    _resf_bundle_run(
         name = "{}.server".format(name),
         build = False,
         tags = tags + [
             "manual",
-            "byc_frontend_server",
+            "resf_frontend_server",
             "ibazel_notify_changes",
             "ibazel_live_reload",
         ],

@@ -1,4 +1,4 @@
-load("//rules_byc:defs.bzl", "migration_tar")
+load("//rules_resf:defs.bzl", "migration_tar")
 
 package(default_visibility = ["//visibility:public"])
 

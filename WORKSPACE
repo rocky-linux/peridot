@@ -3,7 +3,7 @@ workspace(
     managed_directories = {"@npm": ["node_modules"]},
 )
 
-load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive", "http_jar")
 
 # --start python--
 load("//wrksp:python_download.bzl", "python_download")
@@ -206,6 +206,17 @@ load("//wrksp:atlassian_deps.bzl", "atlassian_deps")
 
 atlassian_deps()
 # --end atlassian--
+
+# --start bazel-diff--
+
+http_jar(
+    name = "bazel_diff",
+    sha256 = "59f2a614f90b4c2a6c83f1e6146d8722dfaac3a1d8f42734dcbb6ccf373a1cbd",
+    urls = [
+        "https://github.com/Tinder/bazel-diff/releases/download/4.0.5/bazel-diff_deploy.jar",
+    ],
+)
+# --end bazel-diff--
 
 new_local_repository(
     name = "raw_ts_library",
