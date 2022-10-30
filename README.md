@@ -1,5 +1,5 @@
-# distro-tools
-Cloud-native build and release tools tailored to building, releasing and maintaining Linux distributions and forks
+# Peridot
+Named after the Gemstone,  Peridot (pronounced  - PERR-ih-dot) is a cloud-native build and release tool used for building, releasing and maintaining Linux distributions and forks.
 
 ## Structure
 __Other components pending__
