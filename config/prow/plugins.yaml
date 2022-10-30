@@ -10,13 +10,19 @@ plugins:
       - help
       - heart
       - hold
-      - needs-rebase
       - label
       - lgtm
       - trigger
       - verify-owners
       - wip
       - yuks
+
+external_plugins:
+  rocky-linux/peridot:
+    - name: needs-rebase
+      events:
+        - issue_comment
+        - pull_request
 
 config_updater:
   maps:
