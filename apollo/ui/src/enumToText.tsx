@@ -31,7 +31,10 @@
  */
 
 import { Box, Tag, TagProps } from '@chakra-ui/react';
-import { AdvisorySeverity, V1AdvisoryType } from 'bazel-bin/apollo/proto/v1/client_typescript';
+import {
+  AdvisorySeverity,
+  V1AdvisoryType,
+} from 'bazel-bin/apollo/proto/v1/client_typescript';
 import React from 'react';
 
 export const severityToText = (severity?: AdvisorySeverity): string => {
@@ -83,7 +86,7 @@ export const severityToBadge = (
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 24 24"
       >
-        <g fill="#F7941D">
+        <g fill="#F47B2A">
           <path d="M22.2 19.2l-8.8-16c-.2-.3-.5-.6-.8-.7-.3-.1-.7-.1-1.1 0-.3.1-.6.4-.8.7l-8.8 16c-.3.5-.2 1 0 1.5.3.5.8.7 1.3.8h17.7c.3 0 .5-.1.8-.2.2-.1.4-.3.5-.6.2-.4.2-1 0-1.5zm-18.8.6L12 4.3l8.6 15.5H3.4z" />
           <path d="M12 15.7c-.2 0-.4.1-.6.2-.2.2-.2.4-.2.6v.8c0 .3.2.6.4.7.3.1.6.1.8 0s.4-.4.4-.7v-.8c0-.2-.1-.4-.2-.6-.2-.1-.4-.2-.6-.2zM11.2 9v5c0 .3.2.6.4.7.3.1.6.1.8 0 .3-.1.4-.4.4-.7V9c0-.3-.2-.6-.4-.7-.3-.1-.6-.1-.8 0s-.4.4-.4.7z" />
         </g>

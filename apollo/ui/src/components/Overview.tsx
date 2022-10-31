@@ -264,7 +264,7 @@ export const Overview = () => {
         </HStack>
         <HStack>
           <FormControl width="180px" flexShrink={0} flexGrow={1}>
-            <FormLabel fontSize="sm">After</FormLabel>
+            <FormLabel fontSize="sm">From</FormLabel>
             <Input
               type="date"
               variant="filled"
@@ -297,7 +297,7 @@ export const Overview = () => {
             />
           </FormControl>
           <FormControl width="180px" flexShrink={0} flexGrow={1}>
-            <FormLabel fontSize="sm">Before</FormLabel>
+            <FormLabel fontSize="sm">To</FormLabel>
             <Input
               type="date"
               variant="filled"
@@ -321,7 +321,9 @@ export const Overview = () => {
 
                 const [year, month, date] = newVal.split('-').map(Number);
 
-                setFilterBefore(new Date(year, month - 1, date));
+                setFilterBefore(
+                  new Date(year, month - 1, date, 23, 59, 59, 59) // Set to 1ms prior to midnight to be inclusive of selected date
+                );
               }}
             />
           </FormControl>
@@ -404,7 +406,7 @@ export const Overview = () => {
       ) : (
         <Box backgroundColor="white" boxShadow="base">
           <TableContainer>
-            <Table size="sm" variant="striped">
+            <Table size="sm">
               <Thead>
                 <Tr>
                   <Th {...stickyProps} width="36px" />
@@ -412,12 +414,7 @@ export const Overview = () => {
                   <Th {...stickyProps}>Synopsis</Th>
                   <Th {...stickyProps}>Type / Severity</Th>
                   <Th {...stickyProps}>Products</Th>
-                  <Th {...stickyProps}>
-                    <HStack spacing={1}>
-                      <Text>Issue Date</Text>
-                      <ChevronDownIcon />
-                    </HStack>
-                  </Th>
+                  <Th {...stickyProps}>Issue Date</Th>
                 </Tr>
               </Thead>
               <Tbody>
@@ -428,12 +425,16 @@ export const Overview = () => {
                     </Td>
                   </Tr>
                 )}
-                {advisories?.map((a) => (
+                {advisories?.map((a, idx) => (
                   <Tr key={a.name}>
-                    <Td textAlign="center" pr={0}>
+                    <Td
+                      backgroundColor={idx % 2 ? 'gray.50' : undefined}
+                      textAlign="center"
+                      pr={0}
+                    >
                       {severityToBadge(a.severity)}
                     </Td>
-                    <Td>
+                    <Td backgroundColor={idx % 2 ? 'gray.50' : undefined}>
                       <Link
                         className="text-peridot-primary visited:text-purple-500"
                         to={`/${a.name}`}
@@ -441,20 +442,22 @@ export const Overview = () => {
                         {a.name}
                       </Link>
                     </Td>
-                    <Td>
+                    <Td backgroundColor={idx % 2 ? 'gray.50' : undefined}>
                       {a.synopsis?.replace(
                         /^(Critical|Important|Moderate|Low): /,
                         ''
                       )}
                     </Td>
-                    <Td>
+                    <Td backgroundColor={idx % 2 ? 'gray.50' : undefined}>
                       {typeToText(a.type)}
                       {a.type === V1AdvisoryType.Security
                         ? ` / ${severityToText(a.severity)}`
                         : ''}
                     </Td>
-                    <Td>{a.affectedProducts?.join(', ')}</Td>
-                    <Td>
+                    <Td backgroundColor={idx % 2 ? 'gray.50' : undefined}>
+                      {a.affectedProducts?.join(', ')}
+                    </Td>
+                    <Td backgroundColor={idx % 2 ? 'gray.50' : undefined}>
                       {Intl.DateTimeFormat(undefined, {
                         day: '2-digit',
                         month: 'short',

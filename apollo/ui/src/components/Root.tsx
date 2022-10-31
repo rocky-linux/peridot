@@ -30,7 +30,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-import { Box, HStack, Text } from '@chakra-ui/react';
+import { Box, HStack, Text, Link as ChakraLink } from '@chakra-ui/react';
 import { RESFLogo } from 'common/ui/RESFLogo';
 import React from 'react';
 import { Route, Switch } from 'react-router';
@@ -50,7 +50,7 @@ export const Root = () => {
       alignItems="stretch"
     >
       <Box
-        background={`linear-gradient(to right, ${COLOR_RESF_GREEN}, ${COLOR_RESF_BLUE})`}
+        background={`linear-gradient(to bottom right, ${COLOR_RESF_GREEN}, ${COLOR_RESF_BLUE})`}
         display="flex"
         flexDirection="row"
         alignItems="center"
@@ -78,6 +78,40 @@ export const Root = () => {
           <Route path="/" exact component={Overview} />
           <Route path="/:id" component={ShowErrata} />
         </Switch>
+      </Box>
+      <Box
+        px="4"
+        // backgroundColor="#10859E"
+        background={`linear-gradient(to top left, ${COLOR_RESF_GREEN}, ${COLOR_RESF_BLUE})`}
+        color="white"
+        display="flex"
+        height="50px"
+      >
+        <ChakraLink
+          href="/api/v2/advisories:rss"
+          isExternal
+          display="flex"
+          alignItems="center"
+          my="auto"
+        >
+          <Box
+            as="svg"
+            viewBox="0 0 24 24"
+            width="18px"
+            height="18px"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            display="block"
+            mr={1.5}
+          >
+            <path d="M4 11a9 9 0 019 9M4 4a16 16 0 0116 16" />
+            <circle cx="5" cy="19" r="1" />
+          </Box>
+          <span>RSS</span>
+        </ChakraLink>
       </Box>
     </Box>
   );
