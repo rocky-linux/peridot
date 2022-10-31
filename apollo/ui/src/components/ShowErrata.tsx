@@ -53,8 +53,15 @@ import {
   UnorderedList,
   VStack,
 } from '@chakra-ui/react';
-import { severityToBadge, typeToText } from 'apollo/ui/src/enumToText';
-import { V1Advisory } from 'bazel-bin/apollo/proto/v1/client_typescript';
+import {
+  severityToBadge,
+  severityToText,
+  typeToText,
+} from 'apollo/ui/src/enumToText';
+import {
+  V1Advisory,
+  V1AdvisoryType,
+} from 'bazel-bin/apollo/proto/v1/client_typescript';
 import { reqap } from 'common/ui/reqap';
 import React, { useState } from 'react';
 import { RouteComponentProps } from 'react-router';
@@ -239,6 +246,11 @@ export const ShowErrata = (props: ShowErrataProps) => {
                   <Text>
                     <b>Type:</b> {typeToText(errata.type)}
                   </Text>
+                  {errata.type === V1AdvisoryType.Security && (
+                    <Text>
+                      <b>Severity:</b> {severityToText(errata.severity)}
+                    </Text>
+                  )}
                   <Box>
                     <Text fontWeight="bold">
                       Affected Product

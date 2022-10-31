@@ -30,7 +30,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-import { Box, HStack, Text } from '@chakra-ui/react';
+import { Box, HStack, Text, Link as ChakraLink } from '@chakra-ui/react';
 import { RESFLogo } from 'common/ui/RESFLogo';
 import React from 'react';
 import { Route, Switch } from 'react-router';
@@ -78,6 +78,38 @@ export const Root = () => {
           <Route path="/" exact component={Overview} />
           <Route path="/:id" component={ShowErrata} />
         </Switch>
+      </Box>
+      <Box
+        py="6"
+        px="4"
+        backgroundColor="gray.700"
+        color="white"
+        display="flex"
+      >
+        <ChakraLink
+          href="/api/v2/advisories:rss"
+          isExternal
+          display="flex"
+          alignItems="center"
+        >
+          <Box
+            as="svg"
+            viewBox="0 0 24 24"
+            width="18px"
+            height="18px"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            display="block"
+            mr={1.5}
+          >
+            <path d="M4 11a9 9 0 019 9M4 4a16 16 0 0116 16" />
+            <circle cx="5" cy="19" r="1" />
+          </Box>
+          <span>RSS</span>
+        </ChakraLink>
       </Box>
     </Box>
   );
