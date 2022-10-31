@@ -30,25 +30,38 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-import React from 'react';
 import {
-  V1Advisory,
-  V1GetAdvisoryResponse,
-} from 'bazel-bin/apollo/proto/v1/client_typescript';
-import { reqap } from 'common/ui/reqap';
-import { api } from '../api';
-import { RouteComponentProps } from 'react-router';
-import {
-  Card,
-  CardContent,
-  Chip,
-  CircularProgress,
-  Paper,
+  Alert,
+  AlertDescription,
+  AlertIcon,
+  AlertTitle,
+  Box,
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  Heading,
+  HStack,
+  Link,
+  ListItem,
+  Spinner,
   Tab,
+  TabList,
+  TabPanel,
+  TabPanels,
   Tabs,
-  Typography,
-} from '@mui/material';
-import { severityToBadge, severityToText, typeToText } from 'apollo/ui/src/enumToText';
+  Text,
+  UnorderedList,
+  VStack,
+} from '@chakra-ui/react';
+import { severityToBadge, typeToText } from 'apollo/ui/src/enumToText';
+import { V1Advisory } from 'bazel-bin/apollo/proto/v1/client_typescript';
+import { reqap } from 'common/ui/reqap';
+import React, { useState } from 'react';
+import { RouteComponentProps } from 'react-router';
+import { Link as RouterLink } from 'react-router-dom';
+
+import { api } from '../api';
+import { COLOR_RESF_BLUE, COLOR_RESF_GREEN } from '../styles';
 
 interface ShowErrataParams {
   id: string;
@@ -58,182 +71,249 @@ export interface ShowErrataProps
   extends RouteComponentProps<ShowErrataParams> {}
 
 export const ShowErrata = (props: ShowErrataProps) => {
-  const [errata, setErrata] = React.useState<
-    V1Advisory | undefined | null
-  >();
-  const [tabValue, setTabValue] = React.useState(0);
+  const id = props.match.params.id;
+
+  const [errata, setErrata] = useState<V1Advisory>();
+  const [isLoading, setIsLoading] = useState(true);
+  const [isError, setIsError] = useState(false);
 
   React.useEffect(() => {
-    (async () => {
-      let err, res: void | V1GetAdvisoryResponse | undefined;
-      [err, res] = await reqap(() =>
-        api.getAdvisory({ id: props.match.params.id })
-      );
+    const fetch = async () => {
+      setIsLoading(true);
+
+      const [err, res] = await reqap(() => api.getAdvisory({ id }));
+
+      setIsLoading(false);
+
       if (err || !res) {
-        setErrata(null);
+        setIsError(true);
+        setErrata(undefined);
         return;
       }
 
-      if (res) {
-        setErrata(res.advisory);
-      }
-    })().then();
-  }, []);
+      setIsError(false);
 
-  const handleTabChange = ({}, val: number) => {
-    setTabValue(val);
-  };
+      setErrata(res.advisory);
+    };
+
+    fetch();
+  }, [id]);
 
   return (
-    <div>
-      {errata === undefined && <CircularProgress />}
-      {errata === null && (
-        <Typography variant="h2" className="text-lg text-red-800 font-bold">
-          Oh no! Something has gone wrong!
-        </Typography>
-      )}
-      {errata && (
-        <>
-          <div className="flex items-center justify-between mt-4 mb-6">
-            <Typography variant="h5">{errata.name} </Typography>
-            <div className="flex space-x-4 h-full">
-              {severityToBadge(errata.severity)}
-              <Chip
-                color="primary"
-                label={`Issued at ${errata.publishedAt?.toLocaleDateString()}`}
-              />
-            </div>
-          </div>
-          <Card>
-            <Paper square>
-              <Tabs
-                value={tabValue}
-                indicatorColor="primary"
-                textColor="primary"
-                onChange={handleTabChange}
-                aria-label="disabled tabs example"
+    <Box
+      w="100%"
+      h="100%"
+      display="flex"
+      flexDirection="column"
+      p={4}
+      alignItems="stretch"
+      maxWidth="1300px"
+      m="auto"
+    >
+      <Breadcrumb mb={4}>
+        <BreadcrumbItem>
+          <BreadcrumbLink as={RouterLink} to="/">
+            Product Errata
+          </BreadcrumbLink>
+        </BreadcrumbItem>
+        <BreadcrumbItem>
+          <BreadcrumbLink isCurrentPage>{id}</BreadcrumbLink>
+        </BreadcrumbItem>
+      </Breadcrumb>
+      {isLoading ? (
+        <Spinner
+          m="auto"
+          size="xl"
+          alignSelf="center"
+          color={COLOR_RESF_GREEN}
+          thickness="3px"
+        />
+      ) : isError ? (
+        <Alert
+          status="error"
+          m="auto"
+          flexDirection="column"
+          width="300px"
+          borderRadius="md"
+        >
+          <AlertIcon mr="0" />
+          <AlertTitle>Something has gone wrong</AlertTitle>
+          <AlertDescription>Failed to load errata</AlertDescription>
+        </Alert>
+      ) : (
+        errata && (
+          <>
+            <HStack
+              alignItems="center"
+              backgroundColor="white"
+              py="2"
+              px="4"
+              spacing="6"
+              mb={2}
+            >
+              {severityToBadge(errata.severity, 40)}
+              <VStack alignItems="stretch" spacing="0" flexGrow={1}>
+                <HStack justifyContent="space-between">
+                  <Text fontSize="lg" fontWeight="bold">
+                    {errata.name}
+                  </Text>
+                </HStack>
+                <Text fontSize="sm">{errata.synopsis}</Text>
+              </VStack>
+            </HStack>
+            <Tabs backgroundColor="white" p="2">
+              <TabList>
+                <Tab>Erratum</Tab>
+                <Tab>Affected Packages</Tab>
+              </TabList>
+              <Box
+                display="flex"
+                flexDir="row"
+                alignItems="stretch"
+                flexWrap="wrap"
+                justifyContent="space-between"
               >
-                <Tab value={0} label="Erratum" />
-                <Tab value={1} label="Affected packages" />
-              </Tabs>
-            </Paper>
-            {tabValue === 0 && (
-              <CardContent className="max-w-5xl space-y-4">
-                <div>
-                  <Typography variant="h6">Synopsis</Typography>
-                  {errata.synopsis}
-                </div>
-                <div>
-                  <Typography variant="h6">Type</Typography>
-                  {typeToText(errata.type)}
-                </div>
-                <div>
-                  <Typography variant="h6">Severity</Typography>
-                  {severityToText(errata.severity)}
-                </div>
-                <div>
-                  <Typography variant="h6">Topic</Typography>
-                  {errata.topic?.split('\n').map((x) => (
-                    <p>{x}</p>
-                  ))}
-                </div>
-                <div>
-                  <Typography variant="h6">Description</Typography>
-                  {errata.description?.split('\n').map((x) => (
-                    <p>{x}</p>
-                  ))}
-                </div>
-                <div>
-                  <Typography variant="h6">Affected products</Typography>
-                  <ul>
-                    {errata.affectedProducts?.map((x) => (
-                      <li>{x}</li>
+                <TabPanels maxWidth="850px" px="2">
+                  <TabPanel>
+                    <Heading as="h2" size="md">
+                      Topic
+                    </Heading>
+                    {errata.topic?.split('\n').map((p, i) => (
+                      <Text key={i} mt={2}>
+                        {p}
+                      </Text>
                     ))}
-                  </ul>
-                </div>
-                <div>
-                  <Typography variant="h6">Fixes</Typography>
-                  <ul>
-                    {errata.fixes?.map((x) => (
-                      <li>
-                        <a
-                          href={x.sourceLink}
-                          target="_blank"
-                        >
-                          {x.sourceBy} - {x.ticket}
-                        </a>
-                      </li>
+                    <Heading as="h2" size="md" mt={4}>
+                      Description
+                    </Heading>
+                    {errata.description?.split('\n').map((p, i) => (
+                      <Text key={i} mt={2}>
+                        {p}
+                      </Text>
                     ))}
-                  </ul>
-                </div>
-                <div>
-                  <Typography variant="h6">CVEs</Typography>
-                  <ul>
-                    {errata.cves?.map((x) => {
-                      let text = `${x.name}${
-                        x.sourceBy !== '' && ` (Source: ${x.sourceBy})`
-                      }`;
+                  </TabPanel>
+                  <TabPanel>
+                    <VStack alignItems="flex-start" spacing="6">
+                      {Object.keys(errata.rpms || {}).map((product) => (
+                        <div key={product}>
+                          <Heading as="h2" size="lg" mb={4} fontWeight="300">
+                            {product}
+                          </Heading>
+                          <Heading as="h3" size="md" mt={2}>
+                            SRPMs
+                          </Heading>
+                          <UnorderedList pl="4">
+                            {errata.rpms?.[product]?.nvras
+                              ?.filter((x) => x.indexOf('.src.rpm') !== -1)
+                              .map((x) => (
+                                <ListItem key={x}>{x}</ListItem>
+                              ))}
+                          </UnorderedList>
+                          <Heading as="h3" size="md" mt={2}>
+                            RPMs
+                          </Heading>
+                          <UnorderedList pl="4">
+                            {errata.rpms?.[product]?.nvras
+                              ?.filter((x) => x.indexOf('.src.rpm') === -1)
+                              .map((x) => (
+                                <ListItem key={x}>{x}</ListItem>
+                              ))}
+                          </UnorderedList>
+                        </div>
+                      ))}
+                    </VStack>
+                  </TabPanel>
+                </TabPanels>
+                <VStack
+                  py="4"
+                  px="8"
+                  alignItems="flex-start"
+                  minWidth="300px"
+                  spacing="5"
+                  flexShrink={0}
+                  backgroundColor="gray.100"
+                >
+                  <Text>
+                    <b>Issued:</b> {errata.publishedAt?.toLocaleDateString()}
+                  </Text>
+                  <Text>
+                    <b>Type:</b> {typeToText(errata.type)}
+                  </Text>
+                  <Box>
+                    <Text fontWeight="bold">
+                      Affected Product
+                      {(errata.affectedProducts?.length || 0) > 1 ? 's' : ''}
+                    </Text>
+                    <UnorderedList>
+                      {errata.affectedProducts?.map((x, idx) => (
+                        <ListItem key={idx}>{x}</ListItem>
+                      ))}
+                    </UnorderedList>
+                  </Box>
+                  <Box>
+                    <Text fontWeight="bold">Fixes</Text>
+                    <UnorderedList>
+                      {errata.fixes?.map((x, idx) => (
+                        <ListItem key={idx}>
+                          <Link
+                            href={x.sourceLink}
+                            isExternal
+                            color={COLOR_RESF_BLUE}
+                          >
+                            {x.sourceBy} - {x.ticket}
+                          </Link>
+                        </ListItem>
+                      ))}
+                    </UnorderedList>
+                  </Box>
+                  <Box>
+                    <Text fontWeight="bold">CVEs</Text>
+                    <UnorderedList>
+                      {!!errata.cves?.length ? (
+                        errata.cves?.map((x, idx) => {
+                          let text = `${x.name}${
+                            x.sourceBy !== '' && ` (Source: ${x.sourceBy})`
+                          }`;
 
-                      return (
-                        <li>
-                          {x.sourceLink === '' ? (
-                            <span>{text}</span>
-                          ) : (
-                            <a href={x.sourceLink} target="_blank">
-                              {text}
-                            </a>
-                          )}
-                        </li>
-                      );
-                    })}
-                    {errata.cves?.length === 0 && <li>No CVEs</li>}
-                  </ul>
-                </div>
-                <div>
-                  <Typography variant="h6">References</Typography>
-                  <ul>
-                    {errata.references?.map((x) => (
-                      <li>{x}</li>
-                    ))}
-                    {errata.references?.length === 0 && <li>No references</li>}
-                  </ul>
-                </div>
-              </CardContent>
-            )}
-            {tabValue === 1 && (
-              <CardContent className="max-w-5xl">
-                <div className="space-x-4 divide-y py-2">
-                  {Object.keys(errata.rpms || {}).map(product => (
-                    <div className="space-y-4">
-                      <Typography variant="h6">{product}</Typography>
-                      <div>
-                        <Typography variant="subtitle1">SRPMs</Typography>
-                        <ul>
-                          {errata.rpms[product].nvras
-                          ?.filter((x) => x.indexOf('.src.rpm') !== -1)
-                          .map((x) => (
-                            <li>{x}</li>
-                          ))}
-                        </ul>
-                      </div>
-                      <div>
-                        <Typography variant="subtitle1">RPMs</Typography>
-                        <ul>
-                          {errata.rpms[product].nvras
-                          ?.filter((x) => x.indexOf('.src.rpm') === -1)
-                          .map((x) => (
-                            <li>{x}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            )}
-          </Card>
-        </>
+                          return (
+                            <ListItem key={idx}>
+                              {x.sourceLink === '' ? (
+                                <span>{text}</span>
+                              ) : (
+                                <Link
+                                  href={x.sourceLink}
+                                  isExternal
+                                  color={COLOR_RESF_BLUE}
+                                >
+                                  {text}
+                                </Link>
+                              )}
+                            </ListItem>
+                          );
+                        })
+                      ) : (
+                        <ListItem>No CVEs</ListItem>
+                      )}
+                    </UnorderedList>
+                  </Box>
+                  <Box>
+                    <Text fontWeight="bold">References</Text>
+                    <UnorderedList>
+                      {!!errata.references?.length ? (
+                        errata.references?.map((x, idx) => (
+                          <ListItem key={idx}>{x}</ListItem>
+                        ))
+                      ) : (
+                        <ListItem>No references</ListItem>
+                      )}
+                    </UnorderedList>
+                  </Box>
+                </VStack>
+              </Box>
+            </Tabs>
+          </>
+        )
       )}
-    </div>
+    </Box>
   );
 };

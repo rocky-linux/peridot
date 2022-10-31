@@ -30,180 +30,468 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-import React from 'react';
 import {
-  DataGrid,
-  GridColDef,
-  GridColumns,
-  GridRowsProp,
-} from '@mui/x-data-grid';
+  AddIcon,
+  ArrowLeftIcon,
+  ArrowRightIcon,
+  ChevronDownIcon,
+  MinusIcon,
+  SearchIcon,
+} from '@chakra-ui/icons';
 import {
+  Alert,
+  AlertDescription,
+  AlertIcon,
+  AlertTitle,
+  Box,
+  ButtonGroup,
   FormControl,
-  InputLabel,
-  MenuItem,
+  FormLabel,
+  HStack,
+  IconButton,
+  Input,
+  InputGroup,
+  InputLeftElement,
   Select,
-  CircularProgress,
-  TextField,
-  Container,
-  Typography,
-  Divider,
-} from '@mui/material';
+  Spinner,
+  Stack,
+  Table,
+  TableColumnHeaderProps,
+  TableContainer,
+  Tbody,
+  Td,
+  Text,
+  Th,
+  Thead,
+  Tr,
+  useColorModeValue,
+} from '@chakra-ui/react';
+import {
+  severityToBadge,
+  severityToText,
+  typeToBadge,
+  typeToText,
+} from 'apollo/ui/src/enumToText';
+import {
+  ListAdvisoriesFiltersSeverityEnum,
+  ListAdvisoriesFiltersTypeEnum,
+} from 'bazel-bin/apollo/proto/v1/client_typescript';
+import {
+  AdvisorySeverity,
+  V1Advisory,
+  V1AdvisoryType,
+} from 'bazel-bin/apollo/proto/v1/client_typescript/models';
+import { reqap } from 'common/ui/reqap';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
-import {
-  V1Advisory,
-  V1ListAdvisoriesResponse,
-} from 'bazel-bin/apollo/proto/v1/client_typescript/models';
 import { api } from '../api';
-import { reqap } from 'common/ui/reqap';
-import { severityToBadge, typeToBadge } from 'apollo/ui/src/enumToText';
+import { COLOR_RESF_GREEN } from '../styles';
 
 export const Overview = () => {
-  // When advisories is set to null that means an error has occurred
-  // Undefined means loading
-  const [advisories, setAdvisories] = React.useState<
-    V1Advisory[] | undefined | null
-  >();
-  const [pageSize, setPageSize] = React.useState(25);
-  const [page, setPage] = React.useState(0);
-  const [total, setTotal] = React.useState(0);
-  const [filterSynopsis, setFilterSynopsis] = React.useState<
-    string | undefined
-  >();
-  const [filterCve, setFilterCve] = React.useState<string | undefined>();
+  const inputBackground = useColorModeValue('white', 'gray.800');
 
-  React.useEffect(() => {
-      const timer = setTimeout(() => {
-        (async () => {
-          let err, res: void | V1ListAdvisoriesResponse | undefined;
-          [err, res] = await reqap(() =>
-            api.listAdvisories({
-              page,
-              limit: pageSize,
-              filtersSynopsis: filterSynopsis,
-              filtersCve: filterCve,
-            })
-          );
-          if (err || !res) {
-            setAdvisories(null);
-            return;
-          }
+  const [advisories, setAdvisories] = useState<V1Advisory[]>();
+  const [lastUpdated, setLastUpdated] = useState<Date>();
+  const [total, setTotal] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isError, setIsError] = useState(false);
 
-          if (res) {
-            setAdvisories(res.advisories);
-            setTotal(parseInt(res.total || '0'));
-          }
-        })().then();
-      }, 500);
+  // Request State
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(25);
+  const [filtersKeyword, setFiltersKeyword] = useState<string>();
+  const [filterBefore, setFilterBefore] = useState<Date>();
+  const [filterAfter, setFilterAfter] = useState<Date>();
+  const [filtersType, setFiltersType] =
+    useState<keyof typeof ListAdvisoriesFiltersTypeEnum>();
+  const [filtersSeverity, setFiltersSeverity] =
+    useState<keyof typeof ListAdvisoriesFiltersSeverityEnum>();
 
-      return () => clearTimeout(timer);
-  }, [pageSize, page, filterSynopsis, filterCve]);
+  useEffect(() => {
+    const fetch = async () => {
+      setIsLoading(true);
+      const [err, res] = await reqap(() =>
+        api.listAdvisories({
+          page,
+          limit: pageSize,
+          filtersKeyword,
+          filtersBefore: filterBefore,
+          filtersAfter: filterAfter,
+          filtersSeverity: filtersSeverity
+            ? ListAdvisoriesFiltersSeverityEnum[filtersSeverity]
+            : undefined,
+          filtersType: filtersType
+            ? ListAdvisoriesFiltersTypeEnum[filtersType]
+            : undefined,
+        })
+      );
 
-  const columns: GridColDef[] = [
-    {
-      field: 'id',
-      headerName: 'Advisory',
-      width: 150,
-      sortable: false,
-      renderCell: (params) => (
-        <Link
-          className="no-underline text-peridot-primary visited:text-purple-500"
-          to={`/${params.value}`}
-        >
-          {params.value}
-        </Link>
-      ),
-    },
-    {
-      field: 'synopsis',
-      headerName: 'Synopsis',
-      width: 450,
-      sortable: false,
-    },
-    {
-      field: 'severity',
-      headerName: 'Severity',
-      width: 150,
-      sortable: false,
-      renderCell: (params) => severityToBadge(params.value, 'small'),
-    },
-    {
-      field: 'products',
-      headerName: 'Products',
-      width: 450,
-      sortable: false,
-    },
-    {
-      field: 'publish_date',
-      headerName: 'Publish date',
-      width: 170,
-      sortable: false,
-    },
-  ];
+      setIsLoading(false);
+
+      if (err || !res) {
+        setIsError(true);
+        setAdvisories(undefined);
+        return;
+      }
+
+      setIsError(false);
+
+      if (res) {
+        setAdvisories(res.advisories);
+        setLastUpdated(res.lastUpdated);
+        setTotal(parseInt(res.total || '0'));
+      }
+    };
+
+    const timer = setTimeout(() => fetch(), 500);
+
+    return () => clearTimeout(timer);
+  }, [
+    pageSize,
+    page,
+    filtersKeyword,
+    filterBefore,
+    filterAfter,
+    filtersSeverity,
+    filtersType,
+  ]);
+
+  // TODO: Figure out why sticky isn't sticking
+  const stickyProps: TableColumnHeaderProps = {
+    position: 'sticky',
+    top: '0px',
+    zIndex: '10',
+    scope: 'col',
+  };
+
+  const lastPage = total < pageSize ? 0 : Math.ceil(total / pageSize) - 1;
 
   return (
-    <div className="w-full">
-      {advisories === undefined && <CircularProgress />}
-      {advisories === null && (
-        <h2 className="text-lg text-red-800 font-bold">
-          Oh no! Something has gone wrong!
-        </h2>
-      )}
-      {advisories && (
-        <>
-          <Container
-            maxWidth={false}
-            className="flex items-center space-x-4 bg-white"
-            style={{ paddingTop: '0.5rem', paddingBottom: '0.5rem' }}
+    <Box
+      w="100%"
+      h="100%"
+      display="flex"
+      flexDirection="column"
+      p={4}
+      alignItems="stretch"
+    >
+      <Stack
+        direction={{
+          sm: 'column',
+          lg: 'row',
+        }}
+        alignItems={{
+          sm: 'stretch',
+          lg: 'flex-end',
+        }}
+      >
+        <InputGroup>
+          <InputLeftElement>
+            <SearchIcon />
+          </InputLeftElement>
+          <Input
+            type="search"
+            aria-label="Keyword search"
+            placeholder="Keyword Search"
+            flexGrow={1}
+            width="200px"
+            variant="filled"
+            borderRadius="0"
+            backgroundColor={inputBackground}
+            onChange={(e) => setFiltersKeyword(e.target.value)}
+          />
+        </InputGroup>
+        <HStack>
+          <FormControl width="180px" flexShrink={0} flexGrow={1}>
+            <FormLabel fontSize="sm">Type</FormLabel>
+            <Select
+              aria-label="Type"
+              placeholder="All"
+              variant="filled"
+              background={inputBackground}
+              borderRadius="0"
+              value={filtersType}
+              onChange={(e) => {
+                if (e.currentTarget.value !== 'Security') {
+                  setFiltersSeverity(undefined);
+                }
+
+                setFiltersType(
+                  e.currentTarget
+                    .value as keyof typeof ListAdvisoriesFiltersTypeEnum
+                );
+              }}
+            >
+              {Object.keys(ListAdvisoriesFiltersTypeEnum)
+                .sort((a, b) => a.localeCompare(b))
+                .filter((a) => a !== 'Unknown')
+                .map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+            </Select>
+          </FormControl>
+          {filtersType === 'Security' && (
+            <FormControl width="180px" flexShrink={0} flexGrow={1}>
+              <FormLabel fontSize="sm">Severity</FormLabel>
+              <Select
+                aria-label="Severity"
+                placeholder="All"
+                variant="filled"
+                background={inputBackground}
+                borderRadius="0"
+                value={filtersSeverity}
+                onChange={(e) =>
+                  setFiltersSeverity(
+                    e.currentTarget
+                      .value as keyof typeof ListAdvisoriesFiltersSeverityEnum
+                  )
+                }
+              >
+                {Object.keys(ListAdvisoriesFiltersSeverityEnum)
+                  .sort((a, b) => a.localeCompare(b))
+                  .filter((a) => a !== 'Unknown')
+                  .map((s) => (
+                    <option key={s} value={s}>
+                      {s}
+                    </option>
+                  ))}
+              </Select>
+            </FormControl>
+          )}
+        </HStack>
+        <HStack>
+          <FormControl width="180px" flexShrink={0} flexGrow={1}>
+            <FormLabel fontSize="sm">After</FormLabel>
+            <Input
+              type="date"
+              variant="filled"
+              background={inputBackground}
+              borderRadius="0"
+              max={
+                filterBefore
+                  ? filterBefore.toLocaleDateString('en-ca')
+                  : new Date().toLocaleDateString('en-ca')
+              }
+              value={filterAfter?.toLocaleDateString('en-ca') || ''}
+              onChange={(e) => {
+                const newVal = e.currentTarget.value;
+                console.log(newVal);
+
+                if (!newVal) {
+                  setFilterAfter(undefined);
+                }
+
+                const asDate = new Date(newVal);
+                if (!(asDate instanceof Date) || isNaN(asDate.getTime())) {
+                  // Check value parses as a date
+                  return;
+                }
+
+                const [year, month, date] = newVal.split('-').map(Number);
+
+                setFilterAfter(new Date(year, month - 1, date));
+              }}
+            />
+          </FormControl>
+          <FormControl width="180px" flexShrink={0} flexGrow={1}>
+            <FormLabel fontSize="sm">Before</FormLabel>
+            <Input
+              type="date"
+              variant="filled"
+              background={inputBackground}
+              borderRadius="0"
+              min={filterAfter?.toLocaleDateString('en-ca')}
+              max={new Date().toLocaleDateString('en-ca')}
+              value={filterBefore?.toLocaleDateString('en-ca') || ''}
+              onChange={(e) => {
+                const newVal = e.currentTarget.value;
+
+                if (!newVal) {
+                  setFilterBefore(undefined);
+                }
+
+                const asDate = new Date(newVal);
+                if (!(asDate instanceof Date) || isNaN(asDate.getTime())) {
+                  // Check value parses as a date
+                  return;
+                }
+
+                const [year, month, date] = newVal.split('-').map(Number);
+
+                setFilterBefore(new Date(year, month - 1, date));
+              }}
+            />
+          </FormControl>
+        </HStack>
+      </Stack>
+      <HStack my={4} justifyContent="space-between" flexWrap="wrap">
+        <Text fontStyle="italic" fontSize="xs">
+          Last updated {lastUpdated?.toLocaleString() || 'never'}
+        </Text>
+        <HStack>
+          <Text fontSize="xs">
+            Displaying {(page * pageSize + 1).toLocaleString()}-
+            {Math.min(total, page * pageSize + pageSize).toLocaleString()} of{' '}
+            {total.toLocaleString()}
+          </Text>
+          <ButtonGroup
+            size="xs"
+            isAttached
+            alignItems="stretch"
+            colorScheme="blackAlpha"
           >
-            <Typography variant="overline">Filters</Typography>
-            <TextField
-              label="Synopsis"
-              variant="outlined"
-              size="small"
-              onChange={(e) => setFilterSynopsis(e.target.value)}
+            <IconButton
+              aria-label="First Page"
+              icon={<ArrowLeftIcon fontSize="8px" />}
+              disabled={page <= 0}
+              onClick={() => setPage(0)}
             />
-            <TextField
-              label="CVE"
-              variant="outlined"
-              size="small"
-              onChange={(e) => setFilterCve(e.target.value)}
+            <IconButton
+              aria-label="Previous Page"
+              icon={<MinusIcon fontSize="8px" />}
+              disabled={page <= 0}
+              onClick={() => setPage((old) => old - 1)}
             />
-          </Container>
-          <Divider />
-          <Container maxWidth={false} disableGutters>
-            <DataGrid
-              autoHeight
-              pagination
-              disableSelectionOnClick
-              disableDensitySelector
-              disableColumnSelector
-              disableColumnMenu
-              className="bg-white"
-              style={{ borderRadius: 0, border: 0 }}
-              rows={advisories.map((advisory: V1Advisory) => ({
-                id: advisory.name,
-                synopsis: advisory.synopsis,
-                severity: advisory.severity,
-                products: advisory.affectedProducts?.join(', '),
-                publish_date: Intl.DateTimeFormat('en-US', {
-                  day: '2-digit',
-                  month: 'short',
-                  year: 'numeric',
-                }).format(advisory.publishedAt),
-              }))}
-              rowsPerPageOptions={[10, 25, 50, 100]}
-              rowCount={total}
-              paginationMode="server"
-              columns={columns}
-              density="compact"
-              pageSize={pageSize}
-              onPageChange={(page) => setPage(page)}
-              onPageSizeChange={(newPageSize) => setPageSize(newPageSize)}
+            <Text
+              fontSize="xs"
+              // borderTop="1px solid"
+              // borderBottom="1px solid"
+              borderColor="gray.200"
+              backgroundColor="white"
+              lineHeight="24px"
+              px={2}
+            >
+              {(page + 1).toLocaleString()} / {(lastPage + 1).toLocaleString()}
+            </Text>
+            <IconButton
+              aria-label="Next Page"
+              icon={<AddIcon fontSize="8px" />}
+              disabled={page >= lastPage}
+              onClick={() => setPage((old) => old + 1)}
             />
-          </Container>
-        </>
+            <IconButton
+              aria-label="Last Page"
+              icon={<ArrowRightIcon fontSize="8px" />}
+              disabled={page >= lastPage}
+              onClick={() => setPage(lastPage)}
+            />
+          </ButtonGroup>
+        </HStack>
+      </HStack>
+      {isLoading ? (
+        <Spinner
+          m="auto"
+          size="xl"
+          alignSelf="center"
+          color={COLOR_RESF_GREEN}
+          thickness="3px"
+        />
+      ) : isError ? (
+        <Alert
+          status="error"
+          m="auto"
+          flexDirection="column"
+          width="300px"
+          borderRadius="md"
+        >
+          <AlertIcon mr="0" />
+          <AlertTitle>Something has gone wrong</AlertTitle>
+          <AlertDescription>Failed to load errata</AlertDescription>
+        </Alert>
+      ) : (
+        <Box backgroundColor="white" boxShadow="base">
+          <TableContainer>
+            <Table size="sm" variant="striped">
+              <Thead>
+                <Tr>
+                  <Th {...stickyProps} width="36px" />
+                  <Th {...stickyProps}>Advisory</Th>
+                  <Th {...stickyProps}>Synopsis</Th>
+                  <Th {...stickyProps}>Type / Severity</Th>
+                  <Th {...stickyProps}>Products</Th>
+                  <Th {...stickyProps}>
+                    <HStack spacing={1}>
+                      <Text>Issue Date</Text>
+                      <ChevronDownIcon />
+                    </HStack>
+                  </Th>
+                </Tr>
+              </Thead>
+              <Tbody>
+                {!advisories?.length && (
+                  <Tr>
+                    <Td colSpan={6} textAlign="center">
+                      <Text>No rows found</Text>
+                    </Td>
+                  </Tr>
+                )}
+                {advisories?.map((a) => (
+                  <Tr key={a.name}>
+                    <Td textAlign="center" pr={0}>
+                      {severityToBadge(a.severity)}
+                    </Td>
+                    <Td>
+                      <Link
+                        className="text-peridot-primary visited:text-purple-500"
+                        to={`/${a.name}`}
+                      >
+                        {a.name}
+                      </Link>
+                    </Td>
+                    <Td>
+                      {a.synopsis?.replace(
+                        /^(Critical|Important|Moderate|Low): /,
+                        ''
+                      )}
+                    </Td>
+                    <Td>
+                      {typeToText(a.type)}
+                      {a.type === V1AdvisoryType.Security
+                        ? ` / ${severityToText(a.severity)}`
+                        : ''}
+                    </Td>
+                    <Td>{a.affectedProducts?.join(', ')}</Td>
+                    <Td>
+                      {Intl.DateTimeFormat(undefined, {
+                        day: '2-digit',
+                        month: 'short',
+                        year: 'numeric',
+                      }).format(a.publishedAt)}
+                    </Td>
+                  </Tr>
+                ))}
+              </Tbody>
+            </Table>
+          </TableContainer>
+        </Box>
       )}
-    </div>
+      <HStack justifyContent="flex-end" mt={4}>
+        <Text as="label" htmlFor="row-count" fontSize="sm">
+          Rows per page:
+        </Text>
+        <Select
+          id="row-count"
+          name="row-count"
+          variant="filled"
+          backgroundColor={inputBackground}
+          width="100px"
+          size="sm"
+          value={pageSize}
+          onChange={(e) => {
+            setPage(0);
+            setPageSize(Number(e.currentTarget.value));
+          }}
+        >
+          {[10, 25, 50, 100].map((count) => (
+            <option key={count} value={count}>
+              {count.toLocaleString()}
+            </option>
+          ))}
+        </Select>
+      </HStack>
+    </Box>
   );
 };
