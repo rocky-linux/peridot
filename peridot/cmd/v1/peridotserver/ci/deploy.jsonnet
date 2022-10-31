@@ -3,9 +3,11 @@ local db = import 'ci/db.jsonnet';
 local kubernetes = import 'ci/kubernetes.jsonnet';
 local temporal = import 'ci/temporal.jsonnet';
 local utils = import 'ci/utils.jsonnet';
+local s3 = import 'ci/s3.jsonnet';
 
 resfdeploy.new({
   name: 'peridotserver',
+  helm_strip_prefix: 'PERIDOT_',
   replicas: if kubernetes.prod() then 5 else 1,
   dbname: 'peridot',
   backend: true,
@@ -31,7 +33,7 @@ resfdeploy.new({
   },
   service_account_options: {
     annotations: {
-      'eks.amazonaws.com/role-arn': 'arn:aws:iam::893168113496:role/peridot_k8s_role',
+      'eks.amazonaws.com/role-arn': if utils.helm_mode then '{{ .Values.awsRoleArn | default !"!" }}' else 'arn:aws:iam::893168113496:role/peridot_k8s_role',
     }
   },
   ports: [
@@ -55,26 +57,18 @@ resfdeploy.new({
       name: 'PERIDOT_PRODUCTION',
       value: if kubernetes.dev() then 'false' else 'true',
     },
-    if utils.local_image then {
-      name: 'PERIDOT_S3_ENDPOINT',
-      value: 'minio.default.svc.cluster.local:9000'
+    {
+      name: 'HYDRA_PUBLIC_HTTP_ENDPOINT_OVERRIDE',
+      value: if utils.helm_mode then '{{ .Values.hydraPublicEndpoint | default !"!" }}' else '',
     },
-    if utils.local_image then {
-      name: 'PERIDOT_S3_DISABLE_SSL',
-      value: 'true'
+    {
+      name: 'HYDRA_ADMIN_HTTP_ENDPOINT_OVERRIDE',
+      value: if utils.helm_mode then '{{ .Values.hydraAdminEndpoint | default !"!" }}' else '',
     },
-    if utils.local_image then {
-      name: 'PERIDOT_S3_FORCE_PATH_STYLE',
-      value: 'true'
-    },
-    if kubernetes.prod() then {
-      name: 'PERIDOT_S3_REGION',
-      value: 'us-east-2',
-    },
-    if kubernetes.prod() then {
-      name: 'PERIDOT_S3_BUCKET',
-      value: 'resf-peridot-prod',
+    {
+      name: 'SPICEDB_GRPC_ENDPOINT_OVERRIDE',
+      value: if utils.helm_mode then '{{ .Values.spicedbEndpoint | default !"!" }}' else '',
     },
     $.dsn,
-  ] + temporal.kube_env('PERIDOT'),
+  ] + s3.kube_env('PERIDOT') + temporal.kube_env('PERIDOT'),
 })

@@ -1,0 +1,6 @@
+apiVersion: v2
+name: obsidian-frontend
+description: Helm chart for Obsidian frontend
+type: application
+version: 0.0.1
+appVersion: "0.0.1"

@@ -1,0 +1,7 @@
+# Set if not AWS S3 (example: Minio)
+s3Endpoint: null
+s3DisableSsl: false
+s3ForcePathStyle: false
+s3Region: us-east-2
+awsRegion: us-east-2
+s3Bucket: resf-peridot-prod

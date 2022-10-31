@@ -1,0 +1,5 @@
+# Ports under requires ingressHost to be set during deploy
+http:
+  ingressHost: null
+
+temporalHostPort: workflow-temporal-frontend.workflow.svc.cluster.local:7233

@@ -1,0 +1,32 @@
+# These default to values in deploy.jsonnet (automatically set by resfdeploy)
+builderOciImageX8664: null
+builderOciImageAarch64: null
+builderOciImageS390x: null
+builderOciImagePpc64le: null
+
+imagePullSecret: null
+
+# Set if not AWS S3 (example: Minio)
+s3Endpoint: null
+s3DisableSsl: false
+s3ForcePathStyle: false
+s3Region: us-east-2
+awsRegion: us-east-2
+s3Bucket: resf-peridot-prod
+
+# Set to true if your cluster can emulate using qemu (example: Docker Desktop on Mac)
+k8sSupportsCrossPlatformNoAffinity: false
+
+# Set to contact services in another cluster (Example: from extarches to main)
+yumrepofsHttpEndpointOverride: null
+temporalHostPort: null
+
+# Provision only mode doesn't take on any "real" work other than provision and destroying workers
+# This is set to true for extarches site
+provisionOnly: false
+
+site: normal
+
+# AWS credentials for external sites (non-AWS sites)
+awsAccessKeyId: null
+awsSecretAccessKey: null

@@ -62,8 +62,8 @@ export default async function (opts) {
 
   const app = express();
   app.use(function (req, res, next) {
-    // Including byc-internal-req: 1 should return the Z page
-    if (req.header('byc-internal-req') === 'yes') {
+    // Including resf-internal-req: 1 should return the Z page
+    if (req.header('resf-internal-req') === 'yes') {
       appZ(req, res, next);
     } else {
       next();

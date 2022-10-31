@@ -54,5 +54,7 @@ peridot_k8s(
     name = "obsidian-frontend",
     src = "deploy.jsonnet",
     outs = RESFDEPLOY_OUTS_BASE,
+    chart_yaml = "Chart.yaml",
+    values_yaml = "values.yaml",
     deps = ["//ci"],
 )

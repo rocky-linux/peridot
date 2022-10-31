@@ -179,9 +179,9 @@ go_third_party()
 # --start jsonnet--
 http_archive(
     name = "io_bazel_rules_jsonnet",
-    sha256 = "d20270872ba8d4c108edecc9581e2bb7f320afab71f8caa2f6394b5202e8a2c3",
-    strip_prefix = "rules_jsonnet-0.4.0",
-    urls = ["https://github.com/bazelbuild/rules_jsonnet/archive/0.4.0.tar.gz"],
+    sha256 = "fa791a38167a198a8b42bfc750ee5642f811ab20649c5517e12719e78d9a133f",
+    strip_prefix = "rules_jsonnet-bd79290c53329db8bc8e3c5b709fbf822d865046",
+    urls = ["https://github.com/bazelbuild/rules_jsonnet/archive/bd79290c53329db8bc8e3c5b709fbf822d865046.tar.gz"],
 )
 
 load("@io_bazel_rules_jsonnet//jsonnet:jsonnet.bzl", "jsonnet_repositories")
@@ -192,9 +192,12 @@ load("@google_jsonnet_go//bazel:repositories.bzl", "jsonnet_go_repositories")
 
 jsonnet_go_repositories()
 
-load("@google_jsonnet_go//bazel:deps.bzl", "jsonnet_go_dependencies")
-
-jsonnet_go_dependencies()
+http_archive(
+    name = "cpp_jsonnet",
+    sha256 = "cbbdddc82c0090881aeff0334b6d60578a15b6fafdb0ac54974840d2b7167d88",
+    strip_prefix = "jsonnet-60bcf7f097ce7ec2d40ea2b4d0217d1e325f4769",
+    urls = ["https://github.com/google/jsonnet/archive/60bcf7f097ce7ec2d40ea2b4d0217d1e325f4769.tar.gz"],
+)
 # --end jsonnet--
 
 # --start atlassian--
@@ -227,3 +230,7 @@ new_local_repository(
 load("//bases/bazel:containers.bzl", "containers")
 
 containers()
+
+load("//rules_resf/toolchains:toolchains.bzl", "toolchains_repositories")
+
+toolchains_repositories()
