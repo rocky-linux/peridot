@@ -30,108 +30,55 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-import React from 'react';
-
-import {
-  AppBar,
-  Toolbar,
-  Container,
-  CssBaseline,
-  Drawer,
-  Divider,
-  IconButton,
-  List,
-} from '@mui/material';
-import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
-import MenuIcon from '@mui/icons-material/Menu';
-
-import { useStyles } from '../styles';
-import { Switch, Route } from 'react-router';
-import { Overview } from './Overview';
-import { Link } from 'react-router-dom';
+import { Box, HStack, Text } from '@chakra-ui/react';
 import { RESFLogo } from 'common/ui/RESFLogo';
-import classnames from 'classnames';
+import React from 'react';
+import { Route, Switch } from 'react-router';
+import { Link } from 'react-router-dom';
+
+import { COLOR_RESF_BLUE, COLOR_RESF_GREEN } from '../styles';
+import { Overview } from './Overview';
 import { ShowErrata } from './ShowErrata';
 
 export const Root = () => {
-  const [open, setOpen] = React.useState(false);
-  const classes = useStyles();
-
-  const handleDrawerClose = () => {
-    setOpen(false);
-  };
-
-  const handleDrawerOpen = () => {
-    setOpen(true);
-  };
-
-  const inManage = location.pathname.startsWith('/manage');
-
   return (
-    <div className={classes.root}>
-      <AppBar
-        position="absolute"
-        className={classnames(
-          inManage && classes.appBar,
-          open && classes.appBarShift
-        )}
+    <Box
+      display="flex"
+      width="100%"
+      minHeight="100vh"
+      flexDirection="column"
+      alignItems="stretch"
+    >
+      <Box
+        background={`linear-gradient(to right, ${COLOR_RESF_GREEN}, ${COLOR_RESF_BLUE})`}
+        display="flex"
+        flexDirection="row"
+        alignItems="center"
+        py="1"
+        px={4}
       >
-        <Toolbar className={classes.toolbar}>
-          {inManage && (
-            <IconButton
-              edge="start"
-              color="inherit"
-              aria-label="open drawer"
-              onClick={handleDrawerOpen}
-              className={classnames(
-                classes.menuButton,
-                open && classes.menuButtonHidden
-              )}
+        <Link to="/" className="no-underline text-white">
+          <HStack flexGrow={1} height="90%" spacing="2">
+            <RESFLogo className="fill-current text-white" />
+            <Text
+              borderLeft="1px solid"
+              pl="2"
+              lineHeight="30px"
+              fontSize="xl"
+              fontWeight="300"
+              color="white"
             >
-              <MenuIcon />
-            </IconButton>
-          )}
-          <Link to="/" className="no-underline text-white">
-            <div
-              className={classnames(
-                classes.title,
-                'flex items-center space-x-4'
-              )}
-            >
-              <RESFLogo className="fill-current text-white" />
-              <div className="font-bold text-lg text-white no-underline">
-                Product Errata{inManage && ' (Admin)'}
-              </div>
-            </div>
-          </Link>
-        </Toolbar>
-      </AppBar>
-      {inManage && (
-        <Drawer
-          variant="permanent"
-          classes={{
-            paper: classnames(
-              classes.drawerPaper,
-              !open && classes.drawerPaperClose
-            ),
-          }}
-          open={open}
-        >
-          <div className={classes.toolbarIcon}>
-            <IconButton onClick={handleDrawerClose}>
-              <ChevronLeftIcon />
-            </IconButton>
-          </div>
-          <Divider />
-        </Drawer>
-      )}
-      <main className={classes.content}>
-        <div className={classes.appBarSpacer} />
+              Product Errata
+            </Text>
+          </HStack>
+        </Link>
+      </Box>
+      <Box as="main" flexGrow={1} overflow="auto">
         <Switch>
           <Route path="/" exact component={Overview} />
           <Route path="/:id" component={ShowErrata} />
         </Switch>
-      </main>
-    </div>
+      </Box>
+    </Box>
   );
 };

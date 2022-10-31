@@ -30,23 +30,21 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+import 'tailwind/tailwind.css';
+
+import { ChakraProvider } from '@chakra-ui/react';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { BrowserRouter } from 'react-router-dom';
-import CssBaseline from '@mui/material/CssBaseline';
 
 import { Root } from './components/Root';
-
-import 'tailwind/tailwind.css';
-import { PeridotThemeProvider } from 'common/mui/theme';
 
 export const app = () => {
   ReactDOM.render(
     <BrowserRouter>
-      <CssBaseline />
-      <PeridotThemeProvider>
+      <ChakraProvider>
         <Root />
-      </PeridotThemeProvider>
+      </ChakraProvider>
     </BrowserRouter>,
     document.getElementById('root')
   );
