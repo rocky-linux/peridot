@@ -3,7 +3,6 @@ plugins:
     plugins:
       - approve
       - assign
-      - blunderbuss
       - cat
       - config-updater
       - dog
