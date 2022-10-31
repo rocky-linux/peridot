@@ -28,6 +28,7 @@ resf_frontend(
         "//dotui",
         "//obsidian/proto/v1:client_typescript",
         "//tailwind:css",
+        "@npm//@emotion/unitless",
         "@npm//@mui/icons-material",
         "@npm//@mui/material",
         "@npm//@mui/styles",

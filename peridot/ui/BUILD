@@ -29,6 +29,7 @@ resf_frontend(
         "//dotui",
         "//peridot/proto/v1:client_typescript",
         "//tailwind:css",
+        "@npm//@emotion/unitless",
         "@npm//@mui/icons-material",
         "@npm//@mui/lab",
         "@npm//@mui/x-data-grid",
