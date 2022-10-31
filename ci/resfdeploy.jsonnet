@@ -1,58 +1,76 @@
-local stage = std.extVar('stage');
-local origUser = std.extVar('user');
-local domainUser = std.extVar('domain_user');
 local ociRegistry = std.extVar('oci_registry');
 local ociRegistryRepo = std.extVar('oci_registry_repo');
 local registry_secret = std.extVar('registry_secret');
-
-local user = if domainUser != 'user-orig' then domainUser else origUser;
-
-local stageNoDash = std.strReplace(stage, '-', '');
 
 local kubernetes = import 'ci/kubernetes.jsonnet';
 local db = import 'ci/db.jsonnet';
 local mappings = import 'ci/mappings.jsonnet';
 local utils = import 'ci/utils.jsonnet';
 
+local helm_mode = utils.helm_mode;
+local stage = utils.stage;
+local user = utils.user;
+local stageNoDash = utils.stage_no_dash;
+
+local slugify_ = function (x) std.asciiLower(std.substr(x, 0, 1)) + std.substr(x, 1, std.length(x)-1);
+local slugify = function (name, extra_remove, str) slugify_(std.join('', [std.asciiUpper(std.substr(x, 0, 1)) + std.asciiLower(std.substr(x, 1, std.length(x)-1)) for x in std.split(std.strReplace(std.strReplace(str, std.asciiUpper(name)+'_', ''), extra_remove, ''), '_')]));
+
+// Can be used to add common labels or annotations
 local labels = {
-  labels: db.label() + kubernetes.istio_labels(),
+  labels: kubernetes.istio_labels(),
 };
 
+// We're using a helper manifestYamlStream function to fix some general issues with it for Helm templates manually.
+// Currently Helm functions should use !" instead of " only for strings.
+// If a value doesn't start with a Helm bracket but ends with one, then end the value with !! (and the opposite for start).
+local manifestYamlStream = function (value, indent_array_in_object=false, c_document_end=false, quote_keys=false)
+  std.strReplace(std.strReplace(std.strReplace(std.strReplace(std.strReplace(std.manifestYamlStream(std.filter(function (x) x != null, value), indent_array_in_object, c_document_end, quote_keys), '!\\"', '"'), '"{{', '{{'), '}}"', '}}'), '}}!!', '}}'), '!!{{', '{{');
+
 {
+  user():: user,
   new(info)::
-    local metadata = {
+    local metadata_init = {
       name: info.name,
-      namespace: if stageNoDash == 'dev' then '%s-dev' % user else if std.objectHas(info, 'namespace') then info.namespace else info.name,
+      namespace: if helm_mode then '{{ .Release.Namespace }}' else (if stageNoDash == 'dev' then '%s-dev' % user else if std.objectHas(info, 'namespace') then info.namespace else info.name),
     };
+    local default_labels_all = {
+      'app.kubernetes.io/name': if helm_mode then '{{ template !"%s.name!" . }}' % info.name else info.name,
+    };
+    local default_labels_helm = if helm_mode then {
+      'helm.sh/chart': '{{ template !"%s.chart!" . }}' % info.name,
+      'app.kubernetes.io/managed-by': '{{ .Release.Service }}',
+      'app.kubernetes.io/instance': '{{ .Release.Name }}',
+      'app.kubernetes.io/version': info.tag,
+    } else {};
+    local default_labels = default_labels_all + default_labels_helm;
+    local metadata = metadata_init + { labels: default_labels };
     local fixed = kubernetes.fix_metadata(metadata);
     local vshost(srv) = '%s-service.%s.svc.cluster.local' % [srv.name, fixed.namespace];
     local infolabels = if info.backend then labels else { labels: kubernetes.istio_labels() };
     local dbname = (if std.objectHas(info, 'dbname') then info.dbname else info.name);
-    local env = if std.objectHas(info, 'env') then info.env else [];
-    local sa_name = '%s-%s-serviceaccount' % [stageNoDash, fixed.name];
-
-    local extra_info = {
-      service_account_name: sa_name,
-    };
+    local env = std.filter(function (x) x != null, [if x != null then if (!std.endsWith(x.name, 'DATABASE_URL') && std.objectHas(x, 'value') && x.value != null) && std.findSubstr('{{', x.value) == null then x {
+      value: if helm_mode then '{{ .Values.%s | default !"%s!"%s }}' % [slugify(info.name, if std.objectHas(info, 'helm_strip_prefix') then info.helm_strip_prefix else ' ', x.name), x.value, if x.value == 'true' || x.value == 'false' then ' | quote' else ''] else x.value,
+    } else x for x in (if std.objectHas(info, 'env') then info.env else [])]);
+    local sa_default = fixed.name;
+    local sa_name = if helm_mode then '{{ .Values.serviceAccountName | default !"%s!" }}' % [fixed.name] else sa_default;
 
     local envs = [stageNoDash];
 
-    local ports = info.ports + (if std.objectHas(info, 'disableMetrics') && info.disableMetrics then [] else [{
+    local disableMetrics = std.objectHas(info, 'disableMetrics') && info.disableMetrics;
+    local ports = (if std.objectHas(info, 'ports') then info.ports else []) + (if disableMetrics then [] else [{
       name: 'metrics',
       containerPort: 7332,
       protocol: 'TCP',
     }]);
-
     local services = if std.objectHas(info, 'services') then info.services else
       [{ name: '%s-%s-%s' % [metadata.name, port.name, env], port: port.containerPort, portName: port.name, expose: if std.objectHas(port, 'expose') then port.expose else false } for env in envs for port in ports];
 
-    local nssa = '001-ns-sa.yaml';
-    local migrate = '002-migrate.yaml';
-    local deployment = '003-deployment.yaml';
-    local svcVsDr = '004-svc-vs-dr.yaml';
-    local custom = '005-custom.yaml';
-
-    local legacyDb = if std.objectHas(info, 'legacyDb') then info.legacyDb else false;
+    local file_yaml_prefix = if helm_mode then 'helm-' else '';
+    local nssa = '%s001-ns-sa.yaml' % file_yaml_prefix;
+    local migrate = '%s002-migrate.yaml' % file_yaml_prefix;
+    local deployment = '%s003-deployment.yaml' % file_yaml_prefix;
+    local svcVsDr = '%s004-svc-vs-dr.yaml' % file_yaml_prefix;
+    local custom = '%s005-custom.yaml' % file_yaml_prefix;
 
     local dbPassEnv = {
       name: 'DATABASE_PASSWORD',
@@ -61,52 +79,66 @@ local labels = {
       secret: if !utils.local_image then {
         name: '%s-database-password' % db.staged_name(dbname),
         key: 'password',
+        optional: '{{ if .Values.databaseUrl }}true{{ else }}false{{ end }}',
       },
     };
 
-    local shouldSecureEndpoint(srv) = if mappings.get_env_from_svc(srv.name) == 'prod' && mappings.is_external(srv.name) then false
+    local ingress_annotations = {
+      'kubernetes.io/tls-acme': 'true',
+      'cert-manager.io/cluster-issuer': if utils.helm_mode then '!!{{ if .Values.overrideClusterIssuer }}{{ .Values.overrideClusterIssuer }}{{ else }}letsencrypt-{{ template !"resf.stage!" . }}{{ end }}!!' else 'letsencrypt-staging',
+    } + (if utils.local_image || !info.backend then {
+      'konghq.com/https-redirect-status-code': '301',
+    } else {});
+
+    // Helm mode doesn't need this as the deployer/operator should configure it themselves
+    local shouldSecureEndpoint(srv) = if helm_mode then false else (if mappings.get_env_from_svc(srv.name) == 'prod' && mappings.is_external(srv.name) then false
                                       else if mappings.should_expose_all(srv.name) then false
                                       else if utils.local_image then false
                                       else if !std.objectHas(srv, 'expose') || !srv.expose then false
-                                      else true;
-    local imagePullSecrets = if registry_secret != 'none' then [registry_secret] else [];
+                                      else true);
+    local imagePullSecrets = if helm_mode then '{{ if .Values.imagePullSecrets }}[{{ range .Values.imagePullSecrets }}{ name: {{.}} },{{ end }}]{{ else }}null{{end}}' else (if registry_secret != 'none' then [registry_secret] else []);
+    local migrate_image = if std.objectHas(info, 'migrate_image') && info.migrate_image != null then info.migrate_image else info.image;
+    local migrate_tag = if std.objectHas(info, 'migrate_tag') && info.migrate_tag != null then info.migrate_tag else info.tag;
+    local stage_in_resource = if helm_mode then '%s!!' % stage else stage;
+    local image = if helm_mode then '{{ ((.Values.image).repository) | default !"%s!" }}' % info.image else info.image;
+    local tag = if helm_mode then '{{ ((.Values.image).tag) | default !"%s!" }}' % info.tag else info.tag;
+
+    local extra_info = {
+      service_account_name: sa_name,
+      imagePullSecrets: imagePullSecrets,
+      image: image,
+      tag: tag,
+    };
 
     {
-      [nssa]: std.manifestYamlStream([
-        kubernetes.define_namespace(metadata.namespace, infolabels),
-        kubernetes.define_service_account(metadata {
-          name: '%s-%s' % [stageNoDash, fixed.name],
-        } + if std.objectHas(info, 'service_account_options') then info.service_account_options else {},
+      [nssa]: (if helm_mode then '{{ if not .Values.serviceAccountName }}\n' else '') + manifestYamlStream([
+        // disable namespace creation in helm mode
+        if !helm_mode then kubernetes.define_namespace(metadata.namespace, infolabels),
+        kubernetes.define_service_account(
+          metadata {
+            name: fixed.name,
+          } + if std.objectHas(info, 'service_account_options') then info.service_account_options else {}
         ),
-      ]),
+      ]) + (if helm_mode then '{{ end }}' else ''),
       [if std.objectHas(info, 'migrate') && info.migrate == true then migrate else null]:
-        std.manifestYamlStream([
+        manifestYamlStream([
           kubernetes.define_service_account(metadata {
-            name: 'init-db-%s-%s' % [fixed.name, stageNoDash],
+            name: 'init-db-%s' % [fixed.name],
           }),
-          kubernetes.define_role_binding(metadata, metadata.name + '-role', [{
-            kind: 'ServiceAccount',
-            name: 'init-db-%s-%s-serviceaccount' % [fixed.name, stageNoDash],
-            namespace: metadata.namespace,
-          }]),
-          kubernetes.define_cluster_role_binding(metadata, metadata.name + '-clusterrole', [{
-            kind: 'ServiceAccount',
-            name: 'init-db-%s-%s-serviceaccount' % [fixed.name, stageNoDash],
-            namespace: metadata.namespace,
-          }]),
           kubernetes.define_role(
             metadata {
-              name: 'init-db-%s-%s' % [fixed.name, stageNoDash],
+              name: 'init-db-%s-%s' % [fixed.name, fixed.namespace],
+              namespace: 'initdb%s' % stage_in_resource,
             },
             [{
               apiGroups: [''],
               resources: ['secrets'],
-              verbs: ['create', 'get'],
+              verbs: ['get'],
             }]
           ),
-          kubernetes.define_cluster_role(
+          kubernetes.define_role(
             metadata {
-              name: 'init-db-%s-%s' % [fixed.name, stageNoDash],
+              name: 'init-db-%s' % [fixed.name],
             },
             [{
               apiGroups: [''],
@@ -116,133 +148,159 @@ local labels = {
           ),
           kubernetes.define_role_binding(
             metadata {
-              name: 'init-db-%s-%s' % [fixed.name, stageNoDash],
+              name: 'init-db-%s-%s' % [fixed.name, fixed.namespace],
+              namespace: 'initdb%s' % stage_in_resource,
             },
-            'init-db-%s-%s-role' % [fixed.name, stageNoDash],
+            'init-db-%s-%s-role' % [fixed.name, fixed.namespace],
             [{
               kind: 'ServiceAccount',
-              name: 'init-db-%s-%s-serviceaccount' % [fixed.name, stageNoDash],
+              name: 'init-db-%s' % [fixed.name],
               namespace: fixed.namespace,
             }],
           ),
-          kubernetes.define_cluster_role_binding(
+          kubernetes.define_role_binding(
             metadata {
-              name: 'init-db-%s-%s' % [fixed.name, stageNoDash],
+              name: 'init-db-%s' % [fixed.name],
             },
-            'init-db-%s-%s-clusterrole' % [fixed.name, stageNoDash],
+            'init-db-%s-role' % [fixed.name],
             [{
               kind: 'ServiceAccount',
-              name: 'init-db-%s-%s-serviceaccount' % [fixed.name, stageNoDash],
+              name: 'init-db-%s' % [fixed.name],
               namespace: fixed.namespace,
             }],
           ),
-          if !legacyDb then kubernetes.define_job(metadata { name: 'request-cert' }, kubernetes.request_cdb_certs('initdb%s' % stageNoDash) + {
-            serviceAccount: '%s-%s-serviceaccount' % [stageNoDash, fixed.name],
-          }),
-          if info.migrate == true && dbname != '' then kubernetes.define_job(metadata { name: info.name + '-migrate' }, {
-            image: if std.objectHas(info, 'migrate_image') && info.migrate_image != null then info.migrate_image else info.image,
-            tag: if std.objectHas(info, 'migrate_tag') && info.migrate_tag != null then info.migrate_tag else info.tag,
-            command: if std.objectHas(info, 'migrate_command') && info.migrate_command != null then info.migrate_command else ['/bin/sh'],
-            serviceAccount: 'init-db-%s-%s-serviceaccount' % [fixed.name, stageNoDash],
-            imagePullSecrets: imagePullSecrets,
-            args: if std.objectHas(info, 'migrate_args') && info.migrate_args != null then info.migrate_args else [
-              '-c',
-              'export REAL_DSN=`echo $%s | sed -e "s/REPLACEME/${DATABASE_PASSWORD}/g"%s`; /usr/bin/migrate -source file:///migrations -database $REAL_DSN up' % [info.dsn.name, if legacyDb then '' else ' | sed -e "s/postgresql/cockroachdb/g"'],
-            ],
-            volumes: (if std.objectHas(info, 'volumes') then info.volumes(metadata) else []) + (if !legacyDb then kubernetes.request_cdb_certs_volumes() else []),
-            initContainers: [
-              if !legacyDb then kubernetes.request_cdb_certs('%s%s' % [metadata.name, stageNoDash]) + {
-                serviceAccount: '%s-%s-serviceaccount' % [stageNoDash, fixed.name],
-              },
-              {
-                name: 'initdb',
-                image: 'quay.io/peridot/initdb:v0.1.4',
-                command: ['/bin/sh'],
-                args: ['-c', '/bundle/initdb*'],
-                volumes: if !legacyDb then kubernetes.request_cdb_certs_volumes(),
-                env: [
-                  {
-                    name: 'INITDB_TARGET_DB',
-                    value: db.staged_name(dbname),
-                  },
-                  {
-                    name: 'INITDB_PRODUCTION',
-                    value: 'true',
-                  },
-                  {
-                    name: 'INITDB_DATABASE_URL',
-                    value: if legacyDb then db.dsn_legacy('postgres', true) else db.dsn('initdb'),
-                  },
-                ],
-              },
-            ],
-            env: [
-              dbPassEnv,
-              info.dsn,
-            ],
-            annotations: {
-              'sidecar.istio.io/inject': 'false',
-              'linkerd.io/inject': 'disabled',
+          if info.migrate == true && dbname != '' then kubernetes.define_job(
+            metadata {
+              name: info.name + '-migrate',
+              annotations: (if helm_mode then {
+                'helm.sh/hook': 'post-install,post-upgrade',
+                'helm.sh/hook-weight': '-5',
+                'helm.sh/hook-delete-policy': 'before-hook-creation',
+              } else {}),
             },
-          }) else {},
+            {
+              image: if helm_mode then '{{ if ((.Values.migrate_image).repository) }}{{ .Values.migrate_image.repository }}{{ else }}{{ ((.Values.image).repository) | default !"%s!" }}{{ end }}' % migrate_image else migrate_image,
+              tag: if helm_mode then '{{ if ((.Values.migrate_image).tag) }}{{ .Values.migrate_image.tag }}{{ else }}{{ ((.Values.image).tag) | default !"%s!" }}{{ end }}' % migrate_tag else migrate_tag,
+              command: if std.objectHas(info, 'migrate_command') && info.migrate_command != null then info.migrate_command else ['/bin/sh'],
+              serviceAccount: 'init-db-%s' % [fixed.name],
+              imagePullSecrets: imagePullSecrets,
+              args: if std.objectHas(info, 'migrate_args') && info.migrate_args != null then info.migrate_args else [
+                '-c',
+                'export REAL_DSN=`echo $%s | sed -e "s/REPLACEME/${DATABASE_PASSWORD}/g"`; /usr/bin/migrate -source file:///migrations -database $REAL_DSN up' % [info.dsn.name],
+              ],
+              volumes: (if std.objectHas(info, 'volumes') then info.volumes(metadata) else []),
+              initContainers: [
+                {
+                  name: 'initdb',
+                  image: 'quay.io/peridot/initdb:v0.1.5',
+                  command: ['/bin/sh'],
+                  args: ['-c', '/bundle/initdb*'],
+                  env: [
+                    {
+                      name: 'INITDB_TARGET_DB',
+                      value: db.staged_name(dbname),
+                    },
+                    {
+                      name: 'INITDB_PRODUCTION',
+                      value: 'true',
+                    },
+                    {
+                      name: 'INITDB_DATABASE_URL',
+                      value: db.dsn('postgres', true),
+                    },
+                    {
+                      name: 'INITDB_SKIP',
+                      value: if helm_mode then '!!{{ if .Values.databaseUrl }}true{{ else }}false{{ end }}!!' else 'false',
+                    },
+                  ],
+                },
+              ],
+              env: [
+                dbPassEnv,
+                info.dsn,
+              ],
+              annotations: {
+                'sidecar.istio.io/inject': 'false',
+                'linkerd.io/inject': 'disabled',
+              },
+            }
+          ) else {},
         ]),
-      [deployment]: std.manifestYamlStream([
+      [deployment]: manifestYamlStream([
         kubernetes.define_deployment(
-          metadata,
+          metadata {
+            annotations: if helm_mode then {
+              'resf.org/calculated-image': info.image,
+              'resf.org/calculated-tag': info.tag,
+            } else null
+          },
           {
-            replicas: if std.objectHas(info, 'replicas') then info.replicas else 1,
-            image: info.image,
-            tag: info.tag,
+            replicas: if helm_mode then '{{ .Values.replicas | default !"1!" }}' else (if std.objectHas(info, 'replicas') then info.replicas else 1),
+            image: image,
+            tag: tag,
             command: if std.objectHas(info, 'command') then [info.command] else null,
             fsGroup: if std.objectHas(info, 'fsGroup') then info.fsGroup else null,
             fsUser: if std.objectHas(info, 'fsUser') then info.fsUser else null,
             imagePullSecrets: imagePullSecrets,
-            labels: db.label(),
-            annotations: (if std.objectHas(info, 'annotations') then info.annotations else {}) + {
+            annotations: (if std.objectHas(info, 'annotations') then info.annotations else {}) + (if disableMetrics then {} else {
               'prometheus.io/scrape': 'true',
               'prometheus.io/port': '7332',
-            },
-            initContainers: if !legacyDb && info.backend then [kubernetes.request_cdb_certs('%s%s' % [metadata.name, stageNoDash]) + {
-              serviceAccount: '%s-%s-serviceaccount' % [stageNoDash, fixed.name],
-            }],
-            volumes: (if std.objectHas(info, 'volumes') then info.volumes(metadata) else []) + (if !legacyDb then kubernetes.request_cdb_certs_volumes() else []),
+            }),
+            volumes: (if std.objectHas(info, 'volumes') then info.volumes(metadata) else []),
             ports: std.map(function(x) x { expose: null, external: null }, ports),
             health: if std.objectHas(info, 'health') then info.health,
             env: env + (if dbname != '' && info.backend then ([dbPassEnv]) else []) + [
               {
                 name: 'SELF_IDENTITY',
-                value: 'spiffe://cluster.local/ns/%s/sa/%s-%s-serviceaccount' % [fixed.namespace, stageNoDash, fixed.name],
+                value: 'spiffe://cluster.local/ns/%s/sa/%s' % [fixed.namespace, fixed.name],
               },
             ] + [
-              if std.objectHas(srv, 'expose') && srv.expose then {
+              if std.objectHas(srv, 'expose') && srv.expose then (if helm_mode then {
+                name: '%s_PUBLIC_URL' % [std.asciiUpper(std.strReplace(std.strReplace(srv.name, stage, ''), '-', '_'))],
+                value: 'https://{{ .Values.%s.ingressHost }}!!' % [srv.portName],
+              } else {
                 name: '%s_PUBLIC_URL' % [std.asciiUpper(std.strReplace(std.strReplace(srv.name, stage, ''), '-', '_'))],
                 value: 'https://%s' % mappings.get(srv.name, user),
-              } else null,
+              }) else null,
             for srv in services],
             limits: if std.objectHas(info, 'limits') then info.limits,
             requests: if std.objectHas(info, 'requests') then info.requests,
             args: if std.objectHas(info, 'args') then info.args else [],
-            serviceAccount: '%s-%s-serviceaccount' % [stageNoDash, fixed.name],
+            serviceAccount: sa_name,
           },
         ),
       ]),
       [svcVsDr]:
-        std.manifestYamlStream(
+        manifestYamlStream(
           [kubernetes.define_service(
             metadata {
               name: srv.name,
               annotations: {
                 'konghq.com/protocol': std.strReplace(std.strReplace(std.strReplace(srv.name, metadata.name, ''), stage, ''), '-', ''),
-                'ingress.kubernetes.io/service-upstream': 'true',
               }
             },
             srv.port,
             srv.port,
             portName=srv.portName,
             selector=metadata.name,
-            env=mappings.get_env_from_svc(srv.name),
+            env=mappings.get_env_from_svc(srv.name)
           ) for srv in services] +
-          [kubernetes.define_virtual_service(metadata { name: srv.name + '-internal' }, {
+          if !helm_mode then [] else [if std.objectHas(srv, 'expose') && srv.expose then kubernetes.define_ingress(
+            metadata {
+              name: srv.name,
+              annotations: ingress_annotations + {
+                'kubernetes.io/ingress.class': '{{ .Values.ingressClass | default !"!" }}',
+                // Secure only by default
+                // This produces https, grpcs, etc.
+                // todo(mustafa): check if we need to add an exemption to a protocol (TCP comes to mind)
+                'konghq.com/protocols': '{{ .Values.kongProtocols | default !"%ss!"' % std.strReplace(std.strReplace(std.strReplace(srv.name, metadata.name, ''), stage, ''), '-', ''),
+              }
+            },
+            host=if helm_mode then '{{ .Values.%s.ingressHost }}' % srv.portName else mappings.get(srv.name, user),
+            port=srv.port,
+            srvName=srv.name + '-service',
+          ) else null for srv in services] +
+          if helm_mode then [] else [kubernetes.define_virtual_service(metadata { name: srv.name + '-internal' }, {
             hosts: [vshost(srv)],
             gateways: [],
             http: [
@@ -259,7 +317,7 @@ local labels = {
               },
             ],
           },) for srv in services] +
-          [if std.objectHas(srv, 'expose') && srv.expose then kubernetes.define_virtual_service(
+          if helm_mode then [] else [if std.objectHas(srv, 'expose') && srv.expose then kubernetes.define_virtual_service(
             metadata {
               name: srv.name,
               annotations: {
@@ -284,7 +342,7 @@ local labels = {
               ],
             }
           ) else null for srv in services] +
-          [{
+          if helm_mode then [] else [{
               apiVersion: 'security.istio.io/v1beta1',
               kind: 'RequestAuthentication',
               metadata: metadata {
@@ -305,7 +363,7 @@ local labels = {
                 }] else [],
             },
           } for srv in services] +
-          [{
+          if helm_mode then [] else [{
             apiVersion: 'security.istio.io/v1beta1',
             kind: 'AuthorizationPolicy',
             metadata: metadata {
@@ -330,7 +388,7 @@ local labels = {
               }],
             },
           } for srv in services] +
-          [kubernetes.define_destination_rule(metadata { name: srv.name }, {
+          if helm_mode then [] else [kubernetes.define_destination_rule(metadata { name: srv.name }, {
             host: vshost(srv),
             trafficPolicy: {
               tls: {
@@ -349,6 +407,6 @@ local labels = {
           },) for srv in services]
         ),
       [if std.objectHas(info, 'custom_job_items') then custom else null]:
-        std.manifestYamlStream(if std.objectHas(info, 'custom_job_items') then info.custom_job_items(metadata, extra_info) else [{}]),
+        manifestYamlStream(if std.objectHas(info, 'custom_job_items') then info.custom_job_items(metadata, extra_info) else [{}]),
     },
 }

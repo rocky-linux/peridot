@@ -8,11 +8,13 @@ local site = std.extVar('site');
 local arch = std.extVar('arch');
 local localEnvironment = std.extVar('local_environment') == '1';
 
-local stageNoDash = std.strReplace(stage, '-', '');
-
-local imagePullPolicy = if stageNoDash == 'dev' then 'Always' else 'IfNotPresent';
-
 local utils = import 'ci/utils.jsonnet';
+
+local helm_mode = utils.helm_mode;
+local stage = utils.stage;
+local user = utils.user;
+local stageNoDash = utils.stage_no_dash;
+local imagePullPolicy = if stageNoDash == 'dev' then 'Always' else 'IfNotPresent';
 
 local defaultEnvs = [
   {
@@ -25,13 +27,17 @@ local defaultEnvs = [
     field: 'metadata.namespace',
   },
   {
+    name: 'RESF_FORCE_NS',
+    value: if helm_mode then '{{ .Values.catalogForceNs | default !"!" }}' else '',
+  },
+  {
     name: 'RESF_SERVICE_ACCOUNT',
     valueFrom: true,
     field: 'spec.serviceAccountName',
   },
   {
     name: 'AWS_REGION',
-    value: 'us-east-2',
+    value: if helm_mode then '{{ .Values.awsRegion | default !"us-east-2!" }}' else 'us-east-2',
   },
   {
     name: 'LOCALSTACK_ENDPOINT',
@@ -40,19 +46,20 @@ local defaultEnvs = [
 ];
 
 local define_env(envsOrig) = std.filter(function(x) x != null, [
-  if field != null then {
+  if field != null then std.prune({
     name: field.name,
     value: if std.objectHas(field, 'value') then field.value,
     valueFrom: if std.objectHas(field, 'valueFrom') && field.valueFrom == true then {
       secretKeyRef: if std.objectHas(field, 'secret') then {
         name: field.secret.name,
         key: field.secret.key,
+        optional: if std.objectHas(field.secret, 'optional') then field.secret.optional else false,
       },
       fieldRef: if std.objectHas(field, 'field') then {
         fieldPath: field.field,
       },
     },
-  }
+  })
   for field in (envsOrig + defaultEnvs)
 ]);
 
@@ -65,7 +72,6 @@ local define_volumes(volumes) = [
     emptyDir: if std.objectHas(vm, 'emptyDir') then {},
     secret: if std.objectHas(vm, 'secret') then vm.secret,
     configMap: if std.objectHas(vm, 'configMap') then vm.configMap,
-    hostPath: if std.objectHas(vm, 'hostPath') then vm.hostPath,
   }
   for vm in volumes
 ];
@@ -99,7 +105,7 @@ local fix_metadata(metadata) = metadata {
   namespace: metadata.namespace,
 };
 
-local prod() = stage == '-prod';
+local prod() = stage != '-dev';
 local dev() = stage == '-dev';
 
 {
@@ -134,7 +140,7 @@ local dev() = stage == '-dev';
       env: if !std.objectHas(deporig, 'env') then [] else deporig.env,
       ports: if !std.objectHas(deporig, 'ports') then [{ containerPort: 80, protocol: 'TCP' }] else deporig.ports,
       initContainers: if !std.objectHas(deporig, 'initContainers') then [] else deporig.initContainers,
-      limits: if std.objectHas(deporig, 'limits') then deporig.limits,
+      limits: if !std.objectHas(deporig, 'limits') || deporig.limits == null then { cpu: '0.1', memory: '256M' } else deporig.limits,
       requests: if !std.objectHas(deporig, 'requests') || deporig.requests == null then { cpu: '0.001', memory: '128M' } else deporig.requests,
     };
 
@@ -184,7 +190,7 @@ local dev() = stage == '-dev';
                 command: if std.objectHas(deployment, 'command') then deployment.command else null,
                 args: if std.objectHas(deployment, 'args') then deployment.args else null,
                 ports: deployment.ports,
-                env: define_env(deployment.env),
+                env: if std.objectHas(deployment, 'env') then define_env(deployment.env) else [],
                 volumeMounts: if std.objectHas(deployment, 'volumes') && deployment.volumes != null then define_volume_mounts(deployment.volumes),
                 securityContext: {
                   runAsGroup: if std.objectHas(deployment, 'fsGroup') then deployment.fsGroup else null,
@@ -200,7 +206,7 @@ local dev() = stage == '-dev';
                     port: deployment.health.port,
                     httpHeaders: [
                       {
-                        name: 'byc-internal-req',
+                        name: 'resf-internal-req',
                         value: 'yes',
                       },
                     ],
@@ -212,7 +218,7 @@ local dev() = stage == '-dev';
                   periodSeconds: if std.objectHas(deployment.health, 'periodSeconds') then deployment.health.periodSeconds else 3,
                   timeoutSeconds: if std.objectHas(deployment.health, 'timeoutSeconds') then deployment.health.timeoutSeconds else 5,
                   successThreshold: if std.objectHas(deployment.health, 'successThreshold') then deployment.health.successThreshold else 1,
-                  failureThreshold: if std.objectHas(deployment.health, 'failureTreshold') then deployment.health.failureTreshold else 30,
+                  failureThreshold: if std.objectHas(deployment.health, 'failureThreshold') then deployment.health.failureThreshold else 30,
                 } else if std.objectHas(deployment, 'health_tcp') && deployment.health_tcp != null then {
                   tcpSocket: {
                     port: deployment.health_tcp.port,
@@ -263,7 +269,7 @@ local dev() = stage == '-dev';
               },
             },
             restartPolicy: 'Always',
-            imagePullSecrets: if std.objectHas(deployment, 'imagePullSecrets') && deployment.imagePullSecrets != null then [
+            imagePullSecrets: if std.objectHas(deployment, 'imagePullSecrets') && deployment.imagePullSecrets != null then if std.type(deployment.imagePullSecrets) == 'string' then deployment.imagePullSecrets else [
               {
                 name: secret,
               }
@@ -305,7 +311,7 @@ local dev() = stage == '-dev';
             ],
           },
         }],
-      } + ({
+      } + (if !helm_mode then {} else {
         tls: [{
           hosts: [
             host,
@@ -415,7 +421,7 @@ local dev() = stage == '-dev';
           spec: {
             automountServiceAccountToken: true,
             serviceAccountName: if std.objectHas(job, 'serviceAccount') then job.serviceAccount,
-            imagePullSecrets: if std.objectHas(job, 'imagePullSecrets') && job.imagePullSecrets != null then [
+            imagePullSecrets: if std.objectHas(job, 'imagePullSecrets') && job.imagePullSecrets != null then if std.type(job.imagePullSecrets) == 'string' then job.imagePullSecrets else [
               {
                 name: secret,
               }
@@ -430,7 +436,7 @@ local dev() = stage == '-dev';
               env: define_env(job.env),
               volumeMounts: if std.objectHas(job, 'volumes') && job.volumes != null then define_volume_mounts(job.volumes),
             }],
-            restartPolicy: 'Never',
+            restartPolicy: if std.objectHas(job, 'restartPolicy') then job.restartPolicy else 'Never',
             volumes: if std.objectHas(job, 'volumes') && job.volumes != null then define_volumes(job.volumes),
           },
         },
@@ -444,7 +450,7 @@ local dev() = stage == '-dev';
       apiVersion: 'v1',
       kind: 'ServiceAccount',
       metadata: metadata {
-        name: metadata.name + '-serviceaccount',
+        name: metadata.name,
       },
     },
 
@@ -474,6 +480,9 @@ local dev() = stage == '-dev';
       },
       rules: rules,
     },
+
+  define_cluster_role_v2(metadataOrig, name, rules)::
+    $.define_cluster_role(metadataOrig { name: '%s-%s' % [metadataOrig.name, name] }, rules),
 
   // RoleBinding
   define_role_binding(metadataOrig, roleName, subjects)::
@@ -514,6 +523,12 @@ local dev() = stage == '-dev';
       },
       subjects: subjects,
     },
+  bind_to_cluster_role_sa(role, serviceAccount)::
+    $.define_cluster_role_binding(role.metadata, role.metadata.name, [{
+      kind: 'ServiceAccount',
+      name: serviceAccount,
+      namespace: role.metadata.namespace,
+    }]),
 
   // PersistentVolumeClaim
   define_persistent_volume_claim(metadataOrig, storage, access_mode='ReadWriteOnce')::
@@ -544,69 +559,6 @@ local dev() = stage == '-dev';
         name: metadata.name + '-cm',
       },
       data: data,
-    },
-
-  request_cdb_certs_volumes()::
-    [
-      {
-        name: 'client-certs',
-        path: '/cockroach-certs',
-        emptyDir: true,
-      },
-    ],
-
-  request_cdb_certs(user)::
-    {
-      name: 'init-certs',
-      image: ociRegistryDocker + '/cockroachdb/cockroach-k8s-request-cert',
-      tag: '0.4',
-      annotations: {
-        'sidecar.istio.io/inject': 'false',
-      },
-      command: [
-        '/bin/ash',
-      ],
-      args: [
-        '-ecx',
-        '/request-cert -namespace=${POD_NAMESPACE} -certs-dir=/cockroach-certs -type=client -user=' + user + ' -symlink-ca-from=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt && ' +
-        'chown -R 1000:1000 /cockroach-certs',
-      ],
-      volumes: $.request_cdb_certs_volumes(),
-      env: [{
-        name: 'POD_NAMESPACE',
-        valueFrom: true,
-        field: 'metadata.namespace',
-      }],
-    },
-
-  cdb_sa_roles(metadataOrig)::
-    local metadata = fix_metadata(metadataOrig);
-    {
-      apiVersion: 'v1',
-      kind: 'List',
-      items: [
-        $.define_service_account(metadataOrig),
-        $.define_role(metadataOrig, [{
-          apiGroups: [''],
-          resources: ['secrets'],
-          verbs: ['create', 'get'],
-        }]),
-        $.define_role_binding(metadataOrig, metadata.name + '-role', [{
-          kind: 'ServiceAccount',
-          name: metadata.name + '-serviceaccount',
-          namespace: metadata.namespace,
-        }]),
-        $.define_cluster_role(metadataOrig, [{
-          apiGroups: ['certificates.k8s.io'],
-          resources: ['certificatesigningrequests'],
-          verbs: ['create', 'get', 'watch'],
-        }]),
-        $.define_cluster_role_binding(metadataOrig, metadata.name + '-clusterrole', [{
-          kind: 'ServiceAccount',
-          name: metadata.name + '-serviceaccount',
-          namespace: metadata.namespace,
-        }]),
-      ],
     },
 
   chown_vm(name, path, id, volumes)::

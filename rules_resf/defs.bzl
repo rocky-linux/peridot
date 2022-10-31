@@ -1,6 +1,7 @@
 load("//rules_resf/internal/resf_bundle:resf_bundle.bzl", _resf_bundle = "resf_bundle", _resf_bundle_run = "resf_bundle_run")
 load("//rules_resf/internal/k8s:k8s.bzl", _k8s_apply = "k8s_apply")
 load("//rules_resf/internal/container:container.bzl", _container = "container", _migration_tar = "migration_tar")
+load("//rules_resf/internal/helm:helm_chart.bzl", _helm_chart = "helm_chart")
 load("@io_bazel_rules_jsonnet//jsonnet:jsonnet.bzl", "jsonnet_to_json")
 load("@build_bazel_rules_nodejs//:index.bzl", "nodejs_binary")
 load("@com_github_atlassian_bazel_tools//:multirun/def.bzl", "multirun")
@@ -9,6 +10,7 @@ resf_bundle = _resf_bundle
 k8s_apply = _k8s_apply
 container = _container
 migration_tar = _migration_tar
+helm_chart = _helm_chart
 
 RESFDEPLOY_OUTS_BASE = [
     "001-ns-sa.yaml",
@@ -34,8 +36,7 @@ def tag_default_update(defaults, append):
     tdict.update(append)
     return tdict
 
-# to find the correct kind during ci run
-def peridot_k8s(name, src, tags = [], outs = [], static = False, prod_only = False, dependent_push = [], force_normal_tags = False, **kwargs):
+def gen_from_jsonnet(name, src, outs, tags, force_normal_tags, helm_mode, **kwargs):
     ext_str_nested = "{STABLE_OCI_REGISTRY_NO_NESTED_SUPPORT_IN_2022_SHAME_ON_YOU_AWS}"
     if force_normal_tags:
         ext_str_nested = "false"
@@ -51,7 +52,10 @@ def peridot_k8s(name, src, tags = [], outs = [], static = False, prod_only = Fal
         "domain_user": "{STABLE_DOMAIN_USER}",
         "registry_secret": "{STABLE_REGISTRY_SECRET}",
         "site": "{STABLE_SITE}",
+        "helm_mode": "false",
     }
+    if helm_mode:
+      ext_strs["helm_mode"] = "true"
     jsonnet_to_json(
         name = name,
         src = src,
@@ -83,6 +87,24 @@ def peridot_k8s(name, src, tags = [], outs = [], static = False, prod_only = Fal
         extra_args = ["-S"],
         **kwargs
     )
+
+# to find the correct kind during ci run
+def peridot_k8s(name, src, tags = [], outs = [], static = False, prod_only = False, dependent_push = [], force_normal_tags = False, chart_yaml = None, values_yaml = None, **kwargs):
+    gen_from_jsonnet(name, src, outs, tags, force_normal_tags, False, **kwargs)
+    if chart_yaml != None:
+        if values_yaml == None:
+            fail("values_yaml is required when chart_yaml is provided")
+        new_outs = ["helm-%s" % o for o in outs]
+        gen_from_jsonnet("%s-helm" % name, src, new_outs, tags, force_normal_tags, True, **kwargs)
+
+        helm_chart(
+            name = "%s.helm" % name,
+            package_name = name,
+            chart_yaml = chart_yaml,
+            values_yaml = values_yaml,
+            srcs = new_outs,
+            tags = ["manual"]
+        )
 
     k8s_apply(
         name = "%s.apply" % name,

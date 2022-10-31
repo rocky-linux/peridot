@@ -1,0 +1,27 @@
+package(default_visibility = ["//visibility:public"])
+
+exports_files([
+    ".helmignore",
+    "_helpers.tpl",
+    "helm.bash",
+])
+
+alias(
+    name = "helm_tool",
+    actual = select({
+        "//platforms:linux_x86_64": "@helm3_linux_x86_64//:helm",
+        "//platforms:linux_arm64": "@helm3_linux_arm64//:helm",
+        "//platforms:darwin_x86_64": "@helm3_darwin_x86_64//:helm",
+        "//platforms:darwin_arm64": "@helm3_darwin_arm64//:helm",
+    }),
+)
+
+alias(
+    name = "yq_tool",
+    actual = select({
+        "//platforms:linux_x86_64": "@yq_linux_x86_64//:yq",
+        "//platforms:linux_arm64": "@yq_linux_arm64//:yq",
+        "//platforms:darwin_x86_64": "@yq_darwin_x86_64//:yq",
+        "//platforms:darwin_arm64": "@yq_darwin_arm64//:yq",
+    }),
+)

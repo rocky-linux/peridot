@@ -47,7 +47,7 @@ export default async function run(webpackConfig) {
     apis: {
       '/api': {
         prodApiUrl: endpointHttp(svcNameHttp('apollo'), NS('apollo')),
-        devApiUrl: `https://apollo-dev.internal.rdev.ciq.localhost`,
+        devApiUrl: `https://apollo-dev.internal.pdev.resf.localhost`,
       },
     },
     port: 9007,
