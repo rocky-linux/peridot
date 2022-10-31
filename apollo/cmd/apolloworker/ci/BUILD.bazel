@@ -12,6 +12,8 @@ peridot_k8s(
     name = "apolloworker",
     src = "deploy.jsonnet",
     outs = RESFDEPLOY_OUTS_MIGRATE,
+    chart_yaml = "Chart.yaml",
+    values_yaml = "values.yaml",
     deps = [
         "//ci",
     ],
