@@ -50,7 +50,7 @@ export const Root = () => {
       alignItems="stretch"
     >
       <Box
-        background={`linear-gradient(to right, ${COLOR_RESF_GREEN}, ${COLOR_RESF_BLUE})`}
+        background={`linear-gradient(to bottom right, ${COLOR_RESF_GREEN}, ${COLOR_RESF_BLUE})`}
         display="flex"
         flexDirection="row"
         alignItems="center"
@@ -80,17 +80,19 @@ export const Root = () => {
         </Switch>
       </Box>
       <Box
-        py="6"
         px="4"
-        backgroundColor="gray.700"
+        // backgroundColor="#10859E"
+        background={`linear-gradient(to top left, ${COLOR_RESF_GREEN}, ${COLOR_RESF_BLUE})`}
         color="white"
         display="flex"
+        height="50px"
       >
         <ChakraLink
           href="/api/v2/advisories:rss"
           isExternal
           display="flex"
           alignItems="center"
+          my="auto"
         >
           <Box
             as="svg"
