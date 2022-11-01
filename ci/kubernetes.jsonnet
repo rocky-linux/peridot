@@ -140,7 +140,7 @@ local dev() = stage == '-dev';
       env: if !std.objectHas(deporig, 'env') then [] else deporig.env,
       ports: if !std.objectHas(deporig, 'ports') then [{ containerPort: 80, protocol: 'TCP' }] else deporig.ports,
       initContainers: if !std.objectHas(deporig, 'initContainers') then [] else deporig.initContainers,
-      limits: if !std.objectHas(deporig, 'limits') || deporig.limits == null then { cpu: '0.1', memory: '256M' } else deporig.limits,
+      limits: if !std.objectHas(deporig, 'limits') || deporig.limits == null then null else deporig.limits,
       requests: if !std.objectHas(deporig, 'requests') || deporig.requests == null then { cpu: '0.001', memory: '128M' } else deporig.requests,
     };
 

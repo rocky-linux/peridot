@@ -79,7 +79,7 @@ local manifestYamlStream = function (value, indent_array_in_object=false, c_docu
       secret: if !utils.local_image then {
         name: '%s-database-password' % db.staged_name(dbname),
         key: 'password',
-        optional: '{{ if .Values.databaseUrl }}true{{ else }}false{{ end }}',
+        optional: if utils.helm_mode then '{{ if .Values.databaseUrl }}true{{ else }}false{{ end }}' else false,
       },
     };
 
@@ -192,7 +192,7 @@ local manifestYamlStream = function (value, indent_array_in_object=false, c_docu
               initContainers: [
                 {
                   name: 'initdb',
-                  image: 'quay.io/peridot/initdb:v0.1.5',
+                  image: 'quay.io/peridot/initdb:v0.1.6',
                   command: ['/bin/sh'],
                   args: ['-c', '/bundle/initdb*'],
                   env: [
