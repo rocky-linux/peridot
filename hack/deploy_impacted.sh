@@ -12,7 +12,7 @@ return_if_impacted_targets_empty
 aws eks --region us-east-2 update-kubeconfig --name peridot-T8WbrA
 
 AWS_JWT="$(aws ecr get-login-password --region us-east-2)"
-B64_AWS_AUTH="$(echo -n "AWS:$AWS_JWT")"
+B64_AWS_AUTH="$(echo -n "AWS:$AWS_JWT" | base64)"
 mkdir -p ~/.docker
 echo '{"auths":{"893168113496.dkr.ecr.us-east-2.amazonaws.com":{"auth":"'"$B64_AWS_AUTH"'"}}}' > ~/.docker/config.json
 

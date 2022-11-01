@@ -12,7 +12,7 @@ $BAZEL_B //:bazel-diff
 BASE_HASH="$PULL_BASE_SHA"
 TARGET_HASH="$PULL_PULL_SHA"
 if [[ -z "$TARGET_HASH" ]]; then
-  BASE_HASH="$(git log --pretty=format:"%H" --merges -n 1)"
+  BASE_HASH="$(git log "HEAD@{1}" --pretty=format:"%H" --merges -n 1)"
   TARGET_HASH="$PULL_BASE_SHA"
 fi
 
