@@ -9,10 +9,17 @@ workspace_dir="$(pwd)"
 
 $BAZEL_B //:bazel-diff
 
+# Fetch all refs
+git fetch --all
+
+# Starting point
+STARTING_COMMIT="$(git rev-parse HEAD)"
+
+# Find base and target hash
 BASE_HASH="$PULL_BASE_SHA"
 TARGET_HASH="$PULL_PULL_SHA"
 if [[ -z "$TARGET_HASH" ]]; then
-  BASE_HASH="$(git log "HEAD@{1}" --pretty=format:"%H" --merges -n 1)"
+  BASE_HASH="$(git log "HEAD~" --pretty=format:"%H" --merges -n 1)"
   TARGET_HASH="$PULL_BASE_SHA"
 fi
 
@@ -29,4 +36,5 @@ bazel-bin/bazel-diff generate-hashes -w "$workspace_dir" -b "$bazel_bin" ending_
 # Get impacted targets
 bazel-bin/bazel-diff get-impacted-targets -sh starting_hashes_json -fh ending_hashes_json -o impacted_targets
 
-
+# Checkout back to starting commit
+git checkout "$STARTING_COMMIT" --quiet
