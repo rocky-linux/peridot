@@ -22,7 +22,7 @@ if [[ -z "$TARGET_HASH" ]]; then
   TARGET_HASH="$(git log "HEAD@{1}" --pretty=format:"%H" --merges -n 1)"
 fi
 echo "Target hash is $PULL_PULL_SHA"
-git checkout "$PULL_PULL_SHA" --quiet
+git checkout "$TARGET_HASH" --quiet
 bazel-bin/bazel-diff generate-hashes -w "$workspace_dir" -b "$bazel_bin" ending_hashes_json
 
 # Get impacted targets
