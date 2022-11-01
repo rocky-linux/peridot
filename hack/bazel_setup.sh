@@ -16,3 +16,10 @@ BAZEL_B="bazel $SOPTIONS build $FLAGS --remote_default_exec_properties=$REMOTE_D
 BAZEL_R="bazel $SOPTIONS run $FLAGS --remote_default_exec_properties=$REMOTE_DEF"
 BAZEL_T="bazel $SOPTIONS test $FLAGS --remote_default_exec_properties=$REMOTE_DEF --test_arg=-test.v --flaky_test_attempts=3 --build_tests_only --test_output=errors"
 BAZEL_QR="bazel $SOPTIONS query $QUERY_FLAGS --keep_going --noshow_progress"
+
+return_if_impacted_targets_empty() {
+  if [[ -z "$(cat impacted_targets)" ]]; then
+    echo "No impacted targets found"
+    exit 0
+  fi
+}

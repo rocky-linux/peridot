@@ -14,7 +14,7 @@ postsubmits:
         nodeSelector:
           peridot.rockylinux.org/workflow-tolerates-arch: amd64
         containers:
-          - image: quay.io/peridot/ci:v0.3.16
+          - image: quay.io/peridot/ci:v0.3.17
             command:
               - hack/unit_tests.sh
 
@@ -32,6 +32,25 @@ postsubmits:
         nodeSelector:
           peridot.rockylinux.org/workflow-tolerates-arch: amd64
         containers:
-          - image: quay.io/peridot/ci:v0.3.16
+          - image: quay.io/peridot/ci:v0.3.17
             command:
               - hack/build_all_frontends.sh
+
+    - name: post-peridot-deploy-impacted
+      always_run: true
+      decorate: true
+      branches:
+        - main
+      spec:
+        serviceAccountName: peridot-deploy
+        tolerations:
+          - key: peridot.rockylinux.org/workflow-tolerates-arch
+            operator: Equal
+            value: amd64
+            effect: NoSchedule
+        nodeSelector:
+          peridot.rockylinux.org/workflow-tolerates-arch: amd64
+        containers:
+          - image: quay.io/peridot/ci:v0.3.17
+            command:
+              - hack/deploy_impacted.sh

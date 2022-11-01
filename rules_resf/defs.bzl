@@ -37,6 +37,7 @@ def tag_default_update(defaults, append):
     return tdict
 
 def gen_from_jsonnet(name, src, outs, tags, force_normal_tags, helm_mode, **kwargs):
+    def_tag = "peridot_k8s"
     ext_str_nested = "{STABLE_OCI_REGISTRY_NO_NESTED_SUPPORT_IN_2022_SHAME_ON_YOU_AWS}"
     if force_normal_tags:
         ext_str_nested = "false"
@@ -56,13 +57,14 @@ def gen_from_jsonnet(name, src, outs, tags, force_normal_tags, helm_mode, **kwar
     }
     if helm_mode:
       ext_strs["helm_mode"] = "true"
+      def_tag = "peridot_helm"
     jsonnet_to_json(
         name = name,
         src = src,
         outs = outs,
         tags = tags + [
             "manual",
-            "peridot_k8s",
+            def_tag,
         ],
         ext_strs = select({
             "//platforms:arm64": dict(ext_strs, arch = "arm64"),
@@ -123,7 +125,7 @@ def peridot_k8s(name, src, tags = [], outs = [], static = False, prod_only = Fal
             ":%s.push" % name,
             ":%s.apply" % name,
         ],
-        tags = ["manual"],
+        tags = ["manual", "push_apply"],
     )
 
 def resf_frontend(name, tags = [], **kwargs):
