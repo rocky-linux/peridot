@@ -48,6 +48,7 @@ import (
 	"time"
 )
 
+// ListAdvisories returns advisories with given filters
 func (s *Server) ListAdvisories(_ context.Context, req *apollopb.ListAdvisoriesRequest) (*apollopb.ListAdvisoriesResponse, error) {
 	if err := req.ValidateAll(); err != nil {
 		return nil, err
