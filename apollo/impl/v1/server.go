@@ -51,6 +51,7 @@ type Server struct {
 	homepage           string
 }
 
+// NewServer creates a new Apollo server.
 func NewServer(db apollodb.Access) *Server {
 	return &Server{
 		log:                logrus.New(),
