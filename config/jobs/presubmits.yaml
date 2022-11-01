@@ -28,7 +28,7 @@ presubmits:
         nodeSelector:
           peridot.rockylinux.org/workflow-tolerates-arch: amd64
         containers:
-          - image: quay.io/peridot/ci:v0.3.17
+          - image: quay.io/peridot/ci:v0.3.19
             command:
               - hack/unit_tests.sh
 
@@ -46,7 +46,7 @@ presubmits:
         nodeSelector:
           peridot.rockylinux.org/workflow-tolerates-arch: amd64
         containers:
-          - image: quay.io/peridot/ci:v0.3.17
+          - image: quay.io/peridot/ci:v0.3.19
             command:
               - hack/non_manual_build.sh
 
@@ -64,7 +64,7 @@ presubmits:
         nodeSelector:
           peridot.rockylinux.org/workflow-tolerates-arch: amd64
         containers:
-          - image: quay.io/peridot/ci:v0.3.17
+          - image: quay.io/peridot/ci:v0.3.19
             command:
               - hack/frontend_build.sh
 
@@ -75,6 +75,6 @@ presubmits:
       decorate: true
       spec:
         containers:
-          - image: quay.io/peridot/ci:v0.3.17
+          - image: quay.io/peridot/ci:v0.3.19
             command:
               - hack/gofmt_check.sh
