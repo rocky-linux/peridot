@@ -87,6 +87,7 @@ func (s *Server) ListAdvisories(_ context.Context, req *apollopb.ListAdvisoriesR
 	}, nil
 }
 
+// ListAdvisoriesRSS returns advisories in RSS format. Only returns latest 25 published advisories
 func (s *Server) ListAdvisoriesRSS(_ context.Context, req *apollopb.ListAdvisoriesRSSRequest) (*httpbody.HttpBody, error) {
 	if err := req.ValidateAll(); err != nil {
 		return nil, err
