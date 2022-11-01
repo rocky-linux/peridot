@@ -9,16 +9,19 @@ workspace_dir="$(pwd)"
 
 $BAZEL_B //:bazel-diff
 
+BASE_HASH="$PULL_BASE_SHA"
+TARGET_HASH="$PULL_PULL_SHA"
+if [[ -z "$TARGET_HASH" ]]; then
+  BASE_HASH="$(git log --pretty=format:"%H" --merges -n 1)"
+  TARGET_HASH="$PULL_BASE_SHA"
+fi
+
 # Generate starting hashes
-echo "Base hash is $PULL_BASE_SHA"
-git checkout "$PULL_BASE_SHA" --quiet
+echo "Base hash is $BASE_HASH"
+git checkout "$BASE_HASH" --quiet
 bazel-bin/bazel-diff generate-hashes -w "$workspace_dir" -b "$bazel_bin" starting_hashes_json
 
 # Generate ending hashes
-TARGET_HASH="$PULL_PULL_SHA"
-if [[ -z "$TARGET_HASH" ]]; then
-  TARGET_HASH="$(git log --pretty=format:"%H" --merges -n 1)"
-fi
 echo "Target hash is $TARGET_HASH"
 git checkout "$TARGET_HASH" --quiet
 bazel-bin/bazel-diff generate-hashes -w "$workspace_dir" -b "$bazel_bin" ending_hashes_json
