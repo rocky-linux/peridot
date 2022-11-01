@@ -11,6 +11,7 @@ plugins:
       - hold
       - label
       - lgtm
+      - mergecommitblocker
       - trigger
       - verify-owners
       - wip
