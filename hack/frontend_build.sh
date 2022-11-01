@@ -4,23 +4,9 @@ set -o errexit
 
 source hack/bazel_setup.sh
 
-bazel_bin="$(which bazel)"
-workspace_dir="$(pwd)"
+hack/get_impacted_targets.sh
 
-$BAZEL_B //:bazel-diff
-
-# Generate starting hashes
-git checkout "$PULL_BASE_SHA" --quiet
-bazel-bin/bazel-diff generate-hashes -w "$workspace_dir" -b "$bazel_bin" starting_hashes_json
-
-# Generate ending hashes
-git checkout "$PULL_PULL_SHA" --quiet
-bazel-bin/bazel-diff generate-hashes -w "$workspace_dir" -b "$bazel_bin" ending_hashes_json
-
-# Get impacted targets
-bazel-bin/bazel-diff get-impacted-targets -sh starting_hashes_json -fh ending_hashes_json -o impacted_targets
+return_if_impacted_targets_empty
 
 # Build impacted targets
 hack/build_impacted_frontend.sh
-
-
