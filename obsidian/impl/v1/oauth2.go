@@ -57,6 +57,9 @@ type NameClaim struct {
 	Name string `json:"name"`
 }
 
+// callbackForwarder helps create an external callback since usual
+// OAuth2 providers doesn't allow callback to localhost.
+// Cloudflare Workers is a good option for this.
 func callbackForwarder(callbackURL string) string {
 	env := os.Getenv("RESF_ENV")
 	// this section contained a callback forwarder, but cannot be published
