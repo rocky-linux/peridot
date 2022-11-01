@@ -38,28 +38,6 @@ import (
 	"strings"
 )
 
-func DTOShortCodeToPB(sc *ShortCode) *apollopb.ShortCode {
-	ret := &apollopb.ShortCode{
-		Code: sc.Code,
-	}
-
-	if sc.ArchivedAt.Valid {
-		ret.Archived = true
-	}
-
-	return ret
-}
-
-func DTOListShortCodesToPB(scs []*ShortCode) []*apollopb.ShortCode {
-	var ret []*apollopb.ShortCode
-
-	for _, v := range scs {
-		ret = append(ret, DTOShortCodeToPB(v))
-	}
-
-	return ret
-}
-
 func DTOAdvisoryToPB(sc *Advisory) *apollopb.Advisory {
 	var errataType string
 	switch apollopb.Advisory_Type(sc.Type) {
