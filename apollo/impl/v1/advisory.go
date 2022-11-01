@@ -153,6 +153,7 @@ func (s *Server) ListAdvisoriesRSS(_ context.Context, req *apollopb.ListAdvisori
 	}, nil
 }
 
+// GetAdvisory returns a single advisory by name
 func (s *Server) GetAdvisory(_ context.Context, req *apollopb.GetAdvisoryRequest) (*apollopb.GetAdvisoryResponse, error) {
 	if err := req.ValidateAll(); err != nil {
 		return nil, err

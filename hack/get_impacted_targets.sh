@@ -14,6 +14,10 @@ git checkout "$PULL_BASE_SHA" --quiet
 bazel-bin/bazel-diff generate-hashes -w "$workspace_dir" -b "$bazel_bin" starting_hashes_json
 
 # Generate ending hashes
+TARGET_HASH="$PULL_PULL_SHA"
+if [[ -z "$TARGET_HASH" ]]; then
+  TARGET_HASH="$(git log "HEAD@{1}" --pretty=format:"%H" --merges -n 1)"
+fi
 git checkout "$PULL_PULL_SHA" --quiet
 bazel-bin/bazel-diff generate-hashes -w "$workspace_dir" -b "$bazel_bin" ending_hashes_json
 
