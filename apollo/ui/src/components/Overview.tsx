@@ -34,7 +34,6 @@ import {
   AddIcon,
   ArrowLeftIcon,
   ArrowRightIcon,
-  ChevronDownIcon,
   MinusIcon,
   SearchIcon,
 } from '@chakra-ui/icons';
@@ -69,7 +68,6 @@ import {
 import {
   severityToBadge,
   severityToText,
-  typeToBadge,
   typeToText,
 } from 'apollo/ui/src/enumToText';
 import {
@@ -77,7 +75,6 @@ import {
   ListAdvisoriesFiltersTypeEnum,
 } from 'bazel-bin/apollo/proto/v1/client_typescript';
 import {
-  AdvisorySeverity,
   V1Advisory,
   V1AdvisoryType,
 } from 'bazel-bin/apollo/proto/v1/client_typescript/models';
@@ -432,7 +429,7 @@ export const Overview = () => {
                       textAlign="center"
                       pr={0}
                     >
-                      {severityToBadge(a.severity)}
+                      {severityToBadge(a.severity, a.type)}
                     </Td>
                     <Td backgroundColor={idx % 2 ? 'gray.50' : undefined}>
                       <Link

@@ -158,7 +158,7 @@ export const ShowErrata = (props: ShowErrataProps) => {
               spacing="6"
               mb={2}
             >
-              {severityToBadge(errata.severity, 40)}
+              {severityToBadge(errata.severity, errata.type, 40)}
               <VStack alignItems="stretch" spacing="0" flexGrow={1}>
                 <HStack justifyContent="space-between">
                   <Text fontSize="lg" fontWeight="bold">

@@ -50,6 +50,7 @@ export const Root = () => {
       alignItems="stretch"
     >
       <Box
+        as="header"
         background={`linear-gradient(to bottom right, ${COLOR_RESF_GREEN}, ${COLOR_RESF_BLUE})`}
         display="flex"
         flexDirection="row"
@@ -61,12 +62,14 @@ export const Root = () => {
           <HStack flexGrow={1} height="90%" spacing="2">
             <RESFLogo className="fill-current text-white" />
             <Text
+              as="h1"
               borderLeft="1px solid"
               pl="2"
               lineHeight="30px"
               fontSize="xl"
               fontWeight="300"
               color="white"
+              whiteSpace="nowrap"
             >
               Product Errata
             </Text>
@@ -80,6 +83,7 @@ export const Root = () => {
         </Switch>
       </Box>
       <Box
+        as="footer"
         px="4"
         // backgroundColor="#10859E"
         background={`linear-gradient(to top left, ${COLOR_RESF_GREEN}, ${COLOR_RESF_BLUE})`}
