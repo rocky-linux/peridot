@@ -13,7 +13,7 @@ require (
 	github.com/antchfx/xmlquery v1.3.6 // indirect
 	github.com/authzed/authzed-go v0.3.0
 	github.com/authzed/grpcutil v0.0.0-20211115181027-063820eb2511
-	github.com/aws/aws-sdk-go v1.36.12
+	github.com/aws/aws-sdk-go v1.44.129
 	github.com/cavaliergopher/rpm v1.2.0
 	github.com/coreos/go-oidc/v3 v3.0.0
 	github.com/fatih/color v1.12.0
@@ -37,7 +37,7 @@ require (
 	github.com/pelletier/go-toml v1.8.1 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/prometheus/client_golang v1.13.0
-	github.com/rocky-linux/srpmproc v0.3.16
+	github.com/rocky-linux/srpmproc v0.4.1
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/cobra v1.1.3
 	github.com/spf13/pflag v1.0.5
@@ -50,6 +50,7 @@ require (
 	go.temporal.io/sdk v1.13.1
 	golang.org/x/crypto v0.0.0-20220622213112-05595931fe9d // indirect
 	golang.org/x/oauth2 v0.0.0-20220223155221-ee480838109b
+	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211 // indirect
 	golang.org/x/tools v0.1.6-0.20210726203631-07bc1bf47fb2 // indirect
 	google.golang.org/genproto v0.0.0-20211104193956-4c6863e31247
 	google.golang.org/grpc v1.44.0
