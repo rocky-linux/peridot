@@ -195,6 +195,13 @@ func kindCatalogSync(tx peridotdb.Access, req *peridotpb.SyncCatalogRequest, cat
 	//   perl.aarch64 -> perl
 	nvrIndex := map[string]string{}
 	for _, catalog := range catalogs {
+		if catalog.ModuleConfiguration != nil {
+			if ret.ModuleConfiguration != nil {
+				return nil, fmt.Errorf("multiple module configurations found")
+			}
+			ret.ModuleConfiguration = catalog.ModuleConfiguration
+		}
+
 		for _, pkg := range catalog.Package {
 			for _, repo := range pkg.Repository {
 				if repoIndex[repo.Name] == nil {
@@ -221,6 +228,22 @@ func kindCatalogSync(tx peridotdb.Access, req *peridotpb.SyncCatalogRequest, cat
 						Name: pkg.Name,
 						Type: pkg.Type,
 					})
+				}
+				for _, moduleStream := range repo.ModuleStream {
+					modulePkg := fmt.Sprintf("module:%s:%s", pkg.Name, moduleStream)
+					alreadyExists := false
+					for _, p := range repoIndex[repo.Name].Packages {
+						if p.Name == modulePkg {
+							alreadyExists = true
+							break
+						}
+					}
+					if !alreadyExists {
+						repoIndex[repo.Name].Packages = append(repoIndex[repo.Name].Packages, RepoSyncPackage{
+							Name: modulePkg,
+							Type: pkg.Type,
+						})
+					}
 				}
 				for _, inf := range repo.IncludeFilter {
 					nvrIndex[inf] = pkg.Name
@@ -321,6 +344,16 @@ func kindCatalogSync(tx peridotdb.Access, req *peridotpb.SyncCatalogRequest, cat
 
 		for _, repo := range repoIndex {
 			for _, pkg := range repo.Packages {
+				// Skip if it starts with module: as it's a module stream
+				if strings.HasPrefix(pkg.Name, "module:") {
+					continue
+				}
+
+				// Always refresh type, expensive but necessary
+				if err := tx.SetPackageType(req.ProjectId.Value, pkg.Name, pkg.Type); err != nil {
+					return nil, fmt.Errorf("failed to update package type: %w", err)
+				}
+
 				// Skip if already in project
 				if packageExistsIndex[pkg.Name] {
 					continue
@@ -857,6 +890,14 @@ func (c *Controller) SyncCatalogActivity(req *peridotpb.SyncCatalogRequest) (*pe
 	}
 	ret.CatalogSync = resKindCatalogSync
 
+	// Set module configuration if it exists
+	if resKindCatalogSync.ModuleConfiguration != nil {
+		err := tx.CreateProjectModuleConfiguration(req.ProjectId.Value, resKindCatalogSync.ModuleConfiguration)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create project module configuration: %w", err)
+		}
+	}
+
 	// Check if we have comps
 	err = checkApplyComps(w, tx, req.ProjectId.Value)
 	if err != nil {
@@ -878,6 +919,10 @@ func (c *Controller) SyncCatalogActivity(req *peridotpb.SyncCatalogRequest) (*pe
 	var buildIDs []string
 	var newBuildPackages []string
 	for _, newPackage := range ret.CatalogSync.NewPackages {
+		// Skip module streams
+		if strings.Contains(newPackage, "module:") {
+			continue
+		}
 		if utils.StrContains(newPackage, newBuildPackages) {
 			continue
 		}
@@ -897,6 +942,10 @@ func (c *Controller) SyncCatalogActivity(req *peridotpb.SyncCatalogRequest) (*pe
 		newBuildPackages = append(newBuildPackages, newPackage)
 	}
 	for _, newPackage := range ret.CatalogSync.ModifiedPackages {
+		// Skip module streams
+		if strings.Contains(newPackage, "module:") {
+			continue
+		}
 		if utils.StrContains(newPackage, newBuildPackages) {
 			continue
 		}

@@ -94,6 +94,7 @@ const columns: GridColDef[] = [
             <Chip size="small" label="Package" variant="outlined" />
           )}
           {(params.row['type'] === V1PackageType.ModuleFork ||
+            params.row['type'] === V1PackageType.NormalForkModule ||
             params.row['type'] === V1PackageType.ModuleForkModuleComponent) && (
             <Chip
               size="small"

@@ -328,6 +328,9 @@ message ExtraBuildOptions {
 
   // Whether to enable networking in rpmbuild
   bool enable_networking = 8;
+
+  // Force a specific dist
+  string force_dist = 9;
 }
 
 message RpmImportRequest {

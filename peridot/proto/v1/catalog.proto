@@ -8,6 +8,7 @@ import "validate/validate.proto";
 import "google/api/annotations.proto";
 import "peridot/proto/v1/task.proto";
 import "peridot/proto/v1/package.proto";
+import "peridot/proto/v1/module.proto";
 
 option go_package = "peridot.resf.org/peridot/pb;peridotpb";
 
@@ -15,6 +16,7 @@ message CatalogSyncRepository {
   string name = 1;
   repeated string include_filter = 2;
   repeated string multilib = 3;
+  repeated string module_stream = 4;
 }
 
 message CatalogSyncPackage {
@@ -47,6 +49,7 @@ message CatalogSync {
   repeated string exclude_multilib_filter = 3;
   repeated GlobFilter exclude_filter = 4;
   repeated GlobFilter include_filter = 5;
+  resf.peridot.v1.ModuleConfiguration module_configuration = 6;
 }
 
 message CatalogExtraPackageOptions {
@@ -82,6 +85,7 @@ message KindCatalogSync {
   repeated string new_repositories = 2;
   repeated string modified_repositories = 3;
   repeated string additional_nvr_globs = 5;
+  resf.peridot.v1.ModuleConfiguration module_configuration = 6;
 }
 
 message KindCatalogExtraOptions {

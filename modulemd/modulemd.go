@@ -32,6 +32,7 @@ package modulemd
 
 import (
 	"fmt"
+	"github.com/go-git/go-billy/v5"
 	"gopkg.in/yaml.v3"
 )
 
@@ -152,6 +153,11 @@ type ModuleMd struct {
 	Data     *Data  `yaml:"data,omitempty"`
 }
 
+type DetectVersionDocument struct {
+	Document string `yaml:"document,omitempty"`
+	Version  int    `yaml:"version,omitempty"`
+}
+
 type DefaultsData struct {
 	Module   string              `yaml:"module,omitempty"`
 	Stream   string              `yaml:"stream,omitempty"`
@@ -165,11 +171,71 @@ type Defaults struct {
 }
 
 func Parse(input []byte) (*ModuleMd, error) {
-	var ret ModuleMd
-	err := yaml.Unmarshal(input, &ret)
+	var detect DetectVersionDocument
+	err := yaml.Unmarshal(input, &detect)
 	if err != nil {
-		return nil, fmt.Errorf("error parsing modulemd: %s", err)
+		return nil, fmt.Errorf("error detecting document version: %s", err)
+	}
+
+	var ret ModuleMd
+
+	if detect.Version == 2 {
+		err = yaml.Unmarshal(input, &ret)
+		if err != nil {
+			return nil, fmt.Errorf("error parsing modulemd: %s", err)
+		}
+	} else if detect.Version == 3 {
+		var v3 V3
+		err = yaml.Unmarshal(input, &v3)
+		if err != nil {
+			return nil, fmt.Errorf("error parsing modulemd: %s", err)
+		}
+
+		ret = ModuleMd{
+			Document: v3.Document,
+			Version:  v3.Version,
+			Data: &Data{
+				Name:        v3.Data.Name,
+				Stream:      v3.Data.Stream,
+				Summary:     v3.Data.Summary,
+				Description: v3.Data.Description,
+				License: &License{
+					Module: v3.Data.License,
+				},
+				Xmd:        v3.Data.Xmd,
+				References: v3.Data.References,
+				Profiles:   v3.Data.Profiles,
+				Profile:    v3.Data.Profile,
+				API:        v3.Data.API,
+				Filter:     v3.Data.Filter,
+				BuildOpts: &BuildOpts{
+					Rpms:   v3.Data.Configurations[0].BuildOpts.Rpms,
+					Arches: v3.Data.Configurations[0].BuildOpts.Arches,
+				},
+				Components: v3.Data.Components,
+			},
+		}
 	}
 
 	return &ret, nil
+}
+
+func (m *ModuleMd) Marshal(fs billy.Filesystem, path string) error {
+	bts, err := yaml.Marshal(m)
+	if err != nil {
+		return err
+	}
+
+	_ = fs.Remove(path)
+	f, err := fs.Create(path)
+	if err != nil {
+		return err
+	}
+	_, err = f.Write(bts)
+	if err != nil {
+		return err
+	}
+	_ = f.Close()
+
+	return nil
 }

@@ -362,3 +362,16 @@ func (a *Access) SetGroupInstallOptionsForPackage(projectId string, packageName 
 	)
 	return err
 }
+
+func (a *Access) SetPackageType(projectId string, packageName string, packageType peridotpb.PackageType) error {
+	_, err := a.query.Exec(
+		`
+        update project_packages set package_type_override = $3
+        where project_id = $1 and package_id = (select id from packages where name = $2)
+        `,
+		projectId,
+		packageName,
+		packageType,
+	)
+	return err
+}

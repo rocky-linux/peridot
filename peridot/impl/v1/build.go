@@ -316,21 +316,9 @@ func (s *Server) SubmitBuild(ctx context.Context, req *peridotpb.SubmitBuildRequ
 		return nil, errors.New("could not find upstream branch")
 	}
 
-	build, err := tx.CreateBuild(pkg.ID.String(), importRevision.PackageVersionId, task.ID.String(), req.ProjectId)
-	if err != nil {
-		s.log.Errorf("could not create build: %v", err)
-		return nil, status.Error(codes.InvalidArgument, "could not create build")
-	}
-
 	taskProto, err := task.ToProto(true)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "could not marshal task: %v", err)
-	}
-
-	rollback = false
-	err = beginTx.Commit()
-	if err != nil {
-		return nil, status.Error(codes.Internal, "could not save, try again")
 	}
 
 	// Check if all branches are modular (that means it's only a module component/module)
@@ -346,6 +334,12 @@ func (s *Server) SubmitBuild(ctx context.Context, req *peridotpb.SubmitBuildRequ
 	}
 
 	if (packageType == peridotpb.PackageType_PACKAGE_TYPE_MODULE_FORK || packageType == peridotpb.PackageType_PACKAGE_TYPE_NORMAL_FORK_MODULE || packageType == peridotpb.PackageType_PACKAGE_TYPE_MODULE_FORK_MODULE_COMPONENT) && req.ModuleVariant {
+		rollback = false
+		err = beginTx.Commit()
+		if err != nil {
+			return nil, status.Error(codes.Internal, "could not save, try again")
+		}
+
 		_, err = s.temporal.ExecuteWorkflow(
 			context.Background(),
 			client.StartWorkflowOptions{
@@ -356,9 +350,7 @@ func (s *Server) SubmitBuild(ctx context.Context, req *peridotpb.SubmitBuildRequ
 			s.temporalWorker.WorkflowController.BuildModuleWorkflow,
 			req,
 			task,
-			&peridotpb.ExtraBuildOptions{
-				ReusableBuildId: build.ID.String(),
-			},
+			&peridotpb.ExtraBuildOptions{},
 		)
 		if err != nil {
 			return nil, err
@@ -366,6 +358,18 @@ func (s *Server) SubmitBuild(ctx context.Context, req *peridotpb.SubmitBuildRequ
 	}
 
 	if packageType != peridotpb.PackageType_PACKAGE_TYPE_MODULE_FORK && packageType != peridotpb.PackageType_PACKAGE_TYPE_MODULE_FORK_MODULE_COMPONENT && len(req.Branches) == 0 && !allStream && !req.ModuleVariant {
+		build, err := tx.CreateBuild(pkg.ID.String(), importRevision.PackageVersionId, task.ID.String(), req.ProjectId)
+		if err != nil {
+			s.log.Errorf("could not create build: %v", err)
+			return nil, status.Error(codes.InvalidArgument, "could not create build")
+		}
+
+		rollback = false
+		err = beginTx.Commit()
+		if err != nil {
+			return nil, status.Error(codes.Internal, "could not save, try again")
+		}
+
 		_, err = s.temporal.ExecuteWorkflow(
 			context.Background(),
 			client.StartWorkflowOptions{

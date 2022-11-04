@@ -40,6 +40,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/storage/memory"
 	"github.com/google/uuid"
+	"github.com/rocky-linux/srpmproc/modulemd"
 	"go.temporal.io/sdk/workflow"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -48,7 +49,6 @@ import (
 	"google.golang.org/protobuf/types/known/wrapperspb"
 	"gopkg.in/yaml.v3"
 	"io/ioutil"
-	"peridot.resf.org/modulemd"
 	"peridot.resf.org/peridot/composetools"
 	"peridot.resf.org/peridot/db/models"
 	peridotpb "peridot.resf.org/peridot/pb"
@@ -223,13 +223,18 @@ func (c *Controller) BuildModuleWorkflow(ctx workflow.Context, req *peridotpb.Su
 		return nil, err
 	}
 
+	branchIndex := map[string]bool{}
 	var streamRevisions models.ImportRevisions
 	for _, revision := range importRevisions {
 		if revision.Modular {
 			if len(req.Branches) > 0 && !utils.StrContains(revision.ScmBranchName, req.Branches) {
 				continue
 			}
+			if branchIndex[revision.ScmBranchName] {
+				continue
+			}
 			streamRevisions = append(streamRevisions, revision)
+			branchIndex[revision.ScmBranchName] = true
 		}
 	}
 
@@ -247,8 +252,14 @@ func (c *Controller) BuildModuleWorkflow(ctx workflow.Context, req *peridotpb.Su
 
 	repoUrl := fmt.Sprintf("%s/modules/%s", upstreamPrefix, gitlabify(pkg.Name))
 
+	authenticator, err := c.getAuthenticator(req.ProjectId)
+	if err != nil {
+		setInternalError(errorDetails, err)
+		return nil, err
+	}
 	r, err := git.Clone(storer, worktree, &git.CloneOptions{
-		URL: repoUrl,
+		URL:  repoUrl,
+		Auth: authenticator,
 	})
 	if err != nil {
 		newErr := fmt.Errorf("failed to clone module repo: %s", err)
@@ -291,11 +302,59 @@ func (c *Controller) BuildModuleWorkflow(ctx workflow.Context, req *peridotpb.Su
 		}
 
 		// Parse yaml content to module metadata
-		moduleMd, err := modulemd.Parse(yamlContent)
+		moduleMdNotBackwardsCompatible, err := modulemd.Parse(yamlContent)
 		if err != nil {
 			newErr := fmt.Errorf("could not parse yaml file from modules repo in branch %s: %v", revision.ScmBranchName, err)
 			setActivityError(errorDetails, newErr)
 			return nil, newErr
+		}
+
+		var moduleMd *modulemd.ModuleMd
+		if moduleMdNotBackwardsCompatible.V2 != nil {
+			moduleMd = moduleMdNotBackwardsCompatible.V2
+		} else if moduleMdNotBackwardsCompatible.V3 != nil {
+			v3 := moduleMdNotBackwardsCompatible.V3
+			moduleMd = &modulemd.ModuleMd{
+				Document: "modulemd",
+				Version:  2,
+				Data: &modulemd.Data{
+					Name:          v3.Data.Name,
+					Stream:        v3.Data.Stream,
+					Summary:       v3.Data.Summary,
+					Description:   v3.Data.Description,
+					ServiceLevels: nil,
+					License: &modulemd.License{
+						Module: v3.Data.License,
+					},
+					Xmd:        v3.Data.Xmd,
+					References: v3.Data.References,
+					Profiles:   v3.Data.Profiles,
+					Profile:    v3.Data.Profile,
+					API:        v3.Data.API,
+					Filter:     v3.Data.Filter,
+					BuildOpts:  nil,
+					Components: v3.Data.Components,
+					Artifacts:  nil,
+				},
+			}
+			if len(v3.Data.Configurations) > 0 {
+				cfg := v3.Data.Configurations[0]
+				if cfg.BuildOpts != nil {
+					moduleMd.Data.BuildOpts = &modulemd.BuildOpts{
+						Rpms:   cfg.BuildOpts.Rpms,
+						Arches: cfg.BuildOpts.Arches,
+					}
+					moduleMd.Data.Dependencies = []*modulemd.Dependencies{
+						{
+							BuildRequires: cfg.BuildRequires,
+							Requires:      cfg.Requires,
+						},
+					}
+				}
+			}
+		}
+		if moduleMd.Data.Name == "" {
+			moduleMd.Data.Name = pkg.Name
 		}
 
 		// Invalid modulemd in repo
@@ -526,6 +585,7 @@ func (c *Controller) BuildModuleStreamWorkflow(ctx workflow.Context, req *perido
 				ExtraYumrepofsRepos: extraRepos,
 				BuildBatchId:        streamBuildOptions.BuildBatchId,
 				Modules:             buildRequiresModules,
+				ForceDist:           streamBuildOptions.Dist,
 			}
 
 			task, err := c.db.CreateTask(nil, "noarch", peridotpb.TaskType_TASK_TYPE_BUILD, &req.ProjectId, &parentTaskId)
