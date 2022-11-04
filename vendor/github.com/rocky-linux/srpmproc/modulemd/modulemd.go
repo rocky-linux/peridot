@@ -160,58 +160,49 @@ type Defaults struct {
 	Data     *DefaultsData `yaml:"data,omitempty"`
 }
 
-func Parse(input []byte) (*ModuleMd, error) {
+type NotBackwardsCompatibleModuleMd struct {
+	V2 *ModuleMd
+	V3 *V3
+}
+
+func Parse(input []byte) (*NotBackwardsCompatibleModuleMd, error) {
 	var detect DetectVersionDocument
 	err := yaml.Unmarshal(input, &detect)
 	if err != nil {
 		return nil, fmt.Errorf("error detecting document version: %s", err)
 	}
 
-	var ret ModuleMd
+	var ret NotBackwardsCompatibleModuleMd
 
 	if detect.Version == 2 {
-		err = yaml.Unmarshal(input, &ret)
+		var v2 ModuleMd
+		err = yaml.Unmarshal(input, &v2)
 		if err != nil {
 			return nil, fmt.Errorf("error parsing modulemd: %s", err)
 		}
+		ret.V2 = &v2
 	} else if detect.Version == 3 {
 		var v3 V3
 		err = yaml.Unmarshal(input, &v3)
 		if err != nil {
 			return nil, fmt.Errorf("error parsing modulemd: %s", err)
 		}
-
-		ret = ModuleMd{
-			Document: v3.Document,
-			Version:  v3.Version,
-			Data: &Data{
-				Name:        v3.Data.Name,
-				Stream:      v3.Data.Stream,
-				Summary:     v3.Data.Summary,
-				Description: v3.Data.Description,
-				License: &License{
-					Module: v3.Data.License,
-				},
-				Xmd:        v3.Data.Xmd,
-				References: v3.Data.References,
-				Profiles:   v3.Data.Profiles,
-				Profile:    v3.Data.Profile,
-				API:        v3.Data.API,
-				Filter:     v3.Data.Filter,
-				BuildOpts: &BuildOpts{
-					Rpms:   v3.Data.Configurations[0].BuildOpts.Rpms,
-					Arches: v3.Data.Configurations[0].BuildOpts.Arches,
-				},
-				Components: v3.Data.Components,
-			},
-		}
+		ret.V3 = &v3
 	}
 
 	return &ret, nil
 }
 
-func (m *ModuleMd) Marshal(fs billy.Filesystem, path string) error {
-	bts, err := yaml.Marshal(m)
+func (m *NotBackwardsCompatibleModuleMd) Marshal(fs billy.Filesystem, path string) error {
+	var bts []byte
+
+	var err error
+	if m.V2 != nil {
+		bts, err = yaml.Marshal(m.V2)
+	}
+	if m.V3 != nil {
+		bts, err = yaml.Marshal(m.V3)
+	}
 	if err != nil {
 		return err
 	}

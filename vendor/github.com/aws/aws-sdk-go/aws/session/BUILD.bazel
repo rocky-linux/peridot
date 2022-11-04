@@ -23,6 +23,7 @@ go_library(
         "//vendor/github.com/aws/aws-sdk-go/aws/corehandlers",
         "//vendor/github.com/aws/aws-sdk-go/aws/credentials",
         "//vendor/github.com/aws/aws-sdk-go/aws/credentials/processcreds",
+        "//vendor/github.com/aws/aws-sdk-go/aws/credentials/ssocreds",
         "//vendor/github.com/aws/aws-sdk-go/aws/credentials/stscreds",
         "//vendor/github.com/aws/aws-sdk-go/aws/csm",
         "//vendor/github.com/aws/aws-sdk-go/aws/defaults",
@@ -30,5 +31,6 @@ go_library(
         "//vendor/github.com/aws/aws-sdk-go/aws/request",
         "//vendor/github.com/aws/aws-sdk-go/internal/ini",
         "//vendor/github.com/aws/aws-sdk-go/internal/shareddefaults",
+        "//vendor/github.com/aws/aws-sdk-go/service/sts",
     ],
 )

@@ -3,6 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "s3manager",
     srcs = [
+        "arn.go",
         "batch.go",
         "bucket_region.go",
         "buffered_read_seeker.go",
@@ -23,6 +24,7 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//vendor/github.com/aws/aws-sdk-go/aws",
+        "//vendor/github.com/aws/aws-sdk-go/aws/arn",
         "//vendor/github.com/aws/aws-sdk-go/aws/awserr",
         "//vendor/github.com/aws/aws-sdk-go/aws/awsutil",
         "//vendor/github.com/aws/aws-sdk-go/aws/client",
