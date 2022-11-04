@@ -60,7 +60,7 @@ func init() {
 }
 
 func mn(_ *cobra.Command, _ []string) {
-	sess, err := utils.NewAwsSession(&aws.Config{})
+	sess, err := utils.NewAwsSessionNoLocalStack(&aws.Config{})
 	if err != nil {
 		logrus.Fatal(err)
 	}

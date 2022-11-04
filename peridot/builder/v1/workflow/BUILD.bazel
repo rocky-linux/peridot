@@ -19,7 +19,6 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//apollo/rpmutils",
-        "//modulemd",
         "//peridot/composetools",
         "//peridot/db",
         "//peridot/db/models",
@@ -47,6 +46,7 @@ go_library(
         "//vendor/github.com/go-git/go-git/v5/storage/memory",
         "//vendor/github.com/gobwas/glob",
         "//vendor/github.com/google/uuid",
+        "//vendor/github.com/rocky-linux/srpmproc/modulemd",
         "//vendor/github.com/rocky-linux/srpmproc/pb",
         "//vendor/github.com/rocky-linux/srpmproc/pkg/data",
         "//vendor/github.com/rocky-linux/srpmproc/pkg/srpmproc",

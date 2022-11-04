@@ -109,11 +109,12 @@ local manifestYamlStream = function (value, indent_array_in_object=false, c_docu
       image: image,
       tag: tag,
     };
+    local istio_mode = if helm_mode then false else if utils.local_image then false else true;
 
     {
       [nssa]: (if helm_mode then '{{ if not .Values.serviceAccountName }}\n' else '') + manifestYamlStream([
         // disable namespace creation in helm mode
-        if !helm_mode then kubernetes.define_namespace(metadata.namespace, infolabels),
+        if !helm_mode then kubernetes.define_namespace(metadata.namespace, infolabels + { annotations: { 'linkerd.io/inject': 'enabled' } }),
         kubernetes.define_service_account(
           metadata {
             name: fixed.name,
@@ -285,22 +286,22 @@ local manifestYamlStream = function (value, indent_array_in_object=false, c_docu
             selector=metadata.name,
             env=mappings.get_env_from_svc(srv.name)
           ) for srv in services] +
-          if !helm_mode then [] else [if std.objectHas(srv, 'expose') && srv.expose then kubernetes.define_ingress(
+          if istio_mode then [] else [if std.objectHas(srv, 'expose') && srv.expose then kubernetes.define_ingress(
             metadata {
               name: srv.name,
               annotations: ingress_annotations + {
-                'kubernetes.io/ingress.class': '{{ .Values.ingressClass | default !"!" }}',
+                'kubernetes.io/ingress.class': if helm_mode then '{{ .Values.ingressClass | default !"!" }}' else 'kong',
                 // Secure only by default
                 // This produces https, grpcs, etc.
                 // todo(mustafa): check if we need to add an exemption to a protocol (TCP comes to mind)
-                'konghq.com/protocols': '{{ .Values.kongProtocols | default !"%ss!"' % std.strReplace(std.strReplace(std.strReplace(srv.name, metadata.name, ''), stage, ''), '-', ''),
+                'konghq.com/protocols': (if helm_mode then '{{ .Values.kongProtocols | default !"%ss!" }}' else '%ss') % std.strReplace(std.strReplace(std.strReplace(srv.name, metadata.name, ''), stage, ''), '-', ''),
               }
             },
             host=if helm_mode then '{{ .Values.%s.ingressHost }}' % srv.portName else mappings.get(srv.name, user),
             port=srv.port,
             srvName=srv.name + '-service',
           ) else null for srv in services] +
-          if helm_mode then [] else [kubernetes.define_virtual_service(metadata { name: srv.name + '-internal' }, {
+          if !istio_mode then [] else [kubernetes.define_virtual_service(metadata { name: srv.name + '-internal' }, {
             hosts: [vshost(srv)],
             gateways: [],
             http: [
@@ -317,7 +318,7 @@ local manifestYamlStream = function (value, indent_array_in_object=false, c_docu
               },
             ],
           },) for srv in services] +
-          if helm_mode then [] else [if std.objectHas(srv, 'expose') && srv.expose then kubernetes.define_virtual_service(
+          if !istio_mode then [] else [if std.objectHas(srv, 'expose') && srv.expose then kubernetes.define_virtual_service(
             metadata {
               name: srv.name,
               annotations: {
@@ -342,7 +343,7 @@ local manifestYamlStream = function (value, indent_array_in_object=false, c_docu
               ],
             }
           ) else null for srv in services] +
-          if helm_mode then [] else [{
+          if !istio_mode then [] else [{
               apiVersion: 'security.istio.io/v1beta1',
               kind: 'RequestAuthentication',
               metadata: metadata {
@@ -363,7 +364,7 @@ local manifestYamlStream = function (value, indent_array_in_object=false, c_docu
                 }] else [],
             },
           } for srv in services] +
-          if helm_mode then [] else [{
+          if !istio_mode then [] else [{
             apiVersion: 'security.istio.io/v1beta1',
             kind: 'AuthorizationPolicy',
             metadata: metadata {
@@ -388,7 +389,7 @@ local manifestYamlStream = function (value, indent_array_in_object=false, c_docu
               }],
             },
           } for srv in services] +
-          if helm_mode then [] else [kubernetes.define_destination_rule(metadata { name: srv.name }, {
+          if !istio_mode then [] else [kubernetes.define_destination_rule(metadata { name: srv.name }, {
             host: vshost(srv),
             trafficPolicy: {
               tls: {

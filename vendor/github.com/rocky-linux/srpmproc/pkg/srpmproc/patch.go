@@ -32,6 +32,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-git/go-billy/v5"
 	"github.com/go-git/go-billy/v5/memfs"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
@@ -286,13 +287,30 @@ func patchModuleYaml(pd *data.ProcessData, md *data.ModeData) error {
 		return nil
 	}
 
-	mdTxtPath := "SOURCES/modulemd.src.txt"
-	f, err := md.Worktree.Filesystem.Open(mdTxtPath)
-	if err != nil {
-		mdTxtPath = "SOURCES/modulemd.txt"
+	mdTxtPath := ""
+	var f billy.File
+
+	// tagless mode implies we're looking for CentOS Stream modules, which are generally "SOURCES/NAME.yaml" (copied to SOURCES/ from import)
+	// if not tagless mode, proceed as usual with SOURCES/modulemd.*.txt
+	if pd.TaglessMode {
+		mdTxtPath = fmt.Sprintf("SOURCES/%s.yaml", md.Name)
 		f, err = md.Worktree.Filesystem.Open(mdTxtPath)
 		if err != nil {
-			return fmt.Errorf("could not open modulemd file: %v", err)
+			mdTxtPath = fmt.Sprintf("SOURCES/%s.yml", md.Name)
+			f, err = md.Worktree.Filesystem.Open(mdTxtPath)
+			if err != nil {
+				return fmt.Errorf("could not open modulemd file: %v", err)
+			}
+		}
+	} else {
+		mdTxtPath = "SOURCES/modulemd.src.txt"
+		f, err = md.Worktree.Filesystem.Open(mdTxtPath)
+		if err != nil {
+			mdTxtPath = "SOURCES/modulemd.txt"
+			f, err = md.Worktree.Filesystem.Open(mdTxtPath)
+			if err != nil {
+				return fmt.Errorf("could not open modulemd file: %v", err)
+			}
 		}
 	}
 
@@ -307,13 +325,30 @@ func patchModuleYaml(pd *data.ProcessData, md *data.ModeData) error {
 	}
 
 	// Get stream branch from tag
-	match := misc.GetTagImportRegex(pd).FindStringSubmatch(md.TagBranch)
-	streamBranch := strings.Split(match[2], "-")
-	// Force stream to be the same as stream name in branch
-	module.Data.Stream = streamBranch[len(streamBranch)-1]
+	// (in tagless mode we are trusting the "Stream: <VERSION>" text in the source YAML to be accurate)
+	if !pd.TaglessMode {
+		match := misc.GetTagImportRegex(pd).FindStringSubmatch(md.TagBranch)
+		streamBranch := strings.Split(match[2], "-")
+
+		// Force stream to be the same as stream name in branch
+		if module.V2 != nil {
+			module.V2.Data.Stream = streamBranch[len(streamBranch)-1]
+		}
+		if module.V3 != nil {
+			module.V3.Data.Stream = streamBranch[len(streamBranch)-1]
+		}
+	}
+
+	var components *modulemd.Components
+	if module.V2 != nil {
+		components = module.V2.Data.Components
+	}
+	if module.V3 != nil {
+		components = module.V3.Data.Components
+	}
 
 	log.Println("This module contains the following rpms:")
-	for name := range module.Data.Components.Rpms {
+	for name := range components.Rpms {
 		pd.Log.Printf("\t- %s", name)
 	}
 
@@ -322,7 +357,7 @@ func patchModuleYaml(pd *data.ProcessData, md *data.ModeData) error {
 		defaultBranch = fmt.Sprintf("%s%d-stream-%s", pd.BranchPrefix, pd.Version, pd.ModuleFallbackStream)
 	}
 
-	for name, rpm := range module.Data.Components.Rpms {
+	for name, rpm := range components.Rpms {
 		var tipHash string
 		var pushBranch string
 

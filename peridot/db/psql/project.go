@@ -150,6 +150,34 @@ func (a *Access) GetProjectModuleConfiguration(projectId string) (*peridotpb.Mod
 	return pb, nil
 }
 
+func (a *Access) CreateProjectModuleConfiguration(projectId string, config *peridotpb.ModuleConfiguration) error {
+	anyPb, err := anypb.New(config)
+	if err != nil {
+		return fmt.Errorf("failed to marshal module configuration: %v", err)
+	}
+
+	protoJson, err := protojson.Marshal(anyPb)
+	if err != nil {
+		return fmt.Errorf("failed to marshal module configuration (protojson): %v", err)
+	}
+
+	_, err = a.query.Exec(
+		`
+        insert into project_module_configuration (project_id, proto, active)
+        values ($1, $2, true)
+		on conflict (project_id) do update
+			set proto = $2, active = true
+        `,
+		projectId,
+		protoJson,
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (a *Access) CreateProject(project *peridotpb.Project) (*models.Project, error) {
 	if err := project.ValidateAll(); err != nil {
 		return nil, err

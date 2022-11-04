@@ -57,4 +57,6 @@ type ProcessData struct {
 	Log                  *log.Logger
 	PackageVersion       string
 	PackageRelease       string
+	TaglessMode          bool
+	AltLookAside         bool
 }

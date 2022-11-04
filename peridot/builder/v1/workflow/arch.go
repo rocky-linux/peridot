@@ -455,6 +455,10 @@ func (c *Controller) mockConfig(project *models.Project, packageVersion *models.
 	}
 
 	buildMacros := c.buildMacros(project, packageVersion)
+	if extra != nil && extra.ForceDist != "" {
+		buildMacros["%dist"] = "." + extra.ForceDist
+	}
+
 	mockConfig := `
 config_opts['root'] = '{additionalVendor}-{majorVersion}-{hostArch}'
 config_opts['target_arch'] = '{arch}'

@@ -116,7 +116,6 @@ func (g *GitMode) RetrieveSource(pd *data.ProcessData) (*data.ModeData, error) {
 				if exists != nil && exists.when.After(tag.Tagger.When) {
 					return nil
 				}
-
 				latestTags[match[2]] = &remoteTarget{
 					remote: refSpec,
 					when:   tag.Tagger.When,
@@ -126,11 +125,39 @@ func (g *GitMode) RetrieveSource(pd *data.ProcessData) (*data.ModeData, error) {
 		return nil
 	}
 
+	// In case of "tagless mode", we need to get the head ref of the branch instead
+	// This is a kind of alternative implementation of the above tagAdd assignment
+	refAdd := func(tag *object.Tag) error {
+		if misc.TaglessRefOk(tag.Name, pd) {
+			pd.Log.Printf("Tagless mode:  Identified tagless commit for import: %s\n", tag.Name)
+			refSpec := fmt.Sprintf(tag.Name)
+
+			// We split the string by "/", the branch name we're looking for to pass to latestTags is always last
+			// (ex: "refs/heads/c9s" ---> we want latestTags[c9s]
+			tmpRef := strings.Split(refSpec, "/")
+			tmpBranchName := tmpRef[(len(tmpRef) - 1)]
+
+			latestTags[tmpBranchName] = &remoteTarget{
+				remote: refSpec,
+				when:   tag.Tagger.When,
+			}
+		}
+		return nil
+	}
+
 	tagIter, err := repo.TagObjects()
+
 	if err != nil {
 		return nil, fmt.Errorf("could not get tag objects: %v", err)
 	}
-	_ = tagIter.ForEach(tagAdd)
+
+	// tagless mode means we use "refAdd" (add commit by reference)
+	// normal mode means we can rely on "tagAdd" (the tag should be present for us in the source repo)
+	if pd.TaglessMode {
+		_ = tagIter.ForEach(refAdd)
+	} else {
+		_ = tagIter.ForEach(tagAdd)
+	}
 
 	listOpts := &git.ListOptions{
 		Auth: pd.Authenticator,
@@ -157,17 +184,26 @@ func (g *GitMode) RetrieveSource(pd *data.ProcessData) (*data.ModeData, error) {
 		if err != nil {
 			continue
 		}
-		_ = tagAdd(&object.Tag{
-			Name:   strings.TrimPrefix(string(ref.Name()), "refs/tags/"),
-			Tagger: commit.Committer,
-		})
+
+		// Call refAdd instead of tagAdd in the case of TaglessMode enabled
+		if pd.TaglessMode {
+			_ = refAdd(&object.Tag{
+				Name:   string(ref.Name()),
+				Tagger: commit.Committer,
+			})
+		} else {
+			_ = tagAdd(&object.Tag{
+				Name:   strings.TrimPrefix(string(ref.Name()), "refs/tags/"),
+				Tagger: commit.Committer,
+			})
+		}
+
 	}
 
 	for _, branch := range latestTags {
 		pd.Log.Printf("tag: %s", strings.TrimPrefix(branch.remote, "refs/tags/"))
 		branches = append(branches, *branch)
 	}
-
 	sort.Sort(branches)
 
 	var sortedBranches []string
@@ -185,54 +221,66 @@ func (g *GitMode) RetrieveSource(pd *data.ProcessData) (*data.ModeData, error) {
 }
 
 func (g *GitMode) WriteSource(pd *data.ProcessData, md *data.ModeData) error {
+
 	remote, err := md.Repo.Remote("upstream")
-	if err != nil {
+
+	if err != nil && !pd.TaglessMode {
 		return fmt.Errorf("could not get upstream remote: %v", err)
 	}
 
 	var refspec config.RefSpec
 	var branchName string
 
-	if strings.HasPrefix(md.TagBranch, "refs/heads") {
-		refspec = config.RefSpec(fmt.Sprintf("+%s:%s", md.TagBranch, md.TagBranch))
-		branchName = strings.TrimPrefix(md.TagBranch, "refs/heads/")
-	} else {
-		match := misc.GetTagImportRegex(pd).FindStringSubmatch(md.TagBranch)
-		branchName = match[2]
-		refspec = config.RefSpec(fmt.Sprintf("+refs/heads/%s:%s", branchName, md.TagBranch))
-	}
-	pd.Log.Printf("checking out upstream refspec %s", refspec)
-	fetchOpts := &git.FetchOptions{
-		Auth:       pd.Authenticator,
-		RemoteName: "upstream",
-		RefSpecs:   []config.RefSpec{refspec},
-		Tags:       git.AllTags,
-		Force:      true,
-	}
-	err = remote.Fetch(fetchOpts)
-	if err != nil && err != git.NoErrAlreadyUpToDate {
-		if err == transport.ErrInvalidAuthMethod || err == transport.ErrAuthenticationRequired {
-			fetchOpts.Auth = nil
-			err = remote.Fetch(fetchOpts)
-			if err != nil && err != git.NoErrAlreadyUpToDate {
+	// In the case of tagless mode, we already have the transformed repo sitting in the worktree,
+	// and don't need to perform any checkout or fetch operations
+	if !pd.TaglessMode {
+		if strings.HasPrefix(md.TagBranch, "refs/heads") {
+			refspec = config.RefSpec(fmt.Sprintf("+%s:%s", md.TagBranch, md.TagBranch))
+			branchName = strings.TrimPrefix(md.TagBranch, "refs/heads/")
+		} else {
+			match := misc.GetTagImportRegex(pd).FindStringSubmatch(md.TagBranch)
+			branchName = match[2]
+			refspec = config.RefSpec(fmt.Sprintf("+refs/heads/%s:%s", branchName, md.TagBranch))
+			fmt.Println("Found branchname that does not start w/ refs/heads :: ", branchName)
+		}
+		pd.Log.Printf("checking out upstream refspec %s", refspec)
+
+		fetchOpts := &git.FetchOptions{
+			Auth:       pd.Authenticator,
+			RemoteName: "upstream",
+			RefSpecs:   []config.RefSpec{refspec},
+			Tags:       git.AllTags,
+			Force:      true,
+		}
+		err = remote.Fetch(fetchOpts)
+		if err != nil && err != git.NoErrAlreadyUpToDate {
+			if err == transport.ErrInvalidAuthMethod || err == transport.ErrAuthenticationRequired {
+				fetchOpts.Auth = nil
+				err = remote.Fetch(fetchOpts)
+				if err != nil && err != git.NoErrAlreadyUpToDate {
+					return fmt.Errorf("could not fetch upstream: %v", err)
+				}
+			} else {
 				return fmt.Errorf("could not fetch upstream: %v", err)
 			}
-		} else {
-			return fmt.Errorf("could not fetch upstream: %v", err)
+		}
+
+		err = md.Worktree.Checkout(&git.CheckoutOptions{
+			Branch: plumbing.ReferenceName(md.TagBranch),
+			Force:  true,
+		})
+		if err != nil {
+			return fmt.Errorf("could not checkout source from git: %v", err)
+		}
+
+		_, err = md.Worktree.Add(".")
+		if err != nil {
+			return fmt.Errorf("could not add Worktree: %v", err)
 		}
 	}
 
-	err = md.Worktree.Checkout(&git.CheckoutOptions{
-		Branch: plumbing.ReferenceName(md.TagBranch),
-		Force:  true,
-	})
-	if err != nil {
-		return fmt.Errorf("could not checkout source from git: %v", err)
-	}
-
-	_, err = md.Worktree.Add(".")
-	if err != nil {
-		return fmt.Errorf("could not add Worktree: %v", err)
+	if pd.TaglessMode {
+		branchName = fmt.Sprintf("%s%d%s", pd.ImportBranchPrefix, pd.Version, pd.BranchSuffix)
 	}
 
 	metadataPath := ""
@@ -292,7 +340,32 @@ func (g *GitMode) WriteSource(pd *data.ProcessData, md *data.ModeData) error {
 				body = fromBlobStorage
 				pd.Log.Printf("downloading %s from blob storage", hash)
 			} else {
-				url := fmt.Sprintf("%s/%s/%s/%s", pd.CdnUrl, md.Name, branchName, hash)
+
+				url := ""
+				// Alternate lookaside logic:  if enabled, we pull from a new URL pattern
+				if !pd.AltLookAside {
+					url = fmt.Sprintf("%s/%s/%s/%s", pd.CdnUrl, md.Name, branchName, hash)
+				} else {
+					// We first need the hash algorithm based on length of hash:
+					hashType := "sha512"
+					switch len(hash) {
+					case 128:
+						hashType = "sha512"
+					case 64:
+						hashType = "sha256"
+					case 40:
+						hashType = "sha1"
+					case 32:
+						hashType = "md5"
+					}
+
+					// need the name of the file without "SOURCES/":
+					fileName := strings.Split(path, "/")[1]
+
+					// Alt. lookaside url is of the form: <cdn> / <name> / <filename> / <hashtype> / <hash> / <filename>
+					url = fmt.Sprintf("%s/%s/%s/%s/%s/%s", pd.CdnUrl, md.Name, fileName, hashType, hash, fileName)
+				}
+
 				pd.Log.Printf("downloading %s", url)
 
 				req, err := http.NewRequest("GET", url, nil)

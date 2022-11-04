@@ -39,7 +39,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-func NewAwsSession(cfg *aws.Config) (*session.Session, error) {
+func awsConfigInternal(cfg *aws.Config) {
 	if accessKey := viper.GetString("s3-access-key"); accessKey != "" {
 		cfg.Credentials = credentials.NewStaticCredentials(accessKey, viper.GetString("s3-secret-key"), "")
 	}
@@ -63,7 +63,16 @@ func NewAwsSession(cfg *aws.Config) (*session.Session, error) {
 	if os.Getenv("AWS_REGION") != "" {
 		cfg.Region = aws.String(os.Getenv("AWS_REGION"))
 	}
+}
 
+func NewAwsSessionNoLocalStack(cfg *aws.Config) (*session.Session, error) {
+	awsConfigInternal(cfg)
+
+	return session.NewSession(cfg)
+}
+
+func NewAwsSession(cfg *aws.Config) (*session.Session, error) {
+	awsConfigInternal(cfg)
 	if os.Getenv("LOCALSTACK_ENDPOINT") != "" && os.Getenv("RESF_ENV") == "dev" {
 		cfg.Endpoint = aws.String(os.Getenv("LOCALSTACK_ENDPOINT"))
 		cfg.Credentials = credentials.NewStaticCredentials("test", "test", "")

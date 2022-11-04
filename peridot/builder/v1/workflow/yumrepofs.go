@@ -43,6 +43,7 @@ import (
 	"fmt"
 	"github.com/gobwas/glob"
 	"github.com/google/uuid"
+	"github.com/rocky-linux/srpmproc/modulemd"
 	"github.com/spf13/viper"
 	"go.temporal.io/sdk/activity"
 	"go.temporal.io/sdk/temporal"
@@ -56,7 +57,6 @@ import (
 	"io/ioutil"
 	"path/filepath"
 	"peridot.resf.org/apollo/rpmutils"
-	"peridot.resf.org/modulemd"
 	"peridot.resf.org/peridot/composetools"
 	peridotdb "peridot.resf.org/peridot/db"
 	"peridot.resf.org/peridot/db/models"
@@ -539,9 +539,9 @@ func (c *Controller) UpdateRepoActivity(ctx context.Context, req *UpdateRepoRequ
 		}
 		lockedItem, err = lock.AcquireLock(
 			req.ProjectID,
-			dynamolock.ReplaceData(),
 		)
 		if err != nil {
+			c.log.Errorf("failed to acquire lock: %v", err)
 			continue
 		}
 		break
@@ -978,7 +978,7 @@ func (c *Controller) makeRepoChanges(tx peridotdb.Access, req *UpdateRepoRequest
 
 	var currentActiveArtifacts models.TaskArtifacts
 	// Get currently active artifacts
-	latestBuilds, err := c.db.GetLatestBuildIdsByPackageName(build.PackageName, project.ID.String())
+	latestBuilds, err := c.db.GetLatestBuildsByPackageNameAndPackageVersionID(build.PackageName, build.PackageVersionId, project.ID.String())
 	if err != nil {
 		setInternalError(errorDetails, err)
 		return nil, fmt.Errorf("failed to get latest build ids: %v", err)
@@ -1435,10 +1435,11 @@ func (c *Controller) makeRepoChanges(tx peridotdb.Access, req *UpdateRepoRequest
 			if moduleStream != nil {
 				streamDocument := moduleStream.ModuleStreamDocuments[arch]
 				if streamDocument != nil {
-					newEntry, err := modulemd.Parse(streamDocument.Streams[moduleStream.Stream])
+					newEntryNbc, err := modulemd.Parse(streamDocument.Streams[moduleStream.Stream])
 					if err != nil {
 						return nil, err
 					}
+					newEntry := newEntryNbc.V2
 
 					// If a previous entry exists, we need to overwrite that
 					var moduleIndex *int

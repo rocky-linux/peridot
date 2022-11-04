@@ -53,6 +53,7 @@ def gen_from_jsonnet(name, src, outs, tags, force_normal_tags, helm_mode, **kwar
         "domain_user": "{STABLE_DOMAIN_USER}",
         "registry_secret": "{STABLE_REGISTRY_SECRET}",
         "site": "{STABLE_SITE}",
+        "local_domain": "{STABLE_LOCAL_DOMAIN}",
         "helm_mode": "false",
     }
     if helm_mode:
@@ -84,6 +85,7 @@ def gen_from_jsonnet(name, src, outs, tags, force_normal_tags, helm_mode, **kwar
             "domain_user",
             "registry_secret",
             "site",
+            "local_domain",
         ],
         multiple_outputs = True,
         extra_args = ["-S"],

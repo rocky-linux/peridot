@@ -428,6 +428,37 @@ func (a *Access) GetLatestBuildIdsByPackageName(name string, projectId string) (
 	return ret, nil
 }
 
+func (a *Access) GetLatestBuildsByPackageNameAndPackageVersionID(name string, packageVersionId string, projectId string) ([]string, error) {
+	var ret []string
+	err := a.query.Select(
+		&ret,
+		`
+        select
+            b.id
+        from builds b
+        inner join tasks t on t.id = b.task_id
+        inner join packages p on p.id = b.package_id
+        inner join project_package_versions ppv on ppv.package_version_id = b.package_version_id
+        where
+            b.project_id = $1
+            and p.name = $2
+            and ppv.active_in_repo = true
+            and ppv.project_id = b.project_id
+            and b.package_version_id = $3
+            and t.status = 3
+        order by b.created_at asc
+        `,
+		projectId,
+		name,
+		packageVersionId,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return ret, nil
+}
+
 func (a *Access) GetActiveBuildIdsByTaskArtifactGlob(taskArtifactGlob string, projectId string) ([]string, error) {
 	var ret []string
 	err := a.query.Select(

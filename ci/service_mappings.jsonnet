@@ -1,6 +1,7 @@
-# sync-ignore-file: true
+local local_domain = std.extVar("local_domain");
+
 {
-  local_domain: '.pdev.resf.localhost',
+  local_domain: local_domain,
   default_domain: '.build.resf.org',
   service_mappings: {
     'peridotserver-http': {

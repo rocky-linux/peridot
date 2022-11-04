@@ -42,6 +42,7 @@ type Access interface {
 	ListProjects(filters *peridotpb.ProjectFilters) (models.Projects, error)
 	GetProjectKeys(projectId string) (*models.ProjectKey, error)
 	GetProjectModuleConfiguration(projectId string) (*peridotpb.ModuleConfiguration, error)
+	CreateProjectModuleConfiguration(projectId string, config *peridotpb.ModuleConfiguration) error
 	CreateProject(project *peridotpb.Project) (*models.Project, error)
 	UpdateProject(id string, project *peridotpb.Project) (*models.Project, error)
 	SetProjectKeys(projectId string, username string, password string) error
@@ -65,6 +66,7 @@ type Access interface {
 	NVRAExists(nvra string) (bool, error)
 	GetBuildByPackageNameAndVersionAndRelease(name string, version string, release string, projectId string) (*models.Build, error)
 	GetLatestBuildIdsByPackageName(name string, projectId string) ([]string, error)
+	GetLatestBuildsByPackageNameAndPackageVersionID(name string, packageVersionId string, projectId string) ([]string, error)
 	GetActiveBuildIdsByTaskArtifactGlob(taskArtifactGlob string, projectId string) ([]string, error)
 	GetAllBuildIdsByPackageName(name string, projectId string) ([]string, error)
 
@@ -98,6 +100,7 @@ type Access interface {
 	SetExtraOptionsForPackage(projectId string, packageName string, withFlags pq.StringArray, withoutFlags pq.StringArray) error
 	GetExtraOptionsForPackage(projectId string, packageName string) (*models.ExtraOptions, error)
 	SetGroupInstallOptionsForPackage(projectId string, packageName string, dependsOn pq.StringArray) error
+	SetPackageType(projectId string, packageName string, packageType peridotpb.PackageType) error
 
 	CreateTask(user *utils.ContextUser, arch string, taskType peridotpb.TaskType, projectId *string, parentTaskId *string) (*models.Task, error)
 	SetTaskStatus(id string, status peridotpb.TaskStatus) error
