@@ -38,6 +38,8 @@ import (
 	"fmt"
 	"github.com/ProtonMail/gopenpgp/v2/crypto"
 	"github.com/google/uuid"
+	"io/ioutil"
+	"os"
 	"os/exec"
 	"peridot.resf.org/peridot/db/models"
 	"peridot.resf.org/utils"
@@ -75,6 +77,24 @@ func (s *Server) importGpgKey(armoredKey string) error {
 	return err
 }
 
+func (s *Server) importRpmKey(publicKey string) error {
+	tmpFile, err := ioutil.TempFile("/tmp", "peridot-key-")
+	if err != nil {
+		return err
+	}
+	defer os.Remove(tmpFile.Name())
+	_, err = tmpFile.Write([]byte(publicKey))
+	if err != nil {
+		return err
+	}
+	cmd := gpgCmdEnv(exec.Command("rpm", "--import", tmpFile.Name()))
+	out, err := logCmdRun(cmd)
+	if err != nil {
+		s.log.Errorf("failed to import rpm key: %s", out.String())
+	}
+	return err
+}
+
 // WarmGPGKey warms up a specific GPG key
 // This involves shelling out to GPG to import the key
 func (s *Server) WarmGPGKey(key string, armoredKey string, gpgKey *crypto.Key, db *models.Key) (*LoadedKey, error) {
@@ -85,6 +105,11 @@ func (s *Server) WarmGPGKey(key string, armoredKey string, gpgKey *crypto.Key, d
 	}
 
 	err := s.importGpgKey(armoredKey)
+	if err != nil {
+		return nil, err
+	}
+
+	err = s.importRpmKey(db.PublicKey)
 	if err != nil {
 		return nil, err
 	}

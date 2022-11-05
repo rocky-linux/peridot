@@ -188,6 +188,13 @@ func (s *Server) SignArtifactActivity(ctx context.Context, artifactId string, ke
 
 	switch ext {
 	case ".rpm":
+		beginTx, err := s.db.Begin()
+		if err != nil {
+			s.log.Errorf("failed to begin transaction: %v", err)
+			return nil, status.Error(codes.Internal, "failed to begin transaction")
+		}
+		tx := s.db.UseTransaction(beginTx)
+
 		rpmSign := func() (*keykeeperpb.SignedArtifact, error) {
 			var outBuf bytes.Buffer
 			opts := []string{
@@ -233,7 +240,7 @@ func (s *Server) SignArtifactActivity(ctx context.Context, artifactId string, ke
 			}
 			hash := hex.EncodeToString(hasher.Sum(nil))
 
-			err = s.db.CreateTaskArtifactSignature(artifact.ID.String(), key.keyUuid.String(), hash)
+			err = tx.CreateTaskArtifactSignature(artifact.ID.String(), key.keyUuid.String(), hash)
 			if err != nil {
 				s.log.Errorf("failed to create task artifact signature: %v", err)
 				return nil, fmt.Errorf("failed to create task artifact signature: %v", err)
@@ -257,21 +264,25 @@ func (s *Server) SignArtifactActivity(ctx context.Context, artifactId string, ke
 			err := cmd.Run()
 			if err != nil {
 				s.log.Errorf("failed to verify artifact %s: %v", artifact.Name, err)
+				s.log.Errorf("buf: %s", outBuf.String())
 				return fmt.Errorf("failed to verify artifact %s: %v", artifact.Name, err)
-			}
-			if !strings.Contains(outBuf.String(), "digest signatures OK") {
-				s.log.Errorf("artifact %s not signed(?), retrying", artifact.Name)
-				return fmt.Errorf("artifact %s not signed(?), retrying", artifact.Name)
 			}
 			return nil
 		}
 		res, err := rpmSign()
 		if err != nil {
+			_ = beginTx.Rollback()
 			return nil, err
 		}
 		err = verifySig()
 		if err != nil {
+			_ = beginTx.Rollback()
 			return nil, err
+		}
+		err = beginTx.Commit()
+		if err != nil {
+			s.log.Errorf("failed to commit transaction: %v", err)
+			return nil, status.Error(codes.Internal, "failed to commit transaction")
 		}
 
 		return res, nil
