@@ -128,7 +128,7 @@ func lookaside(cfg *srpmprocpb.Cfg, _ *data.ProcessData, md *data.ModeData, patc
 			}
 
 			path := filepath.Join("SOURCES", fmt.Sprintf("%s.tar.gz", directive.ArchiveName))
-			pushF, err := pushTree.Filesystem.OpenFile(path, os.O_CREATE|os.O_TRUNC|os.O_RDWR, 0644)
+			pushF, err := pushTree.Filesystem.OpenFile(path, os.O_CREATE|os.O_TRUNC|os.O_RDWR, 0o644)
 			if err != nil {
 				return errors.New(fmt.Sprintf("COULD_NOT_CREATE_TAR_FILE:%s", path))
 			}

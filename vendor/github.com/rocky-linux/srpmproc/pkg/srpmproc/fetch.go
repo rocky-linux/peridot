@@ -3,15 +3,16 @@ package srpmproc
 import (
 	"errors"
 	"fmt"
-	"github.com/go-git/go-billy/v5"
-	"github.com/rocky-linux/srpmproc/pkg/blob"
-	"github.com/rocky-linux/srpmproc/pkg/data"
 	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"path/filepath"
 	"strings"
+
+	"github.com/go-git/go-billy/v5"
+	"github.com/rocky-linux/srpmproc/pkg/blob"
+	"github.com/rocky-linux/srpmproc/pkg/data"
 )
 
 func Fetch(logger io.Writer, cdnUrl string, dir string, fs billy.Filesystem, storage blob.Storage) error {
@@ -101,7 +102,7 @@ func Fetch(logger io.Writer, cdnUrl string, dir string, fs billy.Filesystem, sto
 			return fmt.Errorf("checksum in metadata does not match dist-git file")
 		}
 
-		err = fs.MkdirAll(filepath.Join(dir, filepath.Dir(path)), 0755)
+		err = fs.MkdirAll(filepath.Join(dir, filepath.Dir(path)), 0o755)
 		if err != nil {
 			return fmt.Errorf("could not create all directories")
 		}

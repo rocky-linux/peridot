@@ -22,6 +22,7 @@ package modulemd
 
 import (
 	"fmt"
+
 	"github.com/go-git/go-billy/v5"
 	"gopkg.in/yaml.v3"
 )

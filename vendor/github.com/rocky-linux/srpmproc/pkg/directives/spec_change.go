@@ -41,9 +41,7 @@ const (
 	sectionChangelog = "%changelog"
 )
 
-var (
-	sections = []string{"%description", "%prep", "%build", "%install", "%files", "%changelog"}
-)
+var sections = []string{"%description", "%prep", "%build", "%install", "%files", "%changelog"}
 
 type sourcePatchOperationInLoopRequest struct {
 	cfg           *srpmprocpb.Cfg
@@ -212,7 +210,7 @@ func specChange(cfg *srpmprocpb.Cfg, pd *data.ProcessData, md *data.ModeData, _ 
 		return errors.New("COULD_NOT_STAT_SPEC_FILE")
 	}
 
-	specFile, err := pushTree.Filesystem.OpenFile(filePath, os.O_RDONLY, 0644)
+	specFile, err := pushTree.Filesystem.OpenFile(filePath, os.O_RDONLY, 0o644)
 	if err != nil {
 		return errors.New("COULD_NOT_READ_SPEC_FILE")
 	}

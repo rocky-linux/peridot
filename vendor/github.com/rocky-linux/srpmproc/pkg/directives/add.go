@@ -50,7 +50,7 @@ func add(cfg *srpmprocpb.Cfg, pd *data.ProcessData, md *data.ModeData, patchTree
 		case *srpmprocpb.Add_File:
 			filePath = checkAddPrefix(eitherString(filepath.Base(addType.File), add.Name))
 
-			fPatch, err := patchTree.Filesystem.OpenFile(addType.File, os.O_RDONLY, 0644)
+			fPatch, err := patchTree.Filesystem.OpenFile(addType.File, os.O_RDONLY, 0o644)
 			if err != nil {
 				return errors.New(fmt.Sprintf("COULD_NOT_OPEN_FROM:%s", addType.File))
 			}
@@ -80,7 +80,7 @@ func add(cfg *srpmprocpb.Cfg, pd *data.ProcessData, md *data.ModeData, patchTree
 			break
 		}
 
-		f, err := pushTree.Filesystem.OpenFile(filePath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
+		f, err := pushTree.Filesystem.OpenFile(filePath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0o644)
 		if err != nil {
 			return errors.New(fmt.Sprintf("COULD_NOT_OPEN_DESTINATION:%s", filePath))
 		}

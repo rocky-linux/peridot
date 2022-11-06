@@ -21,8 +21,9 @@
 package data
 
 import (
-	"github.com/go-git/go-git/v5"
 	"hash"
+
+	"github.com/go-git/go-git/v5"
 )
 
 type ImportMode interface {

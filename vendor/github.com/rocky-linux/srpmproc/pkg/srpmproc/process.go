@@ -24,6 +24,16 @@ import (
 	"bufio"
 	"encoding/hex"
 	"fmt"
+	"io"
+	"io/ioutil"
+	"log"
+	"os"
+	"os/exec"
+	"os/user"
+	"path/filepath"
+	"strings"
+	"time"
+
 	"github.com/go-git/go-billy/v5"
 	"github.com/go-git/go-billy/v5/osfs"
 	"github.com/go-git/go-git/v5/plumbing/format/gitignore"
@@ -38,15 +48,6 @@ import (
 	"github.com/rocky-linux/srpmproc/pkg/misc"
 	"github.com/rocky-linux/srpmproc/pkg/modes"
 	"github.com/rocky-linux/srpmproc/pkg/rpmutils"
-	"io"
-	"io/ioutil"
-	"log"
-	"os"
-	"os/exec"
-	"os/user"
-	"path/filepath"
-	"strings"
-	"time"
 
 	"github.com/go-git/go-billy/v5/memfs"
 	"github.com/go-git/go-git/v5"
@@ -227,7 +228,7 @@ func NewProcessData(req *ProcessDataRequest) (*data.ProcessData, error) {
 				return nil, err
 			}
 			tmpDir := filepath.Join(req.TmpFsMode, branch)
-			err = fs.MkdirAll(tmpDir, 0755)
+			err = fs.MkdirAll(tmpDir, 0o755)
 			if err != nil {
 				return nil, fmt.Errorf("could not create tmpfs dir: %v", err)
 			}
@@ -287,7 +288,6 @@ func NewProcessData(req *ProcessDataRequest) (*data.ProcessData, error) {
 // all files that are remote goes into .gitignore
 // all ignored files' hash goes into .{Name}.metadata
 func ProcessRPM(pd *data.ProcessData) (*srpmprocpb.ProcessResponse, error) {
-
 	// if we are using "tagless mode", then we need to jump to a completely different import process:
 	// Version info needs to be derived from rpmbuild + spec file, not tags
 	if pd.TaglessMode {
@@ -761,7 +761,7 @@ func processRPMTagless(pd *data.ProcessData) (*srpmprocpb.ProcessResponse, error
 		if err := os.RemoveAll(localPath); err != nil {
 			return nil, fmt.Errorf("Could not remove previous temporary directory: %s", localPath)
 		}
-		if err := os.Mkdir(localPath, 0755); err != nil {
+		if err := os.Mkdir(localPath, 0o755); err != nil {
 			return nil, fmt.Errorf("Could not create temporary directory: %s", localPath)
 		}
 
@@ -993,7 +993,6 @@ func processRPMTagless(pd *data.ProcessData) (*srpmprocpb.ProcessResponse, error
 		BranchCommits:  latestHashForBranch,
 		BranchVersions: versionForBranch,
 	}, nil
-
 }
 
 // Given a local repo on disk, ensure it's in the "traditional" format.  This means:
@@ -1001,13 +1000,12 @@ func processRPMTagless(pd *data.ProcessData) (*srpmprocpb.ProcessResponse, error
 //   - metadata file has the old "<SHASUM>  SOURCES/<filename>"  format
 //   - SPECS/ and SOURCES/ exist and are populated correctly
 func convertLocalRepo(pkgName string, localRepo string) (bool, error) {
-
 	// Make sure we have a SPECS and SOURCES folder made:
-	if err := os.MkdirAll(fmt.Sprintf("%s/SOURCES", localRepo), 0755); err != nil {
+	if err := os.MkdirAll(fmt.Sprintf("%s/SOURCES", localRepo), 0o755); err != nil {
 		return false, fmt.Errorf("Could not create SOURCES directory in: %s", localRepo)
 	}
 
-	if err := os.MkdirAll(fmt.Sprintf("%s/SPECS", localRepo), 0755); err != nil {
+	if err := os.MkdirAll(fmt.Sprintf("%s/SPECS", localRepo), 0o755); err != nil {
 		return false, fmt.Errorf("Could not create SPECS directory in: %s", localRepo)
 	}
 
@@ -1017,15 +1015,14 @@ func convertLocalRepo(pkgName string, localRepo string) (bool, error) {
 		return false, err
 	}
 
-	for _, file := range files {
-
+	for _, f := range files {
 		// We don't want to process SOURCES, SPECS, or any of our .git folders
-		if file.Name() == "SOURCES" || file.Name() == "SPECS" || strings.HasPrefix(file.Name(), ".git") || file.Name() == "."+pkgName+".metadata" {
+		if f.Name() == "SOURCES" || f.Name() == "SPECS" || strings.HasPrefix(f.Name(), ".git") || f.Name() == "."+pkgName+".metadata" {
 			continue
 		}
 
 		// If we have a metadata "sources" file, we need to read it and convert to the old .<pkgname>.metadata format
-		if file.Name() == "sources" {
+		if f.Name() == "sources" {
 			convertStatus := convertMetaData(pkgName, localRepo)
 
 			if convertStatus != true {
@@ -1036,15 +1033,15 @@ func convertLocalRepo(pkgName string, localRepo string) (bool, error) {
 		}
 
 		// Any file that ends in a ".spec" should be put into SPECS/
-		if strings.HasSuffix(file.Name(), ".spec") {
-			err := os.Rename(fmt.Sprintf("%s/%s", localRepo, file.Name()), fmt.Sprintf("%s/SPECS/%s", localRepo, file.Name()))
+		if strings.HasSuffix(f.Name(), ".spec") {
+			err := os.Rename(fmt.Sprintf("%s/%s", localRepo, f.Name()), fmt.Sprintf("%s/SPECS/%s", localRepo, f.Name()))
 			if err != nil {
 				return false, fmt.Errorf("Error moving .spec file to SPECS/")
 			}
 		}
 
 		// if a file isn't skipped in one of the above checks, then it must be a file that belongs in SOURCES/
-		os.Rename(fmt.Sprintf("%s/%s", localRepo, file.Name()), fmt.Sprintf("%s/SOURCES/%s", localRepo, file.Name()))
+		os.Rename(fmt.Sprintf("%s/%s", localRepo, f.Name()), fmt.Sprintf("%s/SOURCES/%s", localRepo, f.Name()))
 	}
 
 	return true, nil
@@ -1053,7 +1050,6 @@ func convertLocalRepo(pkgName string, localRepo string) (bool, error) {
 // Given a local "sources" metadata file (new CentOS Stream format), convert it into the older
 // classic CentOS style:  "<HASH>  SOURCES/<FILENAME>"
 func convertMetaData(pkgName string, localRepo string) bool {
-
 	lookAside, err := os.Open(fmt.Sprintf("%s/sources", localRepo))
 	if err != nil {
 		return false
@@ -1072,7 +1068,6 @@ func convertMetaData(pkgName string, localRepo string) bool {
 	//   - take the
 	// Then check
 	for scanner.Scan() {
-
 		tmpLine := strings.Fields(scanner.Text())
 		// make sure line starts with a "SHA" or "MD" before processing - otherwise it might not be a valid format lookaside line!
 		if !(strings.HasPrefix(tmpLine[0], "SHA") || strings.HasPrefix(tmpLine[0], "MD")) {
@@ -1085,12 +1080,11 @@ func convertMetaData(pkgName string, localRepo string) bool {
 		tmpLine[1] = fmt.Sprintf("SOURCES/%s", tmpLine[1])
 
 		convertedLA = append(convertedLA, fmt.Sprintf("%s %s", tmpLine[3], tmpLine[1]))
-
 	}
 	lookAside.Close()
 
 	// open .<NAME>.metadata file for writing our old-format lines
-	lookAside, err = os.OpenFile(fmt.Sprintf("%s/.%s.metadata", localRepo, pkgName), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	lookAside, err = os.OpenFile(fmt.Sprintf("%s/.%s.metadata", localRepo, pkgName), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
 	if err != nil {
 		fmt.Errorf("Error opening new .metadata file for writing.")
 		return false
@@ -1116,7 +1110,6 @@ func convertMetaData(pkgName string, localRepo string) bool {
 //   - extract RPM version info from that SRPM, and return it
 // If we are in tagless mode, we need to get a package version somehow!
 func getVersionFromSpec(pkgName string, localRepo string, majorVersion int) string {
-
 	// Make sure we have "rpm" and "rpmbuild" and "cp" available in our PATH.  Otherwise, this won't work:
 	_, err := exec.LookPath("rpm")
 	if err != nil {
@@ -1135,7 +1128,7 @@ func getVersionFromSpec(pkgName string, localRepo string, majorVersion int) stri
 
 	// create separate temp folder space to do our RPM work - we don't want to accidentally contaminate the main Git area:
 	rpmBuildPath := fmt.Sprintf("%s_rpm", localRepo)
-	os.Mkdir(rpmBuildPath, 0755)
+	os.Mkdir(rpmBuildPath, 0o755)
 
 	// Copy SOURCES/ and SPECS/ into the temp rpmbuild directory recursively
 	// Yes, we could create or import an elaborate Go-native way to do this, but damnit this is easier:
@@ -1165,7 +1158,7 @@ func getVersionFromSpec(pkgName string, localRepo string, majorVersion int) stri
 		srcFile := strings.Fields(scanner.Text())[1]
 
 		// write a dummy file of the same name into the rpmbuild SOURCES/ directory:
-		dummyFile, err := os.OpenFile(fmt.Sprintf("%s/%s", rpmBuildPath, srcFile), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		dummyFile, err := os.OpenFile(fmt.Sprintf("%s/%s", rpmBuildPath, srcFile), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
 		if err != nil {
 			return ""
 		}
@@ -1222,7 +1215,6 @@ func getVersionFromSpec(pkgName string, localRepo string, majorVersion int) stri
 	// return name-version-release string we derived:
 	log.Printf("Derived NVR %s from tagless repo via temporary SRPM build\n", nvr)
 	return nvr
-
 }
 
 // We need to loop through the lookaside blob files ("SourcesToIgnore"),
@@ -1230,7 +1222,6 @@ func getVersionFromSpec(pkgName string, localRepo string, majorVersion int) stri
 //
 // We also need to add the source paths to .gitignore in the git repo, so we don't accidentally commit + push them
 func processLookasideSources(pd *data.ProcessData, md *data.ModeData, localDir string) error {
-
 	w := md.Worktree
 	metadata, err := w.Filesystem.Create(fmt.Sprintf(".%s.metadata", md.Name))
 	if err != nil {
@@ -1240,7 +1231,7 @@ func processLookasideSources(pd *data.ProcessData, md *data.ModeData, localDir s
 	// Keep track of files we've already uploaded - don't want duplicates!
 	var alreadyUploadedBlobs []string
 
-	gitIgnore, err := os.OpenFile(fmt.Sprintf("%s/.gitignore", localDir), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	gitIgnore, err := os.OpenFile(fmt.Sprintf("%s/.gitignore", localDir), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
 	if err != nil {
 		return err
 	}
@@ -1307,13 +1298,11 @@ func processLookasideSources(pd *data.ProcessData, md *data.ModeData, localDir s
 	}
 
 	return nil
-
 }
 
 // Given an input branch name to import from, like "refs/heads/c9s", produce the tagless branch name we want to commit to, like "r9s"
 // Modular translation of CentOS stream branches i is also done - branch stream-maven-3.8-rhel-9.1.0  ---->  r9s-stream-maven-3.8_9.1.0
 func taglessBranchName(fullBranch string, pd *data.ProcessData) string {
-
 	// Split the full branch name "refs/heads/blah" to only get the short name - last entry
 	tmpBranch := strings.Split(fullBranch, "/")
 	branch := tmpBranch[len(tmpBranch)-1]
@@ -1330,9 +1319,8 @@ func taglessBranchName(fullBranch string, pd *data.ProcessData) string {
 	moduleString := branch[0:rhelSpot]
 
 	// major minor version is everything after the "-rhel-" string
-	majorMinor := branch[rhelSpot+6 : len(branch)]
+	majorMinor := branch[rhelSpot+6:]
 
 	// return translated modular branch:
 	return fmt.Sprintf("%s%d%s-%s_%s", pd.BranchPrefix, pd.Version, pd.BranchSuffix, moduleString, majorMinor)
-
 }

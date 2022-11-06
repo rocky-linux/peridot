@@ -27,11 +27,12 @@ import (
 	"crypto/sha512"
 	"encoding/hex"
 	"fmt"
-	"github.com/go-git/go-billy/v5"
 	"hash"
 	"io"
 	"os"
 	"path/filepath"
+
+	"github.com/go-git/go-billy/v5"
 )
 
 func CopyFromFs(from billy.Filesystem, to billy.Filesystem, path string) error {
@@ -44,7 +45,7 @@ func CopyFromFs(from billy.Filesystem, to billy.Filesystem, path string) error {
 		fullPath := filepath.Join(path, fi.Name())
 
 		if fi.IsDir() {
-			_ = to.MkdirAll(fullPath, 0755)
+			_ = to.MkdirAll(fullPath, 0o755)
 			err := CopyFromFs(from, to, fullPath)
 			if err != nil {
 				return err

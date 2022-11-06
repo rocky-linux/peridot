@@ -22,14 +22,15 @@ package modes
 
 import (
 	"fmt"
-	"github.com/go-git/go-git/v5/plumbing/transport"
-	"github.com/rocky-linux/srpmproc/pkg/misc"
 	"io/ioutil"
 	"net/http"
 	"path/filepath"
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/go-git/go-git/v5/plumbing/transport"
+	"github.com/rocky-linux/srpmproc/pkg/misc"
 
 	"github.com/go-git/go-billy/v5/memfs"
 	"github.com/go-git/go-git/v5"
@@ -146,7 +147,6 @@ func (g *GitMode) RetrieveSource(pd *data.ProcessData) (*data.ModeData, error) {
 	}
 
 	tagIter, err := repo.TagObjects()
-
 	if err != nil {
 		return nil, fmt.Errorf("could not get tag objects: %v", err)
 	}
@@ -221,7 +221,6 @@ func (g *GitMode) RetrieveSource(pd *data.ProcessData) (*data.ModeData, error) {
 }
 
 func (g *GitMode) WriteSource(pd *data.ProcessData, md *data.ModeData) error {
-
 	remote, err := md.Repo.Remote("upstream")
 
 	if err != nil && !pd.TaglessMode {
