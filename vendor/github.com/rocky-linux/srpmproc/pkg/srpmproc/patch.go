@@ -23,14 +23,15 @@ package srpmproc
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/go-git/go-git/v5/plumbing/transport"
-	"github.com/rocky-linux/srpmproc/pkg/misc"
 	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/go-git/go-git/v5/plumbing/transport"
+	"github.com/rocky-linux/srpmproc/pkg/misc"
 
 	"github.com/go-git/go-billy/v5"
 	"github.com/go-git/go-billy/v5/memfs"

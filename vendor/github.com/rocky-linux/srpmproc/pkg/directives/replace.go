@@ -51,7 +51,7 @@ func replace(cfg *srpmprocpb.Cfg, pd *data.ProcessData, _ *data.ModeData, patchT
 
 		switch replacing := replace.Replacing.(type) {
 		case *srpmprocpb.Replace_WithFile:
-			fPatch, err := patchTree.Filesystem.OpenFile(replacing.WithFile, os.O_RDONLY, 0644)
+			fPatch, err := patchTree.Filesystem.OpenFile(replacing.WithFile, os.O_RDONLY, 0o644)
 			if err != nil {
 				return errors.New(fmt.Sprintf("COULD_NOT_OPEN_REPLACING:%s", replacing.WithFile))
 			}

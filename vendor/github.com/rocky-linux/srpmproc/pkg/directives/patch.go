@@ -24,6 +24,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+
 	"github.com/bluekeyes/go-gitdiff/gitdiff"
 	"github.com/go-git/go-git/v5"
 	srpmprocpb "github.com/rocky-linux/srpmproc/pb"

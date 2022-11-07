@@ -21,10 +21,11 @@
 package data
 
 import (
+	"log"
+
 	"github.com/go-git/go-billy/v5"
 	"github.com/go-git/go-git/v5/plumbing/transport"
 	"github.com/rocky-linux/srpmproc/pkg/blob"
-	"log"
 )
 
 type FsCreatorFunc func(branch string) (billy.Filesystem, error)

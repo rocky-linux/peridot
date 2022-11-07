@@ -21,10 +21,11 @@
 package gcs
 
 import (
-	"cloud.google.com/go/storage"
 	"context"
 	"fmt"
 	"io/ioutil"
+
+	"cloud.google.com/go/storage"
 )
 
 type GCS struct {

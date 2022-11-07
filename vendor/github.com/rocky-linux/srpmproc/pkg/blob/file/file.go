@@ -38,7 +38,7 @@ func New(path string) *File {
 }
 
 func (f *File) Write(path string, content []byte) error {
-	w, err := os.OpenFile(filepath.Join(f.path, path), os.O_CREATE|os.O_TRUNC|os.O_RDWR, 0644)
+	w, err := os.OpenFile(filepath.Join(f.path, path), os.O_CREATE|os.O_TRUNC|os.O_RDWR, 0o644)
 	if err != nil {
 		return fmt.Errorf("could not open file: %v", err)
 	}
@@ -57,7 +57,7 @@ func (f *File) Write(path string, content []byte) error {
 }
 
 func (f *File) Read(path string) ([]byte, error) {
-	r, err := os.OpenFile(filepath.Join(f.path, path), os.O_RDONLY, 0644)
+	r, err := os.OpenFile(filepath.Join(f.path, path), os.O_RDONLY, 0o644)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil, nil
