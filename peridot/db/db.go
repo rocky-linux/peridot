@@ -93,7 +93,7 @@ type Access interface {
 	AttachPackageVersion(projectId string, packageId string, packageVersionId string, active bool) error
 	GetProjectPackageVersionFromPackageVersionId(packageVersionId string, projectId string) (string, error)
 	DeactivateProjectPackageVersionByPackageIdAndProjectId(packageId string, projectId string) error
-	MakeActiveInRepoForPackageVersion(packageVersionId string, packageId string) error
+	MakeActiveInRepoForPackageVersion(packageVersionId string, packageId string, projectId string) error
 	CreatePackage(name string, packageType peridotpb.PackageType) (*models.Package, error)
 	AddPackageToProject(projectId string, packageId string, packageTypeOverride peridotpb.PackageType) error
 	GetPackageID(name string) (string, error)

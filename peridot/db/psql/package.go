@@ -242,18 +242,18 @@ func (a *Access) DeactivateProjectPackageVersionByPackageIdAndProjectId(packageI
 	return err
 }
 
-func (a *Access) MakeActiveInRepoForPackageVersion(packageVersionId string, packageId string) error {
+func (a *Access) MakeActiveInRepoForPackageVersion(packageVersionId string, packageId string, projectId string) error {
 	tx, err := a.Begin()
 	if err != nil {
 		return err
 	}
 
-	_, err = tx.Exec("update project_package_versions set active_in_repo = false where package_id = $1", packageId)
+	_, err = tx.Exec("update project_package_versions set active_in_repo = false where package_id = $1 and project_id = $2", packageId, projectId)
 	if err != nil {
 		return err
 	}
 
-	_, err = tx.Exec("update project_package_versions set active_in_repo = true where package_version_id = $1", packageVersionId)
+	_, err = tx.Exec("update project_package_versions set active_in_repo = true where package_version_id = $1 and project_id = $2", packageVersionId, projectId)
 	if err != nil {
 		return err
 	}
