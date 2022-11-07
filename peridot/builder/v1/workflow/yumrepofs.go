@@ -1477,7 +1477,7 @@ func (c *Controller) makeRepoChanges(tx peridotdb.Access, req *UpdateRepoRequest
 	}
 
 	if !req.DisableSetActive {
-		err = tx.MakeActiveInRepoForPackageVersion(build.PackageVersionId, build.PackageId)
+		err = tx.MakeActiveInRepoForPackageVersion(build.PackageVersionId, build.PackageId, build.ProjectId)
 		if err != nil {
 			c.log.Errorf("failed to set active build for project %s, package %s: %s", project.ID.String(), packageName, err)
 			return nil, err
