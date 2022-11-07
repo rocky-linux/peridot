@@ -121,12 +121,17 @@ def peridot_k8s(name, src, tags = [], outs = [], static = False, prod_only = Fal
         commands = dependent_push + [":%s_container" % name],
         tags = ["manual"],
     )
+    push_apply_commands = [
+        ":%s.push" % name,
+        ":%s.apply" % name,
+    ]
+    if force_normal_tags:
+        push_apply_commands = [
+            ":%s.apply" % name,
+        ]
     multirun(
         name = "%s.push_apply" % name,
-        commands = [
-            ":%s.push" % name,
-            ":%s.apply" % name,
-        ],
+        commands = push_apply_commands,
         tags = ["manual", "push_apply"],
     )
 
