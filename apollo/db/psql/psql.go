@@ -105,56 +105,50 @@ func (a *Access) GetAllAdvisories(filters *apollopb.AdvisoryFilters, page int32,
 		&advisories,
 		`
         select
-            q1.*
-        from
-            (
-                select
-                    a.id,
-                    a.created_at,
-                    a.year,
-                    a.num,
-                    a.synopsis,
-                    a.topic,
-                    a.severity,
-                    a.type,
-                    a.description,
-                    a.solution,
-                    a.redhat_issued_at,
-                    a.short_code_code,
-                    a.reboot_suggested,
-                    a.published_at,
-                    array_remove(array_agg(distinct p.name), NULL) as affected_products,
-                    (select array_agg(distinct(
-                        case when c.content is null then c.source_by || ':::' || c.source_link || ':::' || c.id || ':::::::::'
-                             else c.source_by || ':::' || c.source_link || ':::' || c.id || ':::' || jsonb_extract_path_text(c.content, 'cvss3', 'cvss3_scoring_vector') || ':::' || jsonb_extract_path_text(c.content, 'cvss3', 'cvss3_base_score') || ':::' || jsonb_extract_path_text(c.content, 'cwe')
-                        end
-                    )) from advisory_cves ac inner join cves c on c.id = ac.cve_id where ac.advisory_id = a.id) as cves,
-                    (select array_agg(distinct(url)) from advisory_references where advisory_id = a.id) as references,
-                    case when $4 :: bool = true then array(select distinct concat(rpm, ':::', src_rpm) from build_references where affected_product_id in (select id from affected_products where advisory = 'RH' || (case when a.type=1 then 'SA' when a.type=2 then 'BA' else 'EA' end) || '-' || a.year || ':' || a.num))
-                         else array [] :: text[]
-                    end as build_artifacts,
-                    case when $7 :: bool = true then array(select distinct(ar.name || ':::' || p.name) from advisory_rpms ar inner join products p on p.id = ar.product_id where advisory_id = a.id)
-                         else array [] :: text[]
-                    end as rpms,
-                    count(a.*) over() as total
-                from advisories a
-                inner join affected_products ap on ap.advisory = 'RH' || (case when a.type=1 then 'SA' when a.type=2 then 'BA' else 'EA' end) || '-' || a.year || ':' || a.num
-                inner join products p on ap.product_id = p.id
-                where
-                    ($1 :: text is null or p.name = $1 :: text)
-                    and ($2 :: timestamp is null or a.published_at < $2 :: timestamp)
-                    and ($3 :: timestamp is null or a.published_at > $3 :: timestamp)
-                    and (a.published_at is not null or $4 :: bool = true)
-                    and ($6 :: text is null or a.synopsis ilike '%' || $6 :: text || '%')
-                    and ($9 :: numeric = 0 or a.severity = $9 :: numeric)
-                    and ($10 :: numeric = 0 or a.type = $10 :: numeric)
-                group by a.id
-                order by a.published_at desc
-                limit $11 offset $12
-            ) as q1
+            a.id,
+            a.created_at,
+            a.year,
+            a.num,
+            a.synopsis,
+            a.topic,
+            a.severity,
+            a.type,
+            a.description,
+            a.solution,
+            a.redhat_issued_at,
+            a.short_code_code,
+            a.reboot_suggested,
+            a.published_at,
+            array_remove(array_agg(distinct p.name), NULL) as affected_products,
+            (select array_agg(distinct(
+                case when c.content is null then c.source_by || ':::' || c.source_link || ':::' || c.id || ':::::::::'
+                     else c.source_by || ':::' || c.source_link || ':::' || c.id || ':::' || jsonb_extract_path_text(c.content, 'cvss3', 'cvss3_scoring_vector') || ':::' || jsonb_extract_path_text(c.content, 'cvss3', 'cvss3_base_score') || ':::' || jsonb_extract_path_text(c.content, 'cwe')
+                end
+            )) from advisory_cves ac inner join cves c on c.id = ac.cve_id where ac.advisory_id = a.id) as cves,
+            (select array_agg(distinct(url)) from advisory_references where advisory_id = a.id) as references,
+            case when $4 :: bool = true then array(select distinct concat(rpm, ':::', src_rpm) from build_references where affected_product_id in (select id from affected_products where advisory = 'RH' || (case when a.type=1 then 'SA' when a.type=2 then 'BA' else 'EA' end) || '-' || a.year || ':' || a.num))
+                 else array [] :: text[]
+            end as build_artifacts,
+            case when $7 :: bool = true then array(select distinct(ar.name || ':::' || p.name) from advisory_rpms ar inner join products p on p.id = ar.product_id where advisory_id = a.id)
+                 else array [] :: text[]
+            end as rpms,
+            count(a.*) over() as total
+        from advisories a
+        inner join affected_products ap on ap.advisory = 'RH' || (case when a.type=1 then 'SA' when a.type=2 then 'BA' else 'EA' end) || '-' || a.year || ':' || a.num
+        inner join products p on ap.product_id = p.id
         where
-            ($8 :: text is null or ((q1.synopsis ilike '%' || $8 :: text || '%') or (q1.topic ilike '%' || $8 :: text || '%') or (q1.description ilike '%' || $8 :: text || '%') or (q1.solution ilike '%' || $8 :: text || '%') or exists (select from unnest(q1.cves) e where e ilike '%' || $8 :: text || '%')))
-            and ($5 :: text is null or exists (select from unnest(q1.cves) e where e ilike '%' || $5 :: text || '%'))
+            ($1 :: text is null or p.name = $1 :: text)
+            and ($2 :: timestamp is null or a.published_at < $2 :: timestamp)
+            and ($3 :: timestamp is null or a.published_at > $3 :: timestamp)
+            and (a.published_at is not null or $4 :: bool = true)
+            and ($5 :: text is null or exists (select cve_id from advisory_cves where advisory_id = a.id and cve_id ilike '%' || $5 :: text || '%'))
+            and ($6 :: text is null or a.synopsis ilike '%' || $6 :: text || '%')
+            and ($8 :: text is null or ((a.synopsis ilike '%' || $8 :: text || '%') or (a.topic ilike '%' || $8 :: text || '%') or (a.description ilike '%' || $8 :: text || '%') or (a.solution ilike '%' || $8 :: text || '%') or exists (select cve_id from advisory_cves where advisory_id = a.id and cve_id ilike '%' || $8 :: text || '%') or (a.short_code_code || (case when a.type=1 then 'SA' when a.type=2 then 'BA' else 'EA' end) || '-' || a.year || ':' || a.num ilike '%' || $8 :: text || '%')))
+            and ($9 :: numeric = 0 or a.severity = $9 :: numeric)
+            and ($10 :: numeric = 0 or a.type = $10 :: numeric)
+        group by a.id
+        order by a.published_at desc
+        limit $11 offset $12
 		`,
 		utils.StringValueToNullString(filters.Product),
 		utils.TimestampToNullTime(filters.Before),
