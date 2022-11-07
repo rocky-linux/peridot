@@ -1,3 +1,4 @@
+local kubernetes = import 'ci/kubernetes.jsonnet';
 local utils = import 'ci/utils.jsonnet';
 
 {
@@ -20,7 +21,7 @@ local utils = import 'ci/utils.jsonnet';
     },
     {
       name: '%s_S3_BUCKET' % prefix,
-      value: if utils.helm_mode then '{{ .Values.s3Bucket | default !"!" }}' else '',
+      value: if utils.helm_mode then '{{ .Values.s3Bucket | default !"!" }}' else if kubernetes.prod() then 'resf-peridot-prod' else '',
     },
     {
       name: '%s_S3_ASSUME_ROLE' % prefix,
