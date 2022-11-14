@@ -66,7 +66,7 @@ type Access interface {
 	NVRAExists(nvra string) (bool, error)
 	GetBuildByPackageNameAndVersionAndRelease(name string, version string, release string, projectId string) (*models.Build, error)
 	GetLatestBuildIdsByPackageName(name string, projectId string) ([]string, error)
-	GetLatestBuildsByPackageNameAndPackageVersionID(name string, packageVersionId string, projectId string) ([]string, error)
+	GetLatestBuildsByPackageNameAndBranchName(name string, branchName string, projectId string) ([]string, error)
 	GetActiveBuildIdsByTaskArtifactGlob(taskArtifactGlob string, projectId string) ([]string, error)
 	GetAllBuildIdsByPackageName(name string, projectId string) ([]string, error)
 

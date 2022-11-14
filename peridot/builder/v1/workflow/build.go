@@ -739,6 +739,12 @@ func (c *Controller) BuildWorkflow(ctx workflow.Context, req *peridotpb.SubmitBu
 					Arch:       result.Arch,
 					Metadata:   metadata,
 				})
+				artifacts = append(artifacts, &peridotpb.TaskArtifact{
+					TaskId:     result.Subtask.ID.String(),
+					Name:       result.ObjectName,
+					HashSha256: result.HashSha256,
+					Arch:       result.Arch,
+				})
 			}
 		})
 	}
@@ -805,7 +811,7 @@ func (c *Controller) BuildWorkflow(ctx workflow.Context, req *peridotpb.SubmitBu
 
 	submitBuildTask = peridotpb.SubmitBuildTask{
 		BuildId:        buildID,
-		BuildTaskId:    taskID,
+		BuildTaskId:    task.ID.String(),
 		PackageName:    pkg.Name,
 		ImportRevision: importRevision.ToProto(),
 		Artifacts:      artifacts,
@@ -824,7 +830,6 @@ func (c *Controller) BuildWorkflow(ctx workflow.Context, req *peridotpb.SubmitBu
 		setInternalError(errorDetails, err)
 		return nil, err
 	}
-	submitBuildTask.Artifacts = nil
 
 	task.Status = peridotpb.TaskStatus_TASK_STATUS_RUNNING
 

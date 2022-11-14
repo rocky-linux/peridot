@@ -951,7 +951,7 @@ func (c *Controller) UpdateRepoActivity(ctx context.Context, req *UpdateRepoRequ
 
 // todo(mustafa): Convert to request struct
 func (c *Controller) makeRepoChanges(tx peridotdb.Access, req *UpdateRepoRequest, errorDetails *peridotpb.TaskErrorDetails, packageName string, buildId string, moduleStream *peridotpb.ModuleStream, gpgId *string, signArtifactsTasks *keykeeperpb.BatchSignArtifactsTask, cache *Cache) (*yumrepofspb.UpdateRepoTask, error) {
-	build, err := c.db.GetBuild(req.ProjectID, buildId)
+	build, err := tx.GetBuild(req.ProjectID, buildId)
 	if err != nil {
 		c.log.Errorf("error getting build: %v", err)
 		return nil, err
@@ -970,33 +970,56 @@ func (c *Controller) makeRepoChanges(tx peridotdb.Access, req *UpdateRepoRequest
 	}
 	project := projects[0]
 
-	artifacts, err := c.db.GetArtifactsForBuild(buildId)
+	artifacts, err := tx.GetArtifactsForBuild(buildId)
 	if err != nil {
 		setInternalError(errorDetails, err)
 		return nil, fmt.Errorf("failed to get artifacts for build: %v", err)
 	}
 
 	var currentActiveArtifacts models.TaskArtifacts
-	// Get currently active artifacts
-	latestBuilds, err := c.db.GetLatestBuildsByPackageNameAndPackageVersionID(build.PackageName, build.PackageVersionId, project.ID.String())
-	if err != nil {
-		setInternalError(errorDetails, err)
-		return nil, fmt.Errorf("failed to get latest build ids: %v", err)
-	}
-	for _, latestBuild := range latestBuilds {
-		buildArtifacts, err := c.db.GetArtifactsForBuild(latestBuild)
+	var skipDeleteArtifacts []string
+	if moduleStream == nil {
+		// Get currently active artifacts
+		latestBuilds, err := tx.GetLatestBuildIdsByPackageName(build.PackageName, project.ID.String())
 		if err != nil {
 			setInternalError(errorDetails, err)
-			return nil, fmt.Errorf("failed to get artifacts for build: %v", err)
+			return nil, fmt.Errorf("failed to get latest build ids: %v", err)
 		}
-		currentActiveArtifacts = append(currentActiveArtifacts, buildArtifacts...)
+		for _, latestBuild := range latestBuilds {
+			buildArtifacts, err := tx.GetArtifactsForBuild(latestBuild)
+			if err != nil {
+				setInternalError(errorDetails, err)
+				return nil, fmt.Errorf("failed to get artifacts for build: %v", err)
+			}
+			currentActiveArtifacts = append(currentActiveArtifacts, buildArtifacts...)
+		}
+	} else {
+		// Get currently active artifacts
+		latestBuilds, err := tx.GetLatestBuildsByPackageNameAndBranchName(build.PackageName, moduleStream.ImportRevision.ScmBranchName, project.ID.String())
+		if err != nil {
+			setInternalError(errorDetails, err)
+			return nil, fmt.Errorf("failed to get latest build ids: %v", err)
+		}
+		for _, latestBuild := range latestBuilds {
+			buildArtifacts, err := tx.GetArtifactsForBuild(latestBuild)
+			if err != nil {
+				setInternalError(errorDetails, err)
+				return nil, fmt.Errorf("failed to get artifacts for build: %v", err)
+			}
+			currentActiveArtifacts = append(currentActiveArtifacts, buildArtifacts...)
+		}
+	}
+
+	// Get artifacts to skip deletion
+	for _, artifact := range artifacts {
+		skipDeleteArtifacts = append(skipDeleteArtifacts, strings.TrimSuffix(filepath.Base(artifact.Name), ".rpm"))
 	}
 
 	var repos models.Repositories
 
 	if req.ForceRepoId != "" {
 		var err error
-		repo, err := c.db.GetRepository(&req.ForceRepoId, nil, nil)
+		repo, err := tx.GetRepository(&req.ForceRepoId, nil, nil)
 		if err != nil {
 			setInternalError(errorDetails, err)
 			return nil, fmt.Errorf("failed to get repo: %v", err)
@@ -1004,7 +1027,7 @@ func (c *Controller) makeRepoChanges(tx peridotdb.Access, req *UpdateRepoRequest
 		repos = models.Repositories{*repo}
 	} else {
 		var err error
-		repos, err = c.db.FindRepositoriesForPackage(req.ProjectID, packageName, false)
+		repos, err = tx.FindRepositoriesForPackage(req.ProjectID, packageName, false)
 		if err != nil {
 			setInternalError(errorDetails, err)
 			return nil, fmt.Errorf("failed to find repo: %v", err)
@@ -1081,6 +1104,59 @@ func (c *Controller) makeRepoChanges(tx peridotdb.Access, req *UpdateRepoRequest
 		}
 
 		for arch, archArtifacts := range artifactArchMap {
+			noDebugArch := strings.TrimSuffix(arch, "-debug")
+			var streamDocument *modulemd.ModuleMd
+
+			if moduleStream != nil {
+				var newArtifacts models.TaskArtifacts
+
+				streamDocuments := moduleStream.ModuleStreamDocuments[noDebugArch]
+				if streamDocuments != nil {
+					streamDocumentNbc, err := modulemd.Parse(streamDocuments.Streams[moduleStream.Stream])
+					if err != nil {
+						return nil, fmt.Errorf("failed to decode modulemd: %v", err)
+					}
+					streamDocument = streamDocumentNbc.V2
+
+					if arch != "src" {
+						for _, artifact := range archArtifacts {
+							for _, moduleArtifact := range streamDocument.Data.Artifacts.Rpms {
+								moduleArtifactNoEpoch := rpmutils.Epoch().ReplaceAllString(moduleArtifact, "")
+								if strings.TrimSuffix(filepath.Base(artifact.Name), ".rpm") == moduleArtifactNoEpoch {
+									newArtifacts = append(newArtifacts, *artifact)
+								}
+							}
+						}
+
+						artifactArchMap2, err := GenerateArchMapForArtifacts(newArtifacts, &project, &repo)
+						if err != nil {
+							setInternalError(errorDetails, err)
+							return nil, err
+						}
+						archArtifacts = artifactArchMap2[arch]
+					} else {
+						// Remove duplicates for src
+						seen := make(map[string]bool)
+						for _, artifact := range archArtifacts {
+							if !seen[artifact.Name] {
+								newArtifacts = append(newArtifacts, *artifact)
+								seen[artifact.Name] = true
+							}
+						}
+
+						artifactArchMap2, err := GenerateArchMapForArtifacts(newArtifacts, &project, &repo)
+						if err != nil {
+							setInternalError(errorDetails, err)
+							return nil, err
+						}
+						archArtifacts = artifactArchMap2[arch]
+					}
+				}
+				if strings.HasSuffix(arch, "-debug") || arch == "src" {
+					streamDocument = nil
+				}
+			}
+
 			changes := &yumrepofspb.RepositoryChange{
 				Name:             fmt.Sprintf("%s-%s", repo.Name, arch),
 				AddedPackages:    []string{},
@@ -1104,9 +1180,15 @@ func (c *Controller) makeRepoChanges(tx peridotdb.Access, req *UpdateRepoRequest
 			}
 			var modulesRoot []*modulemd.ModuleMd
 
-			idArch := fmt.Sprintf("%s-%s", repo.ID, arch)
+			idArch := fmt.Sprintf("%s-%s", repo.Name, arch)
+			idArchNoDebug := fmt.Sprintf("%s-%s", repo.Name, noDebugArch)
 			var currentRevision *models.RepositoryRevision
 			var groupsXml string
+			if cache.Repos[idArchNoDebug] != nil {
+				if cache.Repos[idArchNoDebug].Modulemd != nil {
+					modulesRoot = cache.Repos[idArchNoDebug].Modulemd
+				}
+			}
 			if cache.Repos[idArch] != nil {
 				if cache.Repos[idArch].PrimaryRoot != nil {
 					primaryRoot = *cache.Repos[idArch].PrimaryRoot
@@ -1117,17 +1199,27 @@ func (c *Controller) makeRepoChanges(tx peridotdb.Access, req *UpdateRepoRequest
 				if cache.Repos[idArch].OtherRoot != nil {
 					otherRoot = *cache.Repos[idArch].OtherRoot
 				}
-				if cache.Repos[idArch].Modulemd != nil {
-					modulesRoot = cache.Repos[idArch].Modulemd
-				}
 				groupsXml = cache.Repos[idArch].GroupsXml
 			} else {
-				currentRevision, err = c.db.GetLatestActiveRepositoryRevision(repo.ID.String(), arch)
+				var noDebugRevision *models.RepositoryRevision
+
+				currentRevision, err = tx.GetLatestActiveRepositoryRevision(repo.ID.String(), arch)
 				if err != nil {
 					if err != sql.ErrNoRows {
 						return nil, fmt.Errorf("failed to get latest active repository revision: %v", err)
 					}
 				}
+				if strings.HasSuffix(arch, "-debug") {
+					noDebugRevision, err = tx.GetLatestActiveRepositoryRevision(repo.ID.String(), noDebugArch)
+					if err != nil {
+						if err != sql.ErrNoRows {
+							return nil, fmt.Errorf("failed to get latest active repository revision: %v", err)
+						}
+					}
+				} else {
+					noDebugRevision = currentRevision
+				}
+
 				if currentRevision != nil {
 					if currentRevision.PrimaryXml != "" {
 						var primaryXmlGz []byte
@@ -1171,11 +1263,14 @@ func (c *Controller) makeRepoChanges(tx peridotdb.Access, req *UpdateRepoRequest
 							return nil, err
 						}
 					}
-					if currentRevision.ModulesYaml != "" {
+					groupsXml = currentRevision.GroupsXml
+				}
+				if noDebugRevision != nil {
+					if noDebugRevision.ModulesYaml != "" {
 						var modulesYamlGz []byte
 						var modulesYaml []byte
 						err := multiErrorCheck(
-							b64Decode(currentRevision.ModulesYaml, &modulesYamlGz),
+							b64Decode(noDebugRevision.ModulesYaml, &modulesYamlGz),
 							decompressWithGz(modulesYamlGz, &modulesYaml),
 						)
 						if err != nil {
@@ -1205,7 +1300,6 @@ func (c *Controller) makeRepoChanges(tx peridotdb.Access, req *UpdateRepoRequest
 							modulesRoot = append(modulesRoot, &*&md)
 						}
 					}
-					groupsXml = currentRevision.GroupsXml
 				}
 			}
 
@@ -1243,7 +1337,7 @@ func (c *Controller) makeRepoChanges(tx peridotdb.Access, req *UpdateRepoRequest
 				}
 
 				shouldAdd := true
-				if arch != "src" {
+				if arch != "src" && moduleStream == nil {
 					// If repo has a list for inclusion, then the artifact has to pass that first
 					if len(repo.IncludeFilter) > 0 {
 						// If the artifact isn't forced, it should be in the include list or additional multilib list
@@ -1326,16 +1420,7 @@ func (c *Controller) makeRepoChanges(tx peridotdb.Access, req *UpdateRepoRequest
 				var pkgId *string
 				var primaryIndex *int
 				for i, primaryPackage := range primaryRoot.Packages {
-					// We check module entries by artifact index from a previous revision
-					if moduleStream != nil {
-						isStreamArtifact := moduleArtifacts[strings.TrimSuffix(filepath.Base(artifact.Name), ".rpm")]
-						if isStreamArtifact {
-							ix := i
-							primaryIndex = &ix
-							pkgId = &primaryPackage.Checksum.Value
-							break
-						}
-					} else {
+					if moduleStream == nil {
 						// If not a module stream, search for a non-module entry
 						// Double check arch as well for multilib purposes
 						if primaryPackage.Name == name && !strings.Contains(primaryPackage.Version.Rel, ".module+") && primaryPackage.Arch == artifact.Arch {
@@ -1343,6 +1428,32 @@ func (c *Controller) makeRepoChanges(tx peridotdb.Access, req *UpdateRepoRequest
 							primaryIndex = &ix
 							pkgId = &primaryPackage.Checksum.Value
 							break
+						}
+					} else {
+						// If a module stream, search for a module entry
+						for _, streamArtifact := range artifacts {
+							var rpmName string
+							var rpmVersion string
+							var rpmRelease string
+							rpmBase := strings.TrimSuffix(filepath.Base(streamArtifact.Name), ".rpm")
+							if rpmutils.NVRUnusualRelease().MatchString(rpmBase) {
+								nvr := rpmutils.NVRUnusualRelease().FindStringSubmatch(rpmBase)
+								rpmName = nvr[1]
+								rpmVersion = nvr[2]
+								rpmRelease = nvr[3]
+							} else if rpmutils.NVR().MatchString(rpmBase) {
+								nvr := rpmutils.NVR().FindStringSubmatch(rpmBase)
+								rpmName = nvr[1]
+								rpmVersion = nvr[2]
+								rpmRelease = nvr[3]
+							}
+
+							if name == rpmName && primaryPackage.Name == name && primaryPackage.Version.Ver == rpmVersion && primaryPackage.Version.Rel == rpmRelease && primaryPackage.Arch == artifact.Arch {
+								ix := i
+								primaryIndex = &ix
+								pkgId = &primaryPackage.Checksum.Value
+								break
+							}
 						}
 					}
 				}
@@ -1395,19 +1506,25 @@ func (c *Controller) makeRepoChanges(tx peridotdb.Access, req *UpdateRepoRequest
 			var nFilelists []*yummeta.FilelistsPackage
 			var nOther []*yummeta.OtherPackage
 			var deleteIds []string
-			if !req.NoDeletePrevious {
+			if !req.NoDeletePrevious || moduleStream != nil {
 				for _, pkg := range primaryRoot.Packages {
 					shouldAdd := true
 					for _, artifact := range currentActiveArtifacts {
-						if filepath.Base(artifact.Name) == filepath.Base(pkg.Location.Href) && !utils.StrContains(strings.TrimSuffix(filepath.Base(artifact.Name), ".rpm"), changes.ModifiedPackages) && !utils.StrContains(strings.TrimSuffix(filepath.Base(artifact.Name), ".rpm"), changes.AddedPackages) {
+						noRpmName := strings.TrimSuffix(filepath.Base(artifact.Name), ".rpm")
+						if filepath.Base(artifact.Name) == filepath.Base(pkg.Location.Href) && !utils.StrContains(noRpmName, changes.ModifiedPackages) && !utils.StrContains(noRpmName, changes.AddedPackages) && !utils.StrContains(noRpmName, skipDeleteArtifacts) {
 							shouldAdd = false
 						}
 					}
 					if !shouldAdd {
 						deleteIds = append(deleteIds, pkg.Checksum.Value)
+					}
+				}
+				for _, pkg := range primaryRoot.Packages {
+					if utils.StrContains(pkg.Checksum.Value, deleteIds) {
 						continue
 					}
-					nPackages = append(nPackages, &*pkg)
+
+					nPackages = append(nPackages, pkg)
 				}
 				for _, pkg := range filelistsRoot.Packages {
 					if utils.StrContains(pkg.PkgId, deleteIds) {
@@ -1432,30 +1549,21 @@ func (c *Controller) makeRepoChanges(tx peridotdb.Access, req *UpdateRepoRequest
 			otherRoot.PackageCount = len(filelistsRoot.Packages)
 
 			// Module builds needs a few more steps
-			if moduleStream != nil {
-				streamDocument := moduleStream.ModuleStreamDocuments[arch]
-				if streamDocument != nil {
-					newEntryNbc, err := modulemd.Parse(streamDocument.Streams[moduleStream.Stream])
-					if err != nil {
-						return nil, err
+			if moduleStream != nil && streamDocument != nil {
+				// If a previous entry exists, we need to overwrite that
+				var moduleIndex *int
+				for i, moduleMd := range modulesRoot {
+					if moduleMd.Data.Name == moduleStream.Name && moduleMd.Data.Stream == moduleStream.Stream {
+						moduleIndex = &*&i
+						break
 					}
-					newEntry := newEntryNbc.V2
-
-					// If a previous entry exists, we need to overwrite that
-					var moduleIndex *int
-					for i, moduleMd := range modulesRoot {
-						if moduleMd.Data.Name == moduleStream.Name && moduleMd.Data.Stream == moduleStream.Stream {
-							moduleIndex = &*&i
-							break
-						}
-					}
-					if moduleIndex != nil {
-						changes.ModifiedModules = append(changes.ModifiedModules, fmt.Sprintf("%s:%s", moduleStream.Name, moduleStream.Stream))
-						modulesRoot[*moduleIndex] = newEntry
-					} else {
-						changes.AddedModules = append(changes.AddedModules, fmt.Sprintf("%s:%s", moduleStream.Name, moduleStream.Stream))
-						modulesRoot = append(modulesRoot, newEntry)
-					}
+				}
+				if moduleIndex != nil {
+					changes.ModifiedModules = append(changes.ModifiedModules, fmt.Sprintf("%s:%s", moduleStream.Name, moduleStream.Stream))
+					modulesRoot[*moduleIndex] = streamDocument
+				} else {
+					changes.AddedModules = append(changes.AddedModules, fmt.Sprintf("%s:%s", moduleStream.Name, moduleStream.Stream))
+					modulesRoot = append(modulesRoot, streamDocument)
 				}
 			}
 
@@ -1470,6 +1578,9 @@ func (c *Controller) makeRepoChanges(tx peridotdb.Access, req *UpdateRepoRequest
 				DefaultsYaml:   defaultsYaml,
 				ModuleDefaults: moduleDefaults,
 				GroupsXml:      groupsXml,
+			}
+			if strings.HasSuffix(arch, "-debug") || arch == "src" {
+				cache.Repos[idArch].Modulemd = nil
 			}
 
 			repoTask.Changes = append(repoTask.Changes, changes)

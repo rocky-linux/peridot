@@ -428,7 +428,7 @@ func (a *Access) GetLatestBuildIdsByPackageName(name string, projectId string) (
 	return ret, nil
 }
 
-func (a *Access) GetLatestBuildsByPackageNameAndPackageVersionID(name string, packageVersionId string, projectId string) ([]string, error) {
+func (a *Access) GetLatestBuildsByPackageNameAndBranchName(name string, branchName string, projectId string) ([]string, error) {
 	var ret []string
 	err := a.query.Select(
 		&ret,
@@ -439,18 +439,19 @@ func (a *Access) GetLatestBuildsByPackageNameAndPackageVersionID(name string, pa
         inner join tasks t on t.id = b.task_id
         inner join packages p on p.id = b.package_id
         inner join project_package_versions ppv on ppv.package_version_id = b.package_version_id
+        inner join import_revisions ir on ir.package_version_id = b.package_version_id
         where
-            b.project_id = $1
-            and p.name = $2
+            b.project_id = $3
+            and p.name = $1
             and ppv.active_in_repo = true
             and ppv.project_id = b.project_id
-            and b.package_version_id = $3
+            and ir.scm_branch_name = $2
             and t.status = 3
         order by b.created_at asc
         `,
-		projectId,
 		name,
-		packageVersionId,
+		branchName,
+		projectId,
 	)
 	if err != nil {
 		return nil, err

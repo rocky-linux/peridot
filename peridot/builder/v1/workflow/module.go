@@ -442,26 +442,29 @@ func (c *Controller) BuildModuleWorkflow(ctx workflow.Context, req *peridotpb.Su
 
 	task.Status = peridotpb.TaskStatus_TASK_STATUS_FAILED
 
+	var buildIDs []string
 	for _, options := range streamBuildOptions {
-		yumrepoCtx := workflow.WithChildOptions(ctx, workflow.ChildWorkflowOptions{
-			TaskQueue: "yumrepofs",
-		})
-		taskID := task.ID.String()
-		updateRepoRequest := &UpdateRepoRequest{
-			ProjectID: req.ProjectId,
-			BuildIDs:  []string{options.BuildId},
-			Delete:    false,
-			TaskID:    &taskID,
-		}
-		updateRepoTask := &yumrepofspb.UpdateRepoTask{}
-		err = workflow.ExecuteChildWorkflow(yumrepoCtx, c.RepoUpdaterWorkflow, updateRepoRequest).Get(ctx, updateRepoTask)
-		if err != nil {
-			setActivityError(errorDetails, err)
-			return nil, err
-		}
-
-		moduleBuildTask.RepoChanges.Changes = append(moduleBuildTask.RepoChanges.Changes, updateRepoTask.Changes...)
+		buildIDs = append(buildIDs, options.BuildId)
 	}
+
+	yumrepoCtx := workflow.WithChildOptions(ctx, workflow.ChildWorkflowOptions{
+		TaskQueue: "yumrepofs",
+	})
+	taskID := task.ID.String()
+	updateRepoRequest := &UpdateRepoRequest{
+		ProjectID: req.ProjectId,
+		BuildIDs:  buildIDs,
+		Delete:    false,
+		TaskID:    &taskID,
+	}
+	updateRepoTask := &yumrepofspb.UpdateRepoTask{}
+	err = workflow.ExecuteChildWorkflow(yumrepoCtx, c.RepoUpdaterWorkflow, updateRepoRequest).Get(ctx, updateRepoTask)
+	if err != nil {
+		setActivityError(errorDetails, err)
+		return nil, err
+	}
+
+	moduleBuildTask.RepoChanges.Changes = append(moduleBuildTask.RepoChanges.Changes, updateRepoTask.Changes...)
 
 	task.Status = peridotpb.TaskStatus_TASK_STATUS_SUCCEEDED
 
@@ -637,47 +640,55 @@ func (c *Controller) BuildModuleStreamWorkflow(ctx workflow.Context, req *perido
 	// Create an index, so we don't have to re-unmarshal later on
 	artifactPrimaryIndex := map[string]ArtifactIndex{}
 
+	artifacts, err := c.db.GetArtifactsForBuild(streamBuildOptions.BuildId)
+	if err != nil {
+		return nil, err
+	}
+
 	// Pre-warm SRPM NEVRAs
 	srpmNevras := map[string]string{}
-	for _, build := range buildTask.Builds {
-		artifacts, err := c.db.GetArtifactsForBuild(build.BuildId)
+	for _, artifact := range artifacts {
+		if artifact.Arch != "src" {
+			continue
+		}
+
+		rpmArtifactMetadata := &peridotpb.RpmArtifactMetadata{}
+		artifactMetadataAny := &anypb.Any{}
+		err = protojson.Unmarshal(artifact.Metadata.JSONText, artifactMetadataAny)
 		if err != nil {
 			return nil, err
 		}
-		for _, artifact := range artifacts {
-			if artifact.Arch != "src" {
-				continue
-			}
+		err := artifactMetadataAny.UnmarshalTo(rpmArtifactMetadata)
+		if err != nil {
+			return nil, err
+		}
 
-			rpmArtifactMetadata := &peridotpb.RpmArtifactMetadata{}
-			artifactMetadataAny := &anypb.Any{}
-			err = protojson.Unmarshal(artifact.Metadata.JSONText, artifactMetadataAny)
-			if err != nil {
-				return nil, err
-			}
-			err := artifactMetadataAny.UnmarshalTo(rpmArtifactMetadata)
-			if err != nil {
-				return nil, err
-			}
+		var primary yummeta.PrimaryRoot
+		err = yummeta.UnmarshalPrimary(rpmArtifactMetadata.Primary, &primary)
+		if err != nil {
+			return nil, err
+		}
 
-			var primary yummeta.PrimaryRoot
-			err = yummeta.UnmarshalPrimary(rpmArtifactMetadata.Primary, &primary)
-			if err != nil {
-				return nil, err
+		for _, build := range buildTask.Builds {
+			if build.PackageName == primary.Packages[0].Name {
+				srpmNevras[build.PackageName] = composetools.GenNevraPrimaryPkg(primary.Packages[0])
 			}
-
-			srpmNevras[build.PackageName] = composetools.GenNevraPrimaryPkg(primary.Packages[0])
 		}
 	}
 
 	// Group content licenses
 	var licenses []string
 	for _, build := range buildTask.Builds {
-		artifacts, err := c.db.GetArtifactsForBuild(build.BuildId)
-		if err != nil {
-			return nil, err
+		var buildTaskArtifactNames []string
+		for _, a := range build.Artifacts {
+			buildTaskArtifactNames = append(buildTaskArtifactNames, a.Name)
 		}
+
 		for _, artifact := range artifacts {
+			if !utils.StrContains(artifact.Name, buildTaskArtifactNames) {
+				continue
+			}
+
 			rpmArtifactMetadata := &peridotpb.RpmArtifactMetadata{}
 			artifactMetadataAny := &anypb.Any{}
 			err = protojson.Unmarshal(artifact.Metadata.JSONText, artifactMetadataAny)
@@ -791,11 +802,22 @@ func fillInRpmArtifactsForModuleMd(md *modulemd.ModuleMd, streamBuildOptions *Mo
 	newMd.Data.License.Content = licenses
 
 	// Set buildrequires platform to the one used
+	didSetPlatform := false
+	platform := streamBuildOptions.Configuration.Platform
+	platformReq := fmt.Sprintf("el%d.%d.%d", platform.Major, platform.Minor, platform.Patch)
 	for _, dep := range newMd.Data.Dependencies {
 		if dep.BuildRequires["platform"] != nil {
-			platform := streamBuildOptions.Configuration.Platform
-			dep.BuildRequires["platform"] = []string{fmt.Sprintf("el%d.%d.%d", platform.Major, platform.Minor, platform.Patch)}
+			dep.BuildRequires["platform"] = []string{platformReq}
+			didSetPlatform = true
+			break
 		}
+	}
+	if !didSetPlatform {
+		newMd.Data.Dependencies = append(newMd.Data.Dependencies, &modulemd.Dependencies{
+			BuildRequires: map[string][]string{
+				"platform": {platformReq},
+			},
+		})
 	}
 
 	// Set arch for components
@@ -855,7 +877,15 @@ func fillInRpmArtifactsForModuleMd(md *modulemd.ModuleMd, streamBuildOptions *Mo
 		collected[nevra] = pkg
 	}
 
-	for nevra, rpmObj := range collected {
+	// Sort collected by rpmObj.Name
+	var collectedNames []string
+	for name := range collected {
+		collectedNames = append(collectedNames, name)
+	}
+	sort.Strings(collectedNames)
+
+	for _, nevra := range collectedNames {
+		rpmObj := collected[nevra]
 		// Skip source RPMs for now as they're
 		// only added if the main RPM is included
 		if rpmObj.Arch == "src" {
