@@ -1041,7 +1041,6 @@ func (c *Controller) makeRepoChanges(tx peridotdb.Access, req *UpdateRepoRequest
 	}
 
 	for _, repo := range repos {
-		c.log.Infof("processing repo: %v", repo.Name)
 		artifactArchMap, err := GenerateArchMapForArtifacts(artifacts, &project, &repo)
 		if err != nil {
 			setInternalError(errorDetails, err)
@@ -1105,8 +1104,6 @@ func (c *Controller) makeRepoChanges(tx peridotdb.Access, req *UpdateRepoRequest
 		}
 
 		for arch, archArtifacts := range artifactArchMap {
-			c.log.Infof("processing arch %s", arch)
-
 			noDebugArch := strings.TrimSuffix(arch, "-debug")
 			var streamDocument *modulemd.ModuleMd
 
@@ -1136,7 +1133,6 @@ func (c *Controller) makeRepoChanges(tx peridotdb.Access, req *UpdateRepoRequest
 							setInternalError(errorDetails, err)
 							return nil, err
 						}
-						c.log.Infof("artifactArchMap2: %v", artifactArchMap2)
 						archArtifacts = artifactArchMap2[arch]
 					} else {
 						// Remove duplicates for src
@@ -1153,7 +1149,6 @@ func (c *Controller) makeRepoChanges(tx peridotdb.Access, req *UpdateRepoRequest
 							setInternalError(errorDetails, err)
 							return nil, err
 						}
-						c.log.Infof("artifactArchMap2: %v", artifactArchMap2)
 						archArtifacts = artifactArchMap2[arch]
 					}
 				}
@@ -1318,7 +1313,6 @@ func (c *Controller) makeRepoChanges(tx peridotdb.Access, req *UpdateRepoRequest
 					}
 				}
 			}
-			c.log.Infof("module artifacts: %v", moduleArtifacts)
 
 			for _, artifact := range archArtifacts {
 				// This shouldn't happen
@@ -1455,7 +1449,6 @@ func (c *Controller) makeRepoChanges(tx peridotdb.Access, req *UpdateRepoRequest
 							}
 
 							if name == rpmName && primaryPackage.Name == name && primaryPackage.Version.Ver == rpmVersion && primaryPackage.Version.Rel == rpmRelease && primaryPackage.Arch == artifact.Arch {
-								c.log.Infof("Found module stream package: %s", rpmBase)
 								ix := i
 								primaryIndex = &ix
 								pkgId = &primaryPackage.Checksum.Value
@@ -1513,8 +1506,6 @@ func (c *Controller) makeRepoChanges(tx peridotdb.Access, req *UpdateRepoRequest
 			var nFilelists []*yummeta.FilelistsPackage
 			var nOther []*yummeta.OtherPackage
 			var deleteIds []string
-			c.log.Infof("modified packages: %v", changes.ModifiedPackages)
-			c.log.Infof("added packages: %v", changes.AddedPackages)
 			if !req.NoDeletePrevious || moduleStream != nil {
 				for _, pkg := range primaryRoot.Packages {
 					shouldAdd := true
@@ -1530,7 +1521,6 @@ func (c *Controller) makeRepoChanges(tx peridotdb.Access, req *UpdateRepoRequest
 				}
 				for _, pkg := range primaryRoot.Packages {
 					if utils.StrContains(pkg.Checksum.Value, deleteIds) {
-						c.log.Infof("Deleting package %s-%s-%s from primary metadata", pkg.Name, pkg.Version.Ver, pkg.Version.Rel)
 						continue
 					}
 
