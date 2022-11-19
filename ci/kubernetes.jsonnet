@@ -228,7 +228,7 @@ local dev() = stage == '-dev';
                 },
               },
             ],
-            affinity: if !std.objectHas(deployment, 'no_anti_affinity') || !deployment.no_anti_affinity then {
+            affinity: (if !std.objectHas(deployment, 'no_anti_affinity') || !deployment.no_anti_affinity then {
               podAntiAffinity: {
                 preferredDuringSchedulingIgnoredDuringExecution: [
                   {
@@ -267,7 +267,33 @@ local dev() = stage == '-dev';
                   },
                 ],
               },
-            },
+            } else {}) + (if deployment.node_pool_request != null then {
+              nodeAffinity: {
+                requiredDuringSchedulingIgnoredDuringExecution: {
+                  nodeSelectorTerms: [
+                    {
+                      matchExpressions: [
+                        {
+                          key: deployment.node_pool_request.key,
+                          operator: 'In',
+                          values: [
+                            deployment.node_pool_request.value,
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              },
+            } else {}),
+            tolerations: if deployment.node_pool_request != null then [
+              {
+                key: deployment.node_pool_request.key,
+                operator: 'Equal',
+                value: deployment.node_pool_request.value,
+                effect: 'NoSchedule',
+              },
+            ] else [],
             restartPolicy: 'Always',
             imagePullSecrets: if std.objectHas(deployment, 'imagePullSecrets') && deployment.imagePullSecrets != null then if std.type(deployment.imagePullSecrets) == 'string' then deployment.imagePullSecrets else [
               {

@@ -6,7 +6,7 @@ local utils = import 'ci/utils.jsonnet';
 
 resfdeploy.new({
   name: 'yumrepofsupdater',
-  replicas: if kubernetes.prod() then 4 else 1,
+  replicas: if kubernetes.prod() then 1 else 1,
   dbname: 'peridot',
   backend: true,
   migrate: true,
@@ -21,12 +21,12 @@ resfdeploy.new({
     value: db.dsn_legacy('peridot', false, 'yumrepofsupdater'),
   },
   requests: if kubernetes.prod() then {
-    cpu: '0.5',
-    memory: '1G',
+    cpu: '2',
+    memory: '15G',
   },
-  limits: if kubernetes.prod() then {
-    cpu: '3',
-    memory: '64G',
+  node_pool_request: {
+    key: 'peridot.rockylinux.org/workflow-tolerates-arch',
+    value: 'amd64',
   },
   service_account_options: {
     annotations: {

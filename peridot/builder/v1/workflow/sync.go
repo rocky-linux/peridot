@@ -926,7 +926,7 @@ func (c *Controller) SyncCatalogActivity(req *peridotpb.SyncCatalogRequest) (*pe
 		if utils.StrContains(newPackage, newBuildPackages) {
 			continue
 		}
-		dbIDs, err := c.db.GetLatestBuildIdsByPackageName(newPackage, req.ProjectId.Value)
+		dbIDs, err := c.db.GetLatestBuildIdsByPackageName(newPackage, &req.ProjectId.Value)
 		if err != nil {
 			if err == sql.ErrNoRows {
 				continue
@@ -949,7 +949,7 @@ func (c *Controller) SyncCatalogActivity(req *peridotpb.SyncCatalogRequest) (*pe
 		if utils.StrContains(newPackage, newBuildPackages) {
 			continue
 		}
-		dbIDs, err := c.db.GetLatestBuildIdsByPackageName(newPackage, req.ProjectId.Value)
+		dbIDs, err := c.db.GetLatestBuildIdsByPackageName(newPackage, &req.ProjectId.Value)
 		if err != nil {
 			if err == sql.ErrNoRows {
 				continue

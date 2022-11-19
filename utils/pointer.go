@@ -121,6 +121,14 @@ func NullStringToPointer(s sql.NullString) *string {
 	return &s.String
 }
 
+func NullStringToEmptyString(s sql.NullString) string {
+	if !s.Valid {
+		return ""
+	}
+
+	return s.String
+}
+
 func Int64(i int64) *int64 {
 	return &i
 }

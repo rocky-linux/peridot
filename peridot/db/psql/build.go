@@ -108,7 +108,11 @@ func (a *Access) AttachBuildToBatch(buildId string, batchId string) error {
 	return nil
 }
 
-func (a *Access) ListBuilds(projectId string, page int32, limit int32) (models.Builds, error) {
+func (a *Access) ListBuilds(filters *peridotpb.BuildFilters, projectId string, page int32, limit int32) (models.Builds, error) {
+	if filters == nil {
+		filters = &peridotpb.BuildFilters{}
+	}
+
 	var ret models.Builds
 	err := a.query.Select(
 		&ret,
@@ -128,13 +132,39 @@ func (a *Access) ListBuilds(projectId string, page int32, limit int32) (models.B
 		from builds b
 		inner join tasks t on t.id = b.task_id
 		inner join packages p on p.id = b.package_id
-		where b.project_id = $1
+		where
+            b.project_id = $1
+            and ($2 :: int is null or $2 :: int = 0 or t.status = $2 :: int)
 		order by b.created_at desc
-		limit $2 offset $3
+		limit $3 offset $4
 		`,
 		projectId,
+		filters.Status,
 		limit,
 		utils.GetOffset(page, limit),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return ret, nil
+}
+
+func (a *Access) GetSuccessfulBuildIDsAsc(projectId string) ([]string, error) {
+	var ret []string
+	err := a.query.Select(
+		&ret,
+		`
+        select
+            b.id
+        from builds b
+        inner join tasks t on t.id = b.task_id
+        where
+            b.project_id = $1
+            and t.status = 3
+        order by b.created_at asc
+        `,
+		projectId,
 	)
 	if err != nil {
 		return nil, err
@@ -177,6 +207,38 @@ func (a *Access) GetBuild(projectId string, buildId string) (*models.Build, erro
 		order by b.created_at desc
 		`,
 		projectId,
+		buildId,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &ret, nil
+}
+
+func (a *Access) GetBuildByID(buildId string) (*models.Build, error) {
+	var ret models.Build
+	err := a.query.Get(
+		&ret,
+		`
+		select
+			b.id,
+			b.created_at,
+			b.package_id,
+			p.name as package_name,
+			b.package_version_id,
+			b.task_id,
+			b.project_id,
+			t.status as task_status,
+			t.response as task_response,
+			t.metadata as task_metadata
+		from builds b
+		inner join tasks t on t.id = b.task_id
+		inner join packages p on p.id = b.package_id
+		where
+			b.id = $1
+		order by b.created_at desc
+		`,
 		buildId,
 	)
 	if err != nil {
@@ -358,9 +420,9 @@ func (a *Access) NVRAExists(nvra string) (bool, error) {
 	return false, nil
 }
 
-func (a *Access) GetBuildByPackageNameAndVersionAndRelease(name string, version string, release string, projectId string) (*models.Build, error) {
-	var ret models.Build
-	err := a.query.Get(
+func (a *Access) GetBuildByPackageNameAndVersionAndRelease(name string, version string, release string) (models.Builds, error) {
+	var ret models.Builds
+	err := a.query.Select(
 		&ret,
 		`
 		select
@@ -379,15 +441,12 @@ func (a *Access) GetBuildByPackageNameAndVersionAndRelease(name string, version 
 		inner join packages p on p.id = b.package_id
         inner join package_versions pv on pv.id = b.package_version_id
 		where
-			b.project_id = $1
-            and p.name = $2
-			and pv.version = $3
-            and pv.release = $4
+            p.name = $1
+			and pv.version = $2
+            and pv.release = $3
             and t.status = 3
 		order by b.created_at desc
-        limit 1
 		`,
-		projectId,
 		name,
 		version,
 		release,
@@ -396,10 +455,10 @@ func (a *Access) GetBuildByPackageNameAndVersionAndRelease(name string, version 
 		return nil, err
 	}
 
-	return &ret, nil
+	return ret, nil
 }
 
-func (a *Access) GetLatestBuildIdsByPackageName(name string, projectId string) ([]string, error) {
+func (a *Access) GetLatestBuildIdsByPackageName(name string, projectId *string) ([]string, error) {
 	var ret []string
 	err := a.query.Select(
 		&ret,
@@ -412,10 +471,8 @@ func (a *Access) GetLatestBuildIdsByPackageName(name string, projectId string) (
         inner join project_package_versions ppv on ppv.package_version_id = b.package_version_id
 		where
             p.name = $2
-            and t.status = 3
-            and ppv.active_in_repo = true
             and ppv.project_id = b.project_id
-            and b.project_id = $1
+            and ($1 :: uuid is null or b.project_id = $1 :: uuid)
 		order by b.created_at asc
 		`,
 		projectId,
@@ -428,7 +485,7 @@ func (a *Access) GetLatestBuildIdsByPackageName(name string, projectId string) (
 	return ret, nil
 }
 
-func (a *Access) GetLatestBuildsByPackageNameAndBranchName(name string, branchName string, projectId string) ([]string, error) {
+func (a *Access) GetBuildIDsByPackageNameAndBranchName(name string, branchName string) ([]string, error) {
 	var ret []string
 	err := a.query.Select(
 		&ret,
@@ -443,15 +500,11 @@ func (a *Access) GetLatestBuildsByPackageNameAndBranchName(name string, branchNa
         where
             b.project_id = $3
             and p.name = $1
-            and ppv.active_in_repo = true
-            and ppv.project_id = b.project_id
-            and ir.scm_branch_name = $2
-            and t.status = 3
+            and ir.scm_branch_name like '%-stream-' || $2
         order by b.created_at asc
         `,
 		name,
 		branchName,
-		projectId,
 	)
 	if err != nil {
 		return nil, err

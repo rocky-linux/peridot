@@ -578,6 +578,7 @@ func (c *Controller) BuildModuleStreamWorkflow(ctx workflow.Context, req *perido
 				},
 				ScmHash:       wrapperspb.String(component.Ref),
 				DisableChecks: req.DisableChecks,
+				SideNvrs:      req.SideNvrs,
 			}
 			extraOptions := &peridotpb.ExtraBuildOptions{
 				DisableYumrepofsUpdates: true,
@@ -726,11 +727,12 @@ func (c *Controller) BuildModuleStreamWorkflow(ctx workflow.Context, req *perido
 
 	// Generate a modulemd for each arch
 	for _, arch := range streamBuildOptions.Project.Archs {
-		err := fillInRpmArtifactsForModuleMd(md, streamBuildOptions, buildTask, artifactPrimaryIndex, arch, licenses, false)
+		newMd := copyModuleMd(*md)
+		err := fillInRpmArtifactsForModuleMd(newMd, streamBuildOptions, buildTask, artifactPrimaryIndex, arch, licenses, false)
 		if err != nil {
 			return nil, err
 		}
-		err = fillInRpmArtifactsForModuleMd(md, streamBuildOptions, buildTask, artifactPrimaryIndex, arch, licenses, true)
+		err = fillInRpmArtifactsForModuleMd(newMd, streamBuildOptions, buildTask, artifactPrimaryIndex, arch, licenses, true)
 		if err != nil {
 			return nil, err
 		}
@@ -793,8 +795,153 @@ func doesRpmPassFilter(artifact *ArtifactIndex, md *modulemd.ModuleMd, arch stri
 	return true
 }
 
+func copyModuleMd(md modulemd.ModuleMd) *modulemd.ModuleMd {
+	ret := modulemd.ModuleMd{
+		Document: md.Document,
+		Version:  md.Version,
+		Data: &modulemd.Data{
+			Name:          md.Data.Name,
+			Stream:        md.Data.Stream,
+			Version:       md.Data.Version,
+			StaticContext: md.Data.StaticContext,
+			Context:       md.Data.Context,
+			Arch:          md.Data.Arch,
+			Summary:       md.Data.Summary,
+			Description:   md.Data.Description,
+			ServiceLevels: map[modulemd.ServiceLevelType]*modulemd.ServiceLevel{},
+			License:       &modulemd.License{},
+			Xmd:           map[string]map[string]string{},
+			Dependencies:  []*modulemd.Dependencies{},
+			References:    &modulemd.References{},
+			Profiles:      map[string]*modulemd.Profile{},
+			Profile:       map[string]*modulemd.Profile{},
+			API:           &modulemd.API{},
+			Filter:        &modulemd.API{},
+			BuildOpts:     &modulemd.BuildOpts{},
+			Components:    &modulemd.Components{},
+			Artifacts:     &modulemd.Artifacts{},
+		},
+	}
+	if md.Data.ServiceLevels != nil {
+		for k, v := range md.Data.ServiceLevels {
+			c := *v
+			ret.Data.ServiceLevels[k] = &c
+		}
+	} else {
+		ret.Data.ServiceLevels = nil
+	}
+	if md.Data.License != nil {
+		c := *md.Data.License
+		ret.Data.License = &c
+	} else {
+		ret.Data.License = nil
+	}
+	if md.Data.Xmd != nil {
+		for k, v := range md.Data.Xmd {
+			c := map[string]string{}
+			for k2, v2 := range v {
+				c[k2] = v2
+			}
+			ret.Data.Xmd[k] = c
+		}
+	} else {
+		ret.Data.Xmd = nil
+	}
+	if md.Data.Dependencies != nil {
+		for _, v := range md.Data.Dependencies {
+			c := *v
+			ret.Data.Dependencies = append(ret.Data.Dependencies, &c)
+		}
+	}
+	if md.Data.References != nil {
+		c := *md.Data.References
+		ret.Data.References = &c
+	} else {
+		ret.Data.References = nil
+	}
+	if md.Data.Profiles != nil {
+		for k, v := range md.Data.Profiles {
+			c := *v
+			ret.Data.Profiles[k] = &c
+		}
+	} else {
+		ret.Data.Profiles = nil
+	}
+	if md.Data.Profile != nil {
+		for k, v := range md.Data.Profile {
+			c := *v
+			ret.Data.Profile[k] = &c
+		}
+	} else {
+		ret.Data.Profile = nil
+	}
+	if md.Data.API != nil {
+		c := *md.Data.API
+		ret.Data.API = &c
+	} else {
+		ret.Data.API = nil
+	}
+	if md.Data.Filter != nil {
+		c := *md.Data.Filter
+		ret.Data.Filter = &c
+	} else {
+		ret.Data.Filter = nil
+	}
+	if md.Data.BuildOpts != nil {
+		c := *md.Data.BuildOpts
+		if md.Data.BuildOpts.Rpms != nil {
+			rpms := *md.Data.BuildOpts.Rpms
+			c.Rpms = &rpms
+		}
+		ret.Data.BuildOpts = &c
+	} else {
+		ret.Data.BuildOpts = nil
+	}
+	if md.Data.Components != nil {
+		c := *md.Data.Components
+		if md.Data.Components.Rpms != nil {
+			rpms := map[string]*modulemd.ComponentRPM{}
+			for k, v := range md.Data.Components.Rpms {
+				x := *v
+				rpms[k] = &x
+			}
+			c.Rpms = rpms
+		}
+		if md.Data.Components.Modules != nil {
+			modules := map[string]*modulemd.ComponentModule{}
+			for k, v := range md.Data.Components.Modules {
+				x := *v
+				modules[k] = &x
+			}
+			c.Modules = modules
+		}
+		ret.Data.Components = &c
+	} else {
+		ret.Data.Components = nil
+	}
+	if md.Data.Artifacts != nil {
+		c := *md.Data.Artifacts
+		if md.Data.Artifacts.RpmMap != nil {
+			rpmMap := map[string]map[string]*modulemd.ArtifactsRPMMap{}
+			for k, v := range md.Data.Artifacts.RpmMap {
+				x := map[string]*modulemd.ArtifactsRPMMap{}
+				for k2, v2 := range v {
+					y := *v2
+					x[k2] = &y
+				}
+				rpmMap[k] = x
+			}
+		}
+		ret.Data.Artifacts = &c
+	} else {
+		ret.Data.Artifacts = nil
+	}
+
+	return &ret
+}
+
 func fillInRpmArtifactsForModuleMd(md *modulemd.ModuleMd, streamBuildOptions *ModuleStreamBuildOptions, buildTask *peridotpb.ModuleStream, artifactPrimaryIndex map[string]ArtifactIndex, arch string, licenses []string, devel bool) error {
-	newMd := *md
+	newMd := copyModuleMd(*md)
 	// Set version, context, arch and licenses
 	newMd.Data.Version = streamBuildOptions.Version
 	newMd.Data.Context = streamBuildOptions.Context
@@ -973,8 +1120,8 @@ func fillInRpmArtifactsForModuleMd(md *modulemd.ModuleMd, streamBuildOptions *Mo
 
 	streamName := streamBuildOptions.Stream
 	if devel {
-		newMd.Data.Name = newMd.Data.Name + "-devel"
-		streamName += "-devel"
+		newMd.Data.Name = streamBuildOptions.Name + "-devel"
+		streamName = streamBuildOptions.Stream + "-devel"
 	}
 
 	yamlBytes, err := yaml.Marshal(&newMd)
