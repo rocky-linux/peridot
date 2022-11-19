@@ -498,8 +498,7 @@ func (a *Access) GetBuildIDsByPackageNameAndBranchName(name string, branchName s
         inner join project_package_versions ppv on ppv.package_version_id = b.package_version_id
         inner join import_revisions ir on ir.package_version_id = b.package_version_id
         where
-            b.project_id = $3
-            and p.name = $1
+            p.name = $1
             and ir.scm_branch_name like '%-stream-' || $2
         order by b.created_at asc
         `,

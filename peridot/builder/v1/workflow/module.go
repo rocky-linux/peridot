@@ -49,6 +49,8 @@ import (
 	"google.golang.org/protobuf/types/known/wrapperspb"
 	"gopkg.in/yaml.v3"
 	"io/ioutil"
+	"path/filepath"
+	"peridot.resf.org/apollo/rpmutils"
 	"peridot.resf.org/peridot/composetools"
 	"peridot.resf.org/peridot/db/models"
 	peridotpb "peridot.resf.org/peridot/pb"
@@ -228,6 +230,9 @@ func (c *Controller) BuildModuleWorkflow(ctx workflow.Context, req *peridotpb.Su
 	for _, revision := range importRevisions {
 		if revision.Modular {
 			if len(req.Branches) > 0 && !utils.StrContains(revision.ScmBranchName, req.Branches) {
+				continue
+			}
+			if !strings.HasPrefix(revision.ScmBranchName, fmt.Sprintf("%s%d%s-stream", project.TargetBranchPrefix, project.MajorVersion, project.BranchSuffix.String)) {
 				continue
 			}
 			if branchIndex[revision.ScmBranchName] {
@@ -539,6 +544,8 @@ func (c *Controller) BuildModuleStreamWorkflow(ctx workflow.Context, req *perido
 			{
 				Name:           repo.Name,
 				ModuleHotfixes: true,
+				Priority:       -1,
+				IgnoreExclude:  true,
 			},
 		}
 	}
@@ -549,8 +556,8 @@ func (c *Controller) BuildModuleStreamWorkflow(ctx workflow.Context, req *perido
 	// Building all project architectures is the default and cannot currently be overridden by the MD.
 	// The MD can't override generated values such as repository or cache either yet.
 	// Name specified by the component is also currently ignored and the key is forcefully used.
-	// We are not respecting platform or buildrequires at all since we don't have an active registry yet.
 	// Whatever is available in the latest revision of yumrepofs for the project is what's used (including external repos).
+	var nonY1Excludes []string
 	for _, buildOrder := range buildOrders {
 		var futures []FutureContext
 		for _, component := range buildOrderIndex[buildOrder] {
@@ -590,6 +597,7 @@ func (c *Controller) BuildModuleStreamWorkflow(ctx workflow.Context, req *perido
 				BuildBatchId:        streamBuildOptions.BuildBatchId,
 				Modules:             buildRequiresModules,
 				ForceDist:           streamBuildOptions.Dist,
+				ExcludePackages:     nonY1Excludes,
 			}
 
 			task, err := c.db.CreateTask(nil, "noarch", peridotpb.TaskType_TASK_TYPE_BUILD, &req.ProjectId, &parentTaskId)
@@ -614,6 +622,12 @@ func (c *Controller) BuildModuleStreamWorkflow(ctx workflow.Context, req *perido
 				return nil, err
 			}
 			buildTask.Builds = append(buildTask.Builds, &btask)
+			for _, a := range btask.Artifacts {
+				match := rpmutils.NVR().FindStringSubmatch(filepath.Base(a.Name))
+				if !utils.StrContains(match[1], nonY1Excludes) {
+					nonY1Excludes = append(nonY1Excludes, match[1])
+				}
+			}
 
 			if repo != nil {
 				yumrepoCtx := workflow.WithChildOptions(ctx, workflow.ChildWorkflowOptions{

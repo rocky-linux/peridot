@@ -478,12 +478,15 @@ func (c *Controller) BuildWorkflow(ctx workflow.Context, req *peridotpb.SubmitBu
 		if extraOptions.ExtraYumrepofsRepos == nil {
 			extraOptions.ExtraYumrepofsRepos = []*peridotpb.ExtraYumrepofsRepo{}
 		}
+		if extraOptions.ExcludePackages == nil {
+			extraOptions.ExcludePackages = []string{}
+		}
 		extraOptions.ExtraYumrepofsRepos = append(extraOptions.ExtraYumrepofsRepos, &peridotpb.ExtraYumrepofsRepo{
 			Name:           repo.Name,
 			ModuleHotfixes: true,
 			IgnoreExclude:  true,
 		})
-		extraOptions.ExcludePackages = excludes
+		extraOptions.ExcludePackages = append(extraOptions.ExcludePackages, excludes...)
 
 		var buildIds []string
 		for _, build := range buildNvrs {

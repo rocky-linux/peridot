@@ -24,7 +24,7 @@ resfdeploy.new({
     cpu: '2',
     memory: '15G',
   },
-  node_pool_request: {
+  node_pool_request: if kubernetes.prod() then {
     key: 'peridot.rockylinux.org/workflow-tolerates-arch',
     value: 'amd64',
   },
