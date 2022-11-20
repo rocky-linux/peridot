@@ -75,16 +75,15 @@ var (
 )
 
 type UpdateRepoRequest struct {
-	ProjectID   string   `json:"projectId"`
-	BuildIDs    []string `json:"buildId"`
-	TaskID      *string  `json:"taskId"`
-	ForceRepoId string   `json:"forceRepoId"`
-	// todo(mustafa): Add support for deleting packages
-	Delete           bool `json:"delete"`
-	ForceNonModular  bool `json:"forceNonModular"`
-	DisableSigning   bool `json:"disableSigning"`
-	DisableSetActive bool `json:"disableSetActive"`
-	NoDeletePrevious bool `json:"noDeletePrevious"`
+	ProjectID        string   `json:"projectId"`
+	BuildIDs         []string `json:"buildId"`
+	TaskID           *string  `json:"taskId"`
+	ForceRepoId      string   `json:"forceRepoId"`
+	Delete           bool     `json:"delete"`
+	ForceNonModular  bool     `json:"forceNonModular"`
+	DisableSigning   bool     `json:"disableSigning"`
+	DisableSetActive bool     `json:"disableSetActive"`
+	NoDeletePrevious bool     `json:"noDeletePrevious"`
 }
 
 type CompiledGlobFilter struct {
@@ -1012,8 +1011,10 @@ func (c *Controller) makeRepoChanges(tx peridotdb.Access, req *UpdateRepoRequest
 	}
 
 	// Get artifacts to skip deletion
-	for _, artifact := range artifacts {
-		skipDeleteArtifacts = append(skipDeleteArtifacts, strings.TrimSuffix(filepath.Base(artifact.Name), ".rpm"))
+	if !req.Delete {
+		for _, artifact := range artifacts {
+			skipDeleteArtifacts = append(skipDeleteArtifacts, strings.TrimSuffix(filepath.Base(artifact.Name), ".rpm"))
+		}
 	}
 
 	var repos models.Repositories
@@ -1308,8 +1309,8 @@ func (c *Controller) makeRepoChanges(tx peridotdb.Access, req *UpdateRepoRequest
 					archName = fmt.Sprintf("%s.%s", noDebugInfoName, artifact.Arch)
 				}
 
-				shouldAdd := true
-				if arch != "src" && moduleStream == nil {
+				shouldAdd := !req.Delete
+				if arch != "src" && moduleStream == nil && !req.Delete {
 					// If repo has a list for inclusion, then the artifact has to pass that first
 					if len(repo.IncludeFilter) > 0 {
 						// If the artifact isn't forced, it should be in the include list or additional multilib list
@@ -1491,13 +1492,15 @@ func (c *Controller) makeRepoChanges(tx peridotdb.Access, req *UpdateRepoRequest
 			var nFilelists []*yummeta.FilelistsPackage
 			var nOther []*yummeta.OtherPackage
 			var deleteIds []string
-			if !req.NoDeletePrevious || moduleStream != nil {
+			if (!req.NoDeletePrevious || moduleStream != nil) || req.Delete {
 				for _, pkg := range primaryRoot.Packages {
-					shouldAdd := true
-					for _, artifact := range currentActiveArtifacts {
-						noRpmName := strings.TrimSuffix(filepath.Base(artifact.Name), ".rpm")
-						if filepath.Base(artifact.Name) == filepath.Base(pkg.Location.Href) && !utils.StrContains(noRpmName, changes.ModifiedPackages) && !utils.StrContains(noRpmName, changes.AddedPackages) && !utils.StrContains(noRpmName, skipDeleteArtifacts) {
-							shouldAdd = false
+					shouldAdd := !req.Delete
+					if !req.Delete {
+						for _, artifact := range currentActiveArtifacts {
+							noRpmName := strings.TrimSuffix(filepath.Base(artifact.Name), ".rpm")
+							if filepath.Base(artifact.Name) == filepath.Base(pkg.Location.Href) && !utils.StrContains(noRpmName, changes.ModifiedPackages) && !utils.StrContains(noRpmName, changes.AddedPackages) && !utils.StrContains(noRpmName, skipDeleteArtifacts) {
+								shouldAdd = false
+							}
 						}
 					}
 					if !shouldAdd {
