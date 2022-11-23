@@ -84,6 +84,7 @@ type UpdateRepoRequest struct {
 	DisableSigning   bool     `json:"disableSigning"`
 	DisableSetActive bool     `json:"disableSetActive"`
 	NoDeletePrevious bool     `json:"noDeletePrevious"`
+	NoDeleteInChain  bool     `json:"noDeleteInChain"`
 }
 
 type CompiledGlobFilter struct {
@@ -104,8 +105,9 @@ type CachedRepo struct {
 }
 
 type Cache struct {
-	GlobFilters map[string]*CompiledGlobFilter
-	Repos       map[string]*CachedRepo
+	GlobFilters   map[string]*CompiledGlobFilter
+	Repos         map[string]*CachedRepo
+	NoDeleteChain []string
 }
 
 // Chain multiple errors and stop processing if any error is returned
@@ -1011,7 +1013,7 @@ func (c *Controller) makeRepoChanges(tx peridotdb.Access, req *UpdateRepoRequest
 	}
 
 	// Get artifacts to skip deletion
-	if !req.Delete {
+	if !req.Delete && moduleStream == nil {
 		for _, artifact := range artifacts {
 			skipDeleteArtifacts = append(skipDeleteArtifacts, strings.TrimSuffix(filepath.Base(artifact.Name), ".rpm"))
 		}
@@ -1054,10 +1056,6 @@ func (c *Controller) makeRepoChanges(tx peridotdb.Access, req *UpdateRepoRequest
 		var compiledExcludeGlobs []*CompiledGlobFilter
 
 		for _, excludeGlob := range repo.ExcludeFilter {
-			if cache.GlobFilters[excludeGlob] != nil {
-				compiledExcludeGlobs = append(compiledExcludeGlobs, cache.GlobFilters[excludeGlob])
-				continue
-			}
 			var arch string
 			var globVal string
 			if globFilterArchRegex.MatchString(excludeGlob) {
@@ -1076,7 +1074,6 @@ func (c *Controller) makeRepoChanges(tx peridotdb.Access, req *UpdateRepoRequest
 				Glob: g,
 			}
 			compiledExcludeGlobs = append(compiledExcludeGlobs, globFilter)
-			cache.GlobFilters[excludeGlob] = globFilter
 		}
 
 		for arch, archArtifacts := range artifactArchMap {
@@ -1321,7 +1318,7 @@ func (c *Controller) makeRepoChanges(tx peridotdb.Access, req *UpdateRepoRequest
 
 					// Check if it matches any exclude filter
 					for _, excludeFilter := range compiledExcludeGlobs {
-						if excludeFilter.Arch != "" && excludeFilter.Arch != strings.TrimSuffix(arch, "-debug") {
+						if excludeFilter.Arch != "" && excludeFilter.Arch != noDebugArch {
 							continue
 						}
 						if excludeFilter.Glob.Match(noDebugInfoName) || excludeFilter.Glob.Match(archName) {
@@ -1332,11 +1329,6 @@ func (c *Controller) makeRepoChanges(tx peridotdb.Access, req *UpdateRepoRequest
 				c.log.Infof("should add %s: %v", artifact.Name, shouldAdd)
 
 				baseNoRpm := strings.Replace(filepath.Base(artifact.Name), ".rpm", "", 1)
-
-				if !shouldAdd {
-					changes.RemovedPackages = append(changes.RemovedPackages, baseNoRpm)
-					continue
-				}
 
 				var anyMetadata anypb.Any
 				err := protojson.Unmarshal(artifact.Metadata.JSONText, &anyMetadata)
@@ -1436,6 +1428,14 @@ func (c *Controller) makeRepoChanges(tx peridotdb.Access, req *UpdateRepoRequest
 						}
 					}
 				}
+
+				if !shouldAdd {
+					if primaryIndex != nil {
+						changes.RemovedPackages = append(changes.RemovedPackages, baseNoRpm)
+					}
+					continue
+				}
+
 				if primaryIndex != nil {
 					c.log.Infof("found primary index %d", *primaryIndex)
 					if !utils.StrContains(baseNoRpm, changes.ModifiedPackages) && !utils.StrContains(baseNoRpm, changes.AddedPackages) {
@@ -1449,6 +1449,7 @@ func (c *Controller) makeRepoChanges(tx peridotdb.Access, req *UpdateRepoRequest
 					}
 					primaryRoot.Packages = append(primaryRoot.Packages, pkgPrimary.Packages[0])
 				}
+				cache.NoDeleteChain = append(cache.NoDeleteChain, baseNoRpm)
 
 				var filelistsIndex *int
 				if pkgId != nil {
@@ -1500,8 +1501,17 @@ func (c *Controller) makeRepoChanges(tx peridotdb.Access, req *UpdateRepoRequest
 							noRpmName := strings.TrimSuffix(filepath.Base(artifact.Name), ".rpm")
 							if filepath.Base(artifact.Name) == filepath.Base(pkg.Location.Href) && !utils.StrContains(noRpmName, changes.ModifiedPackages) && !utils.StrContains(noRpmName, changes.AddedPackages) && !utils.StrContains(noRpmName, skipDeleteArtifacts) {
 								shouldAdd = false
+								if req.NoDeleteInChain {
+									if utils.StrContains(noRpmName, cache.NoDeleteChain) {
+										shouldAdd = true
+									}
+								}
 							}
 						}
+					}
+					noRpmNamePkg := strings.TrimSuffix(filepath.Base(pkg.Location.Href), ".rpm")
+					if utils.StrContains(noRpmNamePkg, changes.RemovedPackages) {
+						shouldAdd = false
 					}
 					if !shouldAdd {
 						c.log.Infof("deleting %s", pkg.Location.Href)
