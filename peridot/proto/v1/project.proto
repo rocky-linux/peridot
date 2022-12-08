@@ -83,6 +83,13 @@ service ProjectService {
     };
   }
 
+  rpc CloneSwap(CloneSwapRequest) returns (resf.peridot.v1.AsyncTask) {
+    option (google.api.http) = {
+      post: "/v1/projects/{target_project_id=*}/cloneswap"
+      body: "*"
+    };
+  }
+
   rpc ListExternalRepositories(ListExternalRepositoriesRequest) returns (ListExternalRepositoriesResponse) {
     option (google.api.http) = {
       get: "/v1/projects/{project_id=*}/external_repositories"
@@ -309,6 +316,17 @@ message CreateHashedRepositoriesRequest {
 
 message CreateHashedRepositoriesTask {
   repeated string repo_revisions = 1;
+}
+
+message CloneSwapRequest {
+  google.protobuf.StringValue target_project_id = 1 [(validate.rules).message.required = true];
+  google.protobuf.StringValue src_project_id = 2 [(validate.rules).message.required = true];
+}
+
+message CloneSwapTask {
+  string target_project_id = 1;
+  string src_project_id = 2;
+  repeated string build_ids_layered = 3;
 }
 
 message LookasideFileUploadRequest {

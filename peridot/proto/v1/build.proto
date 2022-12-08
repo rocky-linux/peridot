@@ -297,6 +297,7 @@ message ExtraYumrepofsRepo {
   string name = 1;
   bool module_hotfixes = 2;
   bool ignore_exclude = 3;
+  int32 priority = 4;
 }
 
 // These options can be used to customize the behavior of the service

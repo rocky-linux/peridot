@@ -57,7 +57,7 @@ func (s *Server) ListBuilds(ctx context.Context, req *peridotpb.ListBuildsReques
 
 	page := utils.MinPage(req.Page)
 	limit := utils.MinLimit(req.Limit)
-	builds, err := s.db.ListBuilds(req.ProjectId, page, limit)
+	builds, err := s.db.ListBuilds(req.Filters, req.ProjectId, page, limit)
 	if err != nil {
 		s.log.Errorf("could not list builds: %v", err)
 		return nil, utils.CouldNotRetrieveObjects

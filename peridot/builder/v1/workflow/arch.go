@@ -395,11 +395,16 @@ obsoletes=1
 gpgcheck=0
 assumeyes=1
 keepcache=1
+best=1
 syslog_ident=peridotbuilder
 syslog_device=
 metadata_expire=0
 install_weak_deps=0
 protected_packages=
+reposdir=/dev/null
+logfile=/var/log/yum.log
+mdpolicy=group:primary
+metadata_expire=0
 user_agent=peridotbuilder`
 
 	switch project.TargetVendor {
@@ -535,12 +540,6 @@ config_opts['module_setup_commands'] = [{moduleSetupCommands}]
 	mockConfig += `
 config_opts['dnf.conf'] = """
 {yumConfig}
-reposdir=/dev/null
-cachedir=/var/cache/yum
-logfile=/var/log/yum.log
-mdpolicy=group:primary
-metadata_expire=0
-
 `
 
 	repos, err := c.repos(project.ID.String(), arch, extra)

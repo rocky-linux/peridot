@@ -53,9 +53,11 @@ type Access interface {
 	GetBuildCount() (int64, error)
 	CreateBuildBatch(projectId string) (string, error)
 	AttachBuildToBatch(buildId string, batchId string) error
-	ListBuilds(projectId string, page int32, limit int32) (models.Builds, error)
+	ListBuilds(filters *peridotpb.BuildFilters, projectId string, page int32, limit int32) (models.Builds, error)
+	GetSuccessfulBuildIDsAsc(projectId string) ([]string, error)
 	BuildCountInProject(projectId string) (int64, error)
 	GetBuild(projectId string, buildId string) (*models.Build, error)
+	GetBuildByID(buildId string) (*models.Build, error)
 	GetBuildByTaskIdAndPackageId(taskId string, packageId string) (*models.Build, error)
 	GetBuildBatch(projectId string, batchId string, batchFilter *peridotpb.BatchFilter, page int32, limit int32) (models.Builds, error)
 	ListBuildBatches(projectId string, batchId *string, page int32, limit int32) (models.BuildBatches, error)
@@ -64,9 +66,9 @@ type Access interface {
 	LockNVRA(nvra string) error
 	UnlockNVRA(nvra string) error
 	NVRAExists(nvra string) (bool, error)
-	GetBuildByPackageNameAndVersionAndRelease(name string, version string, release string, projectId string) (*models.Build, error)
-	GetLatestBuildIdsByPackageName(name string, projectId string) ([]string, error)
-	GetLatestBuildsByPackageNameAndBranchName(name string, branchName string, projectId string) ([]string, error)
+	GetBuildByPackageNameAndVersionAndRelease(name string, version string, release string) (models.Builds, error)
+	GetLatestBuildIdsByPackageName(name string, projectId *string) ([]string, error)
+	GetBuildIDsByPackageNameAndBranchName(name string, branchName string) ([]string, error)
 	GetActiveBuildIdsByTaskArtifactGlob(taskArtifactGlob string, projectId string) ([]string, error)
 	GetAllBuildIdsByPackageName(name string, projectId string) ([]string, error)
 

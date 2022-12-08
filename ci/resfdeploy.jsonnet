@@ -267,6 +267,7 @@ local manifestYamlStream = function (value, indent_array_in_object=false, c_docu
             limits: if std.objectHas(info, 'limits') then info.limits,
             requests: if std.objectHas(info, 'requests') then info.requests,
             args: if std.objectHas(info, 'args') then info.args else [],
+            node_pool_request: if std.objectHas(info, 'node_pool_request') then info.node_pool_request else null,
             serviceAccount: sa_name,
           },
         ),

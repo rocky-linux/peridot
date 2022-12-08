@@ -5,6 +5,7 @@ go_library(
     srcs = [
         "arch.go",
         "build.go",
+        "clone_swap.go",
         "hashed_repositories.go",
         "import.go",
         "infrastructure.go",
@@ -46,6 +47,7 @@ go_library(
         "//vendor/github.com/go-git/go-git/v5/storage/memory",
         "//vendor/github.com/gobwas/glob",
         "//vendor/github.com/google/uuid",
+        "//vendor/github.com/pkg/errors",
         "//vendor/github.com/rocky-linux/srpmproc/modulemd",
         "//vendor/github.com/rocky-linux/srpmproc/pb",
         "//vendor/github.com/rocky-linux/srpmproc/pkg/data",

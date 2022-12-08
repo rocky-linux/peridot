@@ -323,20 +323,13 @@ func (c *Controller) RpmImportActivity(ctx context.Context, req *peridotpb.RpmIm
 	var nvr string
 	for _, rpmObj := range rpms {
 		realNvr := rpmObj.String()
-		if rpmObj.SourceRPM() == "" && rpmObj.Architecture() == "i686" {
-			realNvr = strings.ReplaceAll(realNvr, ".i686", ".src")
-		}
 		if nvr == "" {
 			nvr = rpmObj.SourceRPM()
-			if nvr == "" && rpmObj.Architecture() == "i686" {
+			if nvr == "" {
 				nvr = realNvr
 			}
 
 			break
-		} else {
-			if nvr != rpmObj.SourceRPM() && nvr != fmt.Sprintf("%s.rpm", realNvr) {
-				return nil, fmt.Errorf("only include RPMs from one package")
-			}
 		}
 	}
 	if !rpmutils.NVR().MatchString(nvr) {

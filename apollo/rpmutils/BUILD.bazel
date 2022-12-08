@@ -5,4 +5,5 @@ go_library(
     srcs = ["regex.go"],
     importpath = "peridot.resf.org/apollo/rpmutils",
     visibility = ["//visibility:public"],
+    deps = ["//vendor/github.com/rocky-linux/srpmproc/pkg/rpmutils"],
 )

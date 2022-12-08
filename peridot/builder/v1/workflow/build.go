@@ -413,10 +413,16 @@ func (c *Controller) BuildWorkflow(ctx workflow.Context, req *peridotpb.SubmitBu
 		return nil, err
 	}
 
+	// If there is a parent task, we need to use that ID as the parent task ID
+	taskID := task.ID.String()
+	if task.ParentTaskId.Valid {
+		taskID = task.ParentTaskId.String
+	}
+
 	// Create a side repo if the build request specifies side NVRs
 	// Packages specified here will be excluded from the main repo
 	if len(req.SideNvrs) > 0 {
-		var buildNvrs []*models.Build
+		var buildNvrs []models.Build
 		var excludes []string
 		for _, sideNvr := range req.SideNvrs {
 			if !rpmutils.NVRNoArch().MatchString(sideNvr) {
@@ -429,7 +435,7 @@ func (c *Controller) BuildWorkflow(ctx workflow.Context, req *peridotpb.SubmitBu
 			nvrVersion := nvrMatch[2]
 			nvrRelease := nvrMatch[3]
 
-			buildNvr, err := c.db.GetBuildByPackageNameAndVersionAndRelease(nvrName, nvrVersion, nvrRelease, req.ProjectId)
+			buildNvrsFromBuild, err := c.db.GetBuildByPackageNameAndVersionAndRelease(nvrName, nvrVersion, nvrRelease)
 			if err != nil {
 				if err == sql.ErrNoRows {
 					err = fmt.Errorf("side NVR %s not found in project %s", sideNvr, req.ProjectId)
@@ -441,21 +447,23 @@ func (c *Controller) BuildWorkflow(ctx workflow.Context, req *peridotpb.SubmitBu
 				return nil, err
 			}
 
-			artifacts, err := c.db.GetArtifactsForBuild(buildNvr.ID.String())
-			if err != nil {
-				err = fmt.Errorf("could not get artifacts for build %s: %v", buildNvr.ID, err)
-				setInternalError(errorDetails, err)
-				return nil, err
-			}
+			for _, buildNvr := range buildNvrsFromBuild {
+				artifacts, err := c.db.GetArtifactsForBuild(buildNvr.ID.String())
+				if err != nil {
+					err = fmt.Errorf("could not get artifacts for build %s: %v", buildNvr.ID, err)
+					setInternalError(errorDetails, err)
+					return nil, err
+				}
 
-			for _, artifact := range artifacts {
-				artifactName := strings.TrimPrefix(artifact.Name, fmt.Sprintf("%s/", buildNvr.TaskId))
-				if rpmutils.NVR().MatchString(artifactName) {
-					excludes = append(excludes, rpmutils.NVR().FindStringSubmatch(artifactName)[1])
+				for _, artifact := range artifacts {
+					artifactName := strings.TrimPrefix(artifact.Name, fmt.Sprintf("%s/", buildNvr.TaskId))
+					if rpmutils.NVR().MatchString(artifactName) {
+						excludes = append(excludes, rpmutils.NVR().FindStringSubmatch(artifactName)[1])
+					}
 				}
 			}
 
-			buildNvrs = append(buildNvrs, buildNvr)
+			buildNvrs = append(buildNvrs, buildNvrsFromBuild...)
 		}
 
 		repo, err := c.db.CreateRepositoryWithPackages(uuid.New().String(), req.ProjectId, true, []string{})
@@ -470,40 +478,41 @@ func (c *Controller) BuildWorkflow(ctx workflow.Context, req *peridotpb.SubmitBu
 		if extraOptions.ExtraYumrepofsRepos == nil {
 			extraOptions.ExtraYumrepofsRepos = []*peridotpb.ExtraYumrepofsRepo{}
 		}
+		if extraOptions.ExcludePackages == nil {
+			extraOptions.ExcludePackages = []string{}
+		}
 		extraOptions.ExtraYumrepofsRepos = append(extraOptions.ExtraYumrepofsRepos, &peridotpb.ExtraYumrepofsRepo{
 			Name:           repo.Name,
 			ModuleHotfixes: true,
 			IgnoreExclude:  true,
 		})
-		extraOptions.ExcludePackages = excludes
+		extraOptions.ExcludePackages = append(extraOptions.ExcludePackages, excludes...)
 
-		for _, buildNvr := range buildNvrs {
-			yumrepoCtx := workflow.WithChildOptions(ctx, workflow.ChildWorkflowOptions{
-				TaskQueue: "yumrepofs",
-			})
-			updateRepoRequest := &UpdateRepoRequest{
-				ProjectID:        req.ProjectId,
-				TaskID:           &buildNvr.TaskId,
-				BuildIDs:         []string{buildNvr.ID.String()},
-				Delete:           false,
-				ForceRepoId:      repo.ID.String(),
-				ForceNonModular:  true,
-				DisableSigning:   true,
-				DisableSetActive: true,
-			}
-			updateRepoTask := &yumrepofspb.UpdateRepoTask{}
-			err = workflow.ExecuteChildWorkflow(yumrepoCtx, c.RepoUpdaterWorkflow, updateRepoRequest).Get(ctx, updateRepoTask)
-			if err != nil {
-				return nil, err
-			}
+		var buildIds []string
+		for _, build := range buildNvrs {
+			buildIds = append(buildIds, build.ID.String())
+		}
+
+		yumrepoCtx := workflow.WithChildOptions(ctx, workflow.ChildWorkflowOptions{
+			TaskQueue: "yumrepofs",
+		})
+		updateRepoRequest := &UpdateRepoRequest{
+			ProjectID:        req.ProjectId,
+			TaskID:           &taskID,
+			BuildIDs:         buildIds,
+			Delete:           false,
+			ForceRepoId:      repo.ID.String(),
+			ForceNonModular:  true,
+			DisableSigning:   true,
+			DisableSetActive: true,
+		}
+		updateRepoTask := &yumrepofspb.UpdateRepoTask{}
+		err = workflow.ExecuteChildWorkflow(yumrepoCtx, c.RepoUpdaterWorkflow, updateRepoRequest).Get(ctx, updateRepoTask)
+		if err != nil {
+			return nil, err
 		}
 	}
 
-	// If there is a parent task, we need to use that ID as the parent task ID
-	taskID := task.ID.String()
-	if task.ParentTaskId.Valid {
-		taskID = task.ParentTaskId.String
-	}
 	buildID := extraOptions.ReusableBuildId
 	if buildID == "" {
 		err = errors.New("reusable build id not found")
