@@ -54,7 +54,7 @@ go_rules_dependencies()
 
 go_register_toolchains(
     nogo = "@peridot//:nogo",
-    version = "1.18.3",
+    version = "1.18.9",
 )
 
 go_repository(
