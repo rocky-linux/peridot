@@ -535,6 +535,9 @@ config_opts['module_setup_commands'] = [{moduleSetupCommands}]
 	for _, module := range extra.Modules {
 		moduleSetupCommands = append(moduleSetupCommands, fmt.Sprintf("('enable', '%s')", module))
 	}
+	for _, module := range extra.DisabledModules {
+		moduleSetupCommands = append(moduleSetupCommands, fmt.Sprintf("('disable', '%s')", module))
+	}
 
 	mockConfig += "\n"
 	mockConfig += `
@@ -671,13 +674,16 @@ func (c *Controller) BuildArchActivity(ctx context.Context, projectId string, pa
 		pkgGroup = project.BuildStagePackages
 	}
 
-	if pkgEo != nil {
-		if len(pkgEo.DependsOn) != 0 {
-			for _, pkg := range pkgEo.DependsOn {
-				pkgGroup = append(pkgGroup, pkg)
-			}
-		}
+	var enableModules []string
+	var disableModules []string
+	err = ParsePackageExtraOptions(pkgEo, &pkgGroup, &enableModules, &disableModules)
+
+	if err != nil {
+		c.log.Infof("no extra options to process for package")
 	}
+
+	extraOptions.DisabledModules = disableModules
+	extraOptions.Modules = enableModules
 
 	hostArch := os.Getenv("REAL_BUILD_ARCH")
 	err = c.writeMockConfig(&project, packageVersion, extraOptions, arch, hostArch, pkgGroup)

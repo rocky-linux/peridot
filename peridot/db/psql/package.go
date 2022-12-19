@@ -335,7 +335,7 @@ func (a *Access) GetExtraOptionsForPackage(projectId string, packageName string)
 	var ret models.ExtraOptions
 	err := a.query.Get(
 		&ret,
-		"select id, created_at, updated_at, project_id, package_name, with_flags, without_flags, depends_on from extra_package_options where project_id = $1 and package_name = $2",
+		"select id, created_at, updated_at, project_id, package_name, with_flags, without_flags, depends_on, enable_module, disable_module from extra_package_options where project_id = $1 and package_name = $2",
 		projectId,
 		packageName,
 	)
@@ -345,16 +345,24 @@ func (a *Access) GetExtraOptionsForPackage(projectId string, packageName string)
 	return &ret, nil
 }
 
-func (a *Access) SetGroupInstallOptionsForPackage(projectId string, packageName string, dependsOn pq.StringArray) error {
+func (a *Access) SetGroupInstallOptionsForPackage(projectId string, packageName string, dependsOn pq.StringArray, enableModule pq.StringArray, disableModule pq.StringArray) error {
+	//NOTE(nhanlon) - 2022-12-19 there is probably a better way to default these?
 	if dependsOn == nil {
 		dependsOn = pq.StringArray{}
 	}
+	if enableModule == nil {
+		enableModule = pq.StringArray{}
+	}
+	if disableModule == nil {
+		disableModule = pq.StringArray{}
+	}
+
 	_, err := a.query.Exec(
 		`
-        insert into extra_package_options (project_id, package_name, depends_on)
-        values ($1, $2, $3)
+        insert into extra_package_options (project_id, package_name, depends_on, enable_module, disable_module)
+        values ($1, $2, $3, $4, $5)
         on conflict on constraint extra_package_options_uniq do
-            update set depends_on = $3, updated_at = now()
+            update set depends_on = $3, enable_module = $4, disable_module = $5, updated_at = now()
         `,
 		projectId,
 		packageName,

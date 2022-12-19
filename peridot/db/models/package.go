@@ -73,11 +73,13 @@ type ExtraOptions struct {
 	CreatedAt time.Time    `json:"createdAt" db:"created_at"`
 	UpdatedAt sql.NullTime `json:"updatedAt" db:"updated_at"`
 
-	ProjectId    string         `json:"projectId" db:"project_id"`
-	PackageName  string         `json:"packageName" db:"package_name"`
-	WithFlags    pq.StringArray `json:"withFlags" db:"with_flags"`
-	WithoutFlags pq.StringArray `json:"withoutFlags" db:"without_flags"`
-	DependsOn    pq.StringArray `json:"dependsOn" db:"depends_on"`
+	ProjectId     string         `json:"projectId" db:"project_id"`
+	PackageName   string         `json:"packageName" db:"package_name"`
+	WithFlags     pq.StringArray `json:"withFlags" db:"with_flags"`
+	WithoutFlags  pq.StringArray `json:"withoutFlags" db:"without_flags"`
+	DependsOn     pq.StringArray `json:"dependsOn" db:"depends_on"`
+	EnableModule  pq.StringArray `json:"enableModule" db:"enable_module"`
+	DisableModule pq.StringArray `json:"disableModule" db:"disable_module"`
 }
 
 func (p *Package) ToProto() *peridotpb.Package {
