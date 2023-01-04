@@ -61,6 +61,8 @@ message CatalogExtraPackageOptions {
 message CatalogGroupInstallScopedPackage {
     string name = 1 [(validate.rules).string.min_bytes = 1];
     repeated string depends_on = 2 [(validate.rules).repeated = {unique: true}];
+    repeated string enable_module = 3 [(validate.rules).repeated = {unique: true}];
+    repeated string disable_module = 4 [(validate.rules).repeated = {unique: true}];
 }
 
 message CatalogGroupInstallOption {

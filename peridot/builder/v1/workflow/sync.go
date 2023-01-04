@@ -526,7 +526,7 @@ func processGroupInstallScopedPackageOptions(tx peridotdb.Access, req *peridotpb
 		}
 
 		for _, dbPkg := range dbPkgs {
-			err = tx.SetGroupInstallOptionsForPackage(req.ProjectId.Value, dbPkg.Name, scopedPackage.DependsOn)
+			err = tx.SetGroupInstallOptionsForPackage(req.ProjectId.Value, dbPkg.Name, scopedPackage.DependsOn, scopedPackage.EnableModule, scopedPackage.DisableModule)
 			if err != nil {
 				return nil, fmt.Errorf("failed to set scoped package options for package %s", scopedPackage.Name)
 			}

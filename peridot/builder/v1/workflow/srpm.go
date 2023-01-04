@@ -421,13 +421,17 @@ func (c *Controller) BuildSRPMActivity(ctx context.Context, upstreamPrefix strin
 	if len(project.SrpmStagePackages) != 0 {
 		pkgGroup = project.SrpmStagePackages
 	}
-	if pkgEo != nil {
-		if len(pkgEo.DependsOn) != 0 {
-			for _, pkg := range pkgEo.DependsOn {
-				pkgGroup = append(pkgGroup, pkg)
-			}
-		}
+
+	var enableModules []string
+	var disableModules []string
+	err = ParsePackageExtraOptions(pkgEo, &pkgGroup, &enableModules, &disableModules)
+
+	if err != nil {
+		c.log.Infof("no extra options to process for package")
 	}
+
+	extraOptions.DisabledModules = disableModules
+	extraOptions.Modules = enableModules
 
 	hostArch := os.Getenv("REAL_BUILD_ARCH")
 	extraOptions.EnableNetworking = true
@@ -471,6 +475,32 @@ func (c *Controller) BuildSRPMActivity(ctx context.Context, upstreamPrefix strin
 
 	task.Status = peridotpb.TaskStatus_TASK_STATUS_SUCCEEDED
 
+	return nil
+}
+
+func ParsePackageExtraOptions(pkgEo *models.ExtraOptions, pkgGroup *[]string, enableModules *[]string, disableModules *[]string) error {
+
+	if pkgEo == nil {
+		return fmt.Errorf("no extra options to parse for package")
+	}
+
+	if len(pkgEo.DependsOn) != 0 {
+		for _, pkg := range pkgEo.DependsOn {
+			*pkgGroup = append(*pkgGroup, pkg)
+		}
+	}
+
+	if len(pkgEo.EnableModule) != 0 {
+		for _, pkg := range pkgEo.EnableModule {
+			*enableModules = append(*enableModules, pkg)
+		}
+	}
+
+	if len(pkgEo.DisableModule) != 0 {
+		for _, pkg := range pkgEo.DisableModule {
+			*disableModules = append(*disableModules, pkg)
+		}
+	}
 	return nil
 }
 

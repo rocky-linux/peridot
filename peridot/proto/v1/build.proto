@@ -324,6 +324,9 @@ message ExtraBuildOptions {
   // Modules to enable during build
   repeated string modules = 6;
 
+  // Modules to be disabled during build
+  repeated string disabled_modules = 10;
+
   // Packages to exclude from all repositories not marked with ignore_exclude
   repeated string exclude_packages = 7;
 

@@ -101,7 +101,7 @@ type Access interface {
 	GetPackageID(name string) (string, error)
 	SetExtraOptionsForPackage(projectId string, packageName string, withFlags pq.StringArray, withoutFlags pq.StringArray) error
 	GetExtraOptionsForPackage(projectId string, packageName string) (*models.ExtraOptions, error)
-	SetGroupInstallOptionsForPackage(projectId string, packageName string, dependsOn pq.StringArray) error
+	SetGroupInstallOptionsForPackage(projectId string, packageName string, dependsOn pq.StringArray, enableModule pq.StringArray, disableModule pq.StringArray) error
 	SetPackageType(projectId string, packageName string, packageType peridotpb.PackageType) error
 
 	CreateTask(user *utils.ContextUser, arch string, taskType peridotpb.TaskType, projectId *string, parentTaskId *string) (*models.Task, error)
