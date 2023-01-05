@@ -46,7 +46,7 @@ type Access interface {
 	CreateProject(project *peridotpb.Project) (*models.Project, error)
 	UpdateProject(id string, project *peridotpb.Project) (*models.Project, error)
 	SetProjectKeys(projectId string, username string, password string) error
-	SetBuildRootPackages(projectId string, srpmPackages []string, buildPackages []string) error
+	SetBuildRootPackages(projectId string, srpmPackages pq.StringArray, buildPackages pq.StringArray) error
 
 	CreateBuild(packageId string, packageVersionId string, taskId string, projectId string) (*models.Build, error)
 	GetArtifactsForBuild(buildId string) (models.TaskArtifacts, error)
