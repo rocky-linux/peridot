@@ -367,6 +367,8 @@ func (a *Access) SetGroupInstallOptionsForPackage(projectId string, packageName 
 		projectId,
 		packageName,
 		dependsOn,
+		enableModule,
+		disableModule,
 	)
 	return err
 }
