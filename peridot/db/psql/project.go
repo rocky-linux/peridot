@@ -339,7 +339,14 @@ func (a *Access) SetProjectKeys(projectId string, username string, password stri
 	return err
 }
 
-func (a *Access) SetBuildRootPackages(projectId string, srpmPackages []string, buildPackages []string) error {
+func (a *Access) SetBuildRootPackages(projectId string, srpmPackages pq.StringArray, buildPackages pq.StringArray) error {
+	if srpmPackages == nil {
+		srpmPackages = pq.StringArray{}
+	}
+	if buildPackages == nil {
+		buildPackages = pq.StringArray{}
+	}
+
 	_, err := a.query.Exec(
 		`
 		update projects set srpm_stage_packages = $2, build_stage_packages = $3
