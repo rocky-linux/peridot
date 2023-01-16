@@ -223,6 +223,10 @@ func (a *Access) GetAllAdvisories(filters *apollopb.AdvisoryFilters, page int32,
 			}
 		}
 
+		if advisory.Fixes != nil && len(advisory.Fixes) < 1 {
+			return false
+		}
+
 		return true
 	}), nil
 }
@@ -235,11 +239,18 @@ func (a *Access) GetAdvisoryByCodeAndYearAndNum(code string, year int, num int) 
 
 		return false
 	})
+
 	if len(advisories) == 0 {
 		return nil, sql.ErrNoRows
 	}
 
-	return advisories[0], nil
+	advisory := advisories[0]
+
+	if advisory.Fixes != nil && len(advisory.Fixes) < 1 {
+		return nil, fmt.Errorf("Expected advisory fixes. Was empty.")
+	}
+
+	return advisory, nil
 }
 
 func (a *Access) CreateAdvisory(advisory *apollodb.Advisory) (*apollodb.Advisory, error) {

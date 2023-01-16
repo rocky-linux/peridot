@@ -120,6 +120,7 @@ func (a *Access) GetAllAdvisories(filters *apollopb.AdvisoryFilters, page int32,
             a.reboot_suggested,
             a.published_at,
             array_remove(array_agg(distinct p.name), NULL) as affected_products,
+            (select array_agg(distinct(f.ticket || ':::' || f.source_by || ':::' || f.source_link || ':::' || f.description)) from advisory_fixes adf inner join fixes f on f.id = adf.fix_id where adf.advisory_id = a.id) as fixes,
             (select array_agg(distinct(
                 case when c.content is null then c.source_by || ':::' || c.source_link || ':::' || c.id || ':::::::::'
                      else c.source_by || ':::' || c.source_link || ':::' || c.id || ':::' || jsonb_extract_path_text(c.content, 'cvss3', 'cvss3_scoring_vector') || ':::' || jsonb_extract_path_text(c.content, 'cvss3', 'cvss3_base_score') || ':::' || jsonb_extract_path_text(c.content, 'cwe')
