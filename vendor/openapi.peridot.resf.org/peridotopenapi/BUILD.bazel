@@ -22,6 +22,7 @@ go_library(
         "model_inline_object_6.go",
         "model_inline_object_7.go",
         "model_inline_object_8.go",
+        "model_inline_object_9.go",
         "model_protobuf_any.go",
         "model_rpc_status.go",
         "model_stream_result_of_api_http_body.go",

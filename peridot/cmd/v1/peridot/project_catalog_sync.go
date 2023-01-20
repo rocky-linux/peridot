@@ -31,88 +31,59 @@
 package main
 
 import (
-	"encoding/base64"
+	"fmt"
 	"github.com/spf13/cobra"
-	"io/ioutil"
 	"log"
 	"openapi.peridot.resf.org/peridotopenapi"
-	"os"
 	"time"
 )
 
-type LookasideUploadTask struct {
-	Task struct {
-		Subtasks []struct {
-			Response struct {
-				Digest string `json:"digest"`
-			} `json:"response"`
-		} `json:"subtasks"`
-	} `json:"task"`
+var projectCatalogSync = &cobra.Command{
+	Use: "catalog-sync",
+	Run: projectCatalogSyncMn,
 }
 
-var buildRpmImport = &cobra.Command{
-	Use:  "rpm-import [*.rpm]",
-	Args: cobra.MinimumNArgs(1),
-	Run:  buildRpmImportMn,
-}
-
-var buildRpmImportForceOverride bool
+var (
+	scmURL    string
+	scmBranch string
+)
 
 func init() {
-	buildRpmImport.Flags().BoolVar(&buildRpmImportForceOverride, "force-override", true, "Force override even if version exists (default: true)")
+	projectCatalogSync.Flags().StringVar(&scmURL, "scm-url", "", "SCM URL (defaults to TARGET/peridot-config)")
+	projectCatalogSync.Flags().StringVar(&scmBranch, "scm-branch", "", "SCM branch (defaults to {TARGET_BRANCH_PREFIX}{MAJOR_VERSION})")
 }
 
-func isFile(path string) bool {
-	if _, err := os.Stat(path); err != nil {
-		return false
-	}
-
-	return true
-}
-
-func buildRpmImportMn(_ *cobra.Command, args []string) {
+func projectCatalogSyncMn(_ *cobra.Command, _ []string) {
 	// Ensure project id exists
 	projectId := mustGetProjectID()
+	projectCl := getClient(serviceProject).(peridotopenapi.ProjectServiceApi)
 
-	// Ensure all args are valid files
-	for _, arg := range args {
-		if !isFile(arg) {
-			log.Fatalf("%s is not a valid file", arg)
+	if scmURL == "" || scmBranch == "" {
+		projectRes, _, err := projectCl.GetProject(getContext(), projectId).Execute()
+		errFatal(err)
+		p := projectRes.GetProject()
+
+		if scmURL == "" {
+			scmURL = fmt.Sprintf("%s/%s/peridot-config", p.GetTargetGitlabHost(), p.GetTargetPrefix())
+		}
+		if scmBranch == "" {
+			scmBranch = fmt.Sprintf("%s%d", p.GetTargetBranchPrefix(), p.GetMajorVersion())
 		}
 	}
 
-	// Upload blobs to lookaside and wait for operation to finish
-	var blobs []string
-	projectCl := getClient(serviceProject).(peridotopenapi.ProjectServiceApi)
-	for _, arg := range args {
-		bts, err := ioutil.ReadFile(arg)
-		errFatal(err)
-		base64EncodedBytes := base64.StdEncoding.EncodeToString(bts)
-
-		res, _, err := projectCl.LookasideFileUpload(getContext()).Body(peridotopenapi.V1LookasideFileUploadRequest{
-			File: &base64EncodedBytes,
-		}).Execute()
-		errFatal(err)
-		log.Printf("Uploaded %s to lookaside", arg)
-		blobs = append(blobs, res.GetDigest())
+	body := peridotopenapi.InlineObject5{
+		ScmUrl: &scmURL,
+		Branch: &scmBranch,
 	}
-
-	taskCl := getClient(serviceTask).(peridotopenapi.TaskServiceApi)
-
-	log.Println("Triggering RPM batch import")
-
-	cl := getClient(serviceBuild).(peridotopenapi.BuildServiceApi)
-	importRes, _, err := cl.RpmLookasideBatchImport(getContext(), projectId).
-		Body(peridotopenapi.InlineObject4{
-			LookasideBlobs: &blobs,
-			ForceOverride:  &buildRpmImportForceOverride,
-		}).Execute()
+	req := projectCl.SyncCatalog(getContext(), projectId).Body(body)
+	syncRes, _, err := req.Execute()
 	errFatal(err)
 
-	// Wait for import to finish
-	log.Printf("Waiting for import %s to finish\n", importRes.GetTaskId())
+	// Wait for sync to finish
+	taskCl := getClient(serviceTask).(peridotopenapi.TaskServiceApi)
+	log.Printf("Waiting for sync %s to finish\n", syncRes.GetTaskId())
 	for {
-		res, _, err := taskCl.GetTask(getContext(), projectId, importRes.GetTaskId()).Execute()
+		res, _, err := taskCl.GetTask(getContext(), projectId, syncRes.GetTaskId()).Execute()
 		if err != nil {
 			log.Printf("Error getting task: %s", err.Error())
 			time.Sleep(5 * time.Second)
@@ -120,10 +91,10 @@ func buildRpmImportMn(_ *cobra.Command, args []string) {
 		task := res.GetTask()
 		if task.GetDone() {
 			if task.GetSubtasks()[0].GetStatus() == peridotopenapi.SUCCEEDED {
-				log.Printf("Import %s finished successfully\n", importRes.GetTaskId())
+				log.Printf("Sync %s finished successfully\n", syncRes.GetTaskId())
 				break
 			} else {
-				log.Fatalf("Import %s failed with status %s\n", importRes.GetTaskId(), task.GetSubtasks()[0].GetStatus())
+				log.Fatalf("Sync %s failed with status %s\n", syncRes.GetTaskId(), task.GetSubtasks()[0].GetStatus())
 			}
 		}
 

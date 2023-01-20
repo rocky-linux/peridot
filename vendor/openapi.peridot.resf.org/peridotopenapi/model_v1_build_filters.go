@@ -17,6 +17,7 @@ import (
 // V1BuildFilters struct for V1BuildFilters
 type V1BuildFilters struct {
 	Status *V1TaskStatus `json:"status,omitempty"`
+	PackageName *string `json:"packageName,omitempty"`
 }
 
 // NewV1BuildFilters instantiates a new V1BuildFilters object
@@ -72,10 +73,45 @@ func (o *V1BuildFilters) SetStatus(v V1TaskStatus) {
 	o.Status = &v
 }
 
+// GetPackageName returns the PackageName field value if set, zero value otherwise.
+func (o *V1BuildFilters) GetPackageName() string {
+	if o == nil || o.PackageName == nil {
+		var ret string
+		return ret
+	}
+	return *o.PackageName
+}
+
+// GetPackageNameOk returns a tuple with the PackageName field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *V1BuildFilters) GetPackageNameOk() (*string, bool) {
+	if o == nil || o.PackageName == nil {
+		return nil, false
+	}
+	return o.PackageName, true
+}
+
+// HasPackageName returns a boolean if a field has been set.
+func (o *V1BuildFilters) HasPackageName() bool {
+	if o != nil && o.PackageName != nil {
+		return true
+	}
+
+	return false
+}
+
+// SetPackageName gets a reference to the given string and assigns it to the PackageName field.
+func (o *V1BuildFilters) SetPackageName(v string) {
+	o.PackageName = &v
+}
+
 func (o V1BuildFilters) MarshalJSON() ([]byte, error) {
 	toSerialize := map[string]interface{}{}
 	if o.Status != nil {
 		toSerialize["status"] = o.Status
+	}
+	if o.PackageName != nil {
+		toSerialize["packageName"] = o.PackageName
 	}
 	return json.Marshal(toSerialize)
 }

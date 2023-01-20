@@ -31,88 +31,61 @@
 package main
 
 import (
-	"encoding/base64"
 	"github.com/spf13/cobra"
-	"io/ioutil"
 	"log"
 	"openapi.peridot.resf.org/peridotopenapi"
-	"os"
 	"time"
 )
 
-type LookasideUploadTask struct {
-	Task struct {
-		Subtasks []struct {
-			Response struct {
-				Digest string `json:"digest"`
-			} `json:"response"`
-		} `json:"subtasks"`
-	} `json:"task"`
+var buildPackage = &cobra.Command{
+	Use:  "package [name]",
+	Args: cobra.ExactArgs(1),
+	Run:  buildPackageMn,
 }
 
-var buildRpmImport = &cobra.Command{
-	Use:  "rpm-import [*.rpm]",
-	Args: cobra.MinimumNArgs(1),
-	Run:  buildRpmImportMn,
-}
-
-var buildRpmImportForceOverride bool
+var (
+	scmHash       string
+	disableChecks bool
+	branches      []string
+	moduleVariant bool
+	sideNvrs      []string
+	setInactive   bool
+)
 
 func init() {
-	buildRpmImport.Flags().BoolVar(&buildRpmImportForceOverride, "force-override", true, "Force override even if version exists (default: true)")
+	build.Flags().StringVar(&scmHash, "scm-hash", "", "SCM hash to build")
+	build.Flags().BoolVar(&disableChecks, "disable-checks", false, "Disable checks / tests")
+	build.Flags().StringSliceVar(&branches, "branches", []string{}, "Branches to build (only for module builds)")
+	build.Flags().BoolVar(&moduleVariant, "module-variant", false, "Build a module variant")
+	build.Flags().StringSliceVar(&sideNvrs, "side-nvrs", []string{}, "Side NVRs to include")
+	build.Flags().BoolVar(&setInactive, "set-inactive", false, "Set build as inactive")
 }
 
-func isFile(path string) bool {
-	if _, err := os.Stat(path); err != nil {
-		return false
-	}
-
-	return true
-}
-
-func buildRpmImportMn(_ *cobra.Command, args []string) {
+func buildPackageMn(_ *cobra.Command, args []string) {
 	// Ensure project id exists
 	projectId := mustGetProjectID()
 
-	// Ensure all args are valid files
-	for _, arg := range args {
-		if !isFile(arg) {
-			log.Fatalf("%s is not a valid file", arg)
-		}
+	buildCl := getClient(serviceBuild).(peridotopenapi.BuildServiceApi)
+	body := peridotopenapi.InlineObject2{
+		PackageName:   &args[0],
+		DisableChecks: &disableChecks,
+		Branches:      &branches,
+		ModuleVariant: &moduleVariant,
+		SideNvrs:      &sideNvrs,
+		SetInactive:   &setInactive,
 	}
-
-	// Upload blobs to lookaside and wait for operation to finish
-	var blobs []string
-	projectCl := getClient(serviceProject).(peridotopenapi.ProjectServiceApi)
-	for _, arg := range args {
-		bts, err := ioutil.ReadFile(arg)
-		errFatal(err)
-		base64EncodedBytes := base64.StdEncoding.EncodeToString(bts)
-
-		res, _, err := projectCl.LookasideFileUpload(getContext()).Body(peridotopenapi.V1LookasideFileUploadRequest{
-			File: &base64EncodedBytes,
-		}).Execute()
-		errFatal(err)
-		log.Printf("Uploaded %s to lookaside", arg)
-		blobs = append(blobs, res.GetDigest())
+	if scmHash != "" {
+		body.ScmHash = &scmHash
 	}
-
-	taskCl := getClient(serviceTask).(peridotopenapi.TaskServiceApi)
-
-	log.Println("Triggering RPM batch import")
-
-	cl := getClient(serviceBuild).(peridotopenapi.BuildServiceApi)
-	importRes, _, err := cl.RpmLookasideBatchImport(getContext(), projectId).
-		Body(peridotopenapi.InlineObject4{
-			LookasideBlobs: &blobs,
-			ForceOverride:  &buildRpmImportForceOverride,
-		}).Execute()
+	req := buildCl.SubmitBuild(getContext(), projectId).Body(body)
+	buildRes, _, err := req.Execute()
 	errFatal(err)
 
-	// Wait for import to finish
-	log.Printf("Waiting for import %s to finish\n", importRes.GetTaskId())
+	// Wait for build to finish
+	taskCl := getClient(serviceTask).(peridotopenapi.TaskServiceApi)
+	log.Printf("Waiting for build %s to finish\n", buildRes.GetTaskId())
 	for {
-		res, _, err := taskCl.GetTask(getContext(), projectId, importRes.GetTaskId()).Execute()
+		res, _, err := taskCl.GetTask(getContext(), projectId, buildRes.GetTaskId()).Execute()
 		if err != nil {
 			log.Printf("Error getting task: %s", err.Error())
 			time.Sleep(5 * time.Second)
@@ -120,10 +93,10 @@ func buildRpmImportMn(_ *cobra.Command, args []string) {
 		task := res.GetTask()
 		if task.GetDone() {
 			if task.GetSubtasks()[0].GetStatus() == peridotopenapi.SUCCEEDED {
-				log.Printf("Import %s finished successfully\n", importRes.GetTaskId())
+				log.Printf("Build %s finished successfully\n", buildRes.GetTaskId())
 				break
 			} else {
-				log.Fatalf("Import %s failed with status %s\n", importRes.GetTaskId(), task.GetSubtasks()[0].GetStatus())
+				log.Fatalf("Build %s failed with status %s\n", buildRes.GetTaskId(), task.GetSubtasks()[0].GetStatus())
 			}
 		}
 
