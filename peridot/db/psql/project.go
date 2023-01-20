@@ -32,6 +32,7 @@ package serverpsql
 
 import (
 	"fmt"
+
 	"github.com/jmoiron/sqlx/types"
 	"github.com/lib/pq"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -350,7 +351,7 @@ func (a *Access) SetBuildRootPackages(projectId string, srpmPackages pq.StringAr
 	_, err := a.query.Exec(
 		`
 		update projects set srpm_stage_packages = $2, build_stage_packages = $3
-    where project_id = $1
+		where id = $1
 		`,
 		projectId,
 		srpmPackages,
