@@ -533,12 +533,17 @@ type ApiListBuildsRequest struct {
 	ApiService BuildServiceApi
 	projectId string
 	filtersStatus *string
+	filtersPackageName *string
 	page *int32
 	limit *int32
 }
 
 func (r ApiListBuildsRequest) FiltersStatus(filtersStatus string) ApiListBuildsRequest {
 	r.filtersStatus = &filtersStatus
+	return r
+}
+func (r ApiListBuildsRequest) FiltersPackageName(filtersPackageName string) ApiListBuildsRequest {
+	r.filtersPackageName = &filtersPackageName
 	return r
 }
 func (r ApiListBuildsRequest) Page(page int32) ApiListBuildsRequest {
@@ -596,6 +601,9 @@ func (a *BuildServiceApiService) ListBuildsExecute(r ApiListBuildsRequest) (V1Li
 
 	if r.filtersStatus != nil {
 		localVarQueryParams.Add("filters.status", parameterToString(*r.filtersStatus, ""))
+	}
+	if r.filtersPackageName != nil {
+		localVarQueryParams.Add("filters.packageName", parameterToString(*r.filtersPackageName, ""))
 	}
 	if r.page != nil {
 		localVarQueryParams.Add("page", parameterToString(*r.page, ""))

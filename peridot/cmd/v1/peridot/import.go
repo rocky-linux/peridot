@@ -31,85 +31,54 @@
 package main
 
 import (
-	"encoding/base64"
 	"github.com/spf13/cobra"
-	"io/ioutil"
 	"log"
 	"openapi.peridot.resf.org/peridotopenapi"
-	"os"
 	"time"
 )
 
-type LookasideUploadTask struct {
-	Task struct {
-		Subtasks []struct {
-			Response struct {
-				Digest string `json:"digest"`
-			} `json:"response"`
-		} `json:"subtasks"`
-	} `json:"task"`
+var impCmd = &cobra.Command{
+	Use:  "import [name]",
+	Args: cobra.ExactArgs(1),
+	Run:  impCmdMn,
 }
 
-var buildRpmImport = &cobra.Command{
-	Use:  "rpm-import [*.rpm]",
-	Args: cobra.MinimumNArgs(1),
-	Run:  buildRpmImportMn,
-}
-
-var buildRpmImportForceOverride bool
+var (
+	version string
+	release string
+)
 
 func init() {
-	buildRpmImport.Flags().BoolVar(&buildRpmImportForceOverride, "force-override", true, "Force override even if version exists (default: true)")
+	impCmd.Flags().StringVar(&version, "version", "", "Version of the package to import (if specified, you also need to specify release)")
+	impCmd.Flags().StringVar(&release, "release", "", "Release of the package to import (if specified, you also need to specify version)")
+	impCmd.Flags().BoolVar(&setInactive, "set-inactive", false, "Set build as inactive")
 }
 
-func isFile(path string) bool {
-	if _, err := os.Stat(path); err != nil {
-		return false
+func impCmdMn(_ *cobra.Command, args []string) {
+	if (version == "" && release != "") || (version != "" && release == "") {
+		log.Fatal("You must specify both version and release")
 	}
 
-	return true
-}
-
-func buildRpmImportMn(_ *cobra.Command, args []string) {
 	// Ensure project id exists
 	projectId := mustGetProjectID()
 
-	// Ensure all args are valid files
-	for _, arg := range args {
-		if !isFile(arg) {
-			log.Fatalf("%s is not a valid file", arg)
+	importCl := getClient(serviceImport).(peridotopenapi.ImportServiceApi)
+	body := peridotopenapi.ImportPackageRequestIsTheRequestMessageForImportServiceImportPackage{
+		PackageName: &args[0],
+		SetInactive: &setInactive,
+	}
+	if version != "" {
+		body.Vre = &peridotopenapi.V1VersionRelease{
+			Version: &version,
+			Release: &release,
 		}
 	}
-
-	// Upload blobs to lookaside and wait for operation to finish
-	var blobs []string
-	projectCl := getClient(serviceProject).(peridotopenapi.ProjectServiceApi)
-	for _, arg := range args {
-		bts, err := ioutil.ReadFile(arg)
-		errFatal(err)
-		base64EncodedBytes := base64.StdEncoding.EncodeToString(bts)
-
-		res, _, err := projectCl.LookasideFileUpload(getContext()).Body(peridotopenapi.V1LookasideFileUploadRequest{
-			File: &base64EncodedBytes,
-		}).Execute()
-		errFatal(err)
-		log.Printf("Uploaded %s to lookaside", arg)
-		blobs = append(blobs, res.GetDigest())
-	}
-
-	taskCl := getClient(serviceTask).(peridotopenapi.TaskServiceApi)
-
-	log.Println("Triggering RPM batch import")
-
-	cl := getClient(serviceBuild).(peridotopenapi.BuildServiceApi)
-	importRes, _, err := cl.RpmLookasideBatchImport(getContext(), projectId).
-		Body(peridotopenapi.InlineObject4{
-			LookasideBlobs: &blobs,
-			ForceOverride:  &buildRpmImportForceOverride,
-		}).Execute()
+	req := importCl.ImportPackage(getContext(), projectId).Body(body)
+	importRes, _, err := req.Execute()
 	errFatal(err)
 
 	// Wait for import to finish
+	taskCl := getClient(serviceTask).(peridotopenapi.TaskServiceApi)
 	log.Printf("Waiting for import %s to finish\n", importRes.GetTaskId())
 	for {
 		res, _, err := taskCl.GetTask(getContext(), projectId, importRes.GetTaskId()).Execute()

@@ -56,9 +56,13 @@ func init() {
 
 	root.AddCommand(build)
 	build.AddCommand(buildRpmImport)
+	build.AddCommand(buildPackage)
 
 	root.AddCommand(project)
 	project.AddCommand(projectCreateHashedRepos)
+	project.AddCommand(projectCatalogSync)
+
+	root.AddCommand(impCmd)
 
 	viper.SetEnvPrefix("PERIDOT")
 	viper.AutomaticEnv()
