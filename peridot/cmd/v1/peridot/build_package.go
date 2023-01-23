@@ -31,10 +31,11 @@
 package main
 
 import (
-	"github.com/spf13/cobra"
 	"log"
-	"openapi.peridot.resf.org/peridotopenapi"
 	"time"
+
+	"github.com/spf13/cobra"
+	"openapi.peridot.resf.org/peridotopenapi"
 )
 
 var buildPackage = &cobra.Command{
@@ -53,12 +54,12 @@ var (
 )
 
 func init() {
-	build.Flags().StringVar(&scmHash, "scm-hash", "", "SCM hash to build")
-	build.Flags().BoolVar(&disableChecks, "disable-checks", false, "Disable checks / tests")
-	build.Flags().StringSliceVar(&branches, "branches", []string{}, "Branches to build (only for module builds)")
-	build.Flags().BoolVar(&moduleVariant, "module-variant", false, "Build a module variant")
-	build.Flags().StringSliceVar(&sideNvrs, "side-nvrs", []string{}, "Side NVRs to include")
-	build.Flags().BoolVar(&setInactive, "set-inactive", false, "Set build as inactive")
+	buildPackage.Flags().StringVar(&scmHash, "scm-hash", "", "SCM hash to build")
+	buildPackage.Flags().BoolVar(&disableChecks, "disable-checks", false, "Disable checks / tests")
+	buildPackage.Flags().StringSliceVar(&branches, "branches", []string{}, "Branches to build (only for module builds)")
+	buildPackage.Flags().BoolVar(&moduleVariant, "module-variant", false, "Build a module variant")
+	buildPackage.Flags().StringSliceVar(&sideNvrs, "side-nvrs", []string{}, "Side NVRs to include")
+	buildPackage.Flags().BoolVar(&setInactive, "set-inactive", false, "Set build as inactive")
 }
 
 func buildPackageMn(_ *cobra.Command, args []string) {
