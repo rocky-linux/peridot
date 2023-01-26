@@ -30,32 +30,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-import 'tailwind/tailwind.css';
+import { extendTheme, type ThemeConfig } from '@chakra-ui/react';
 
-import { ChakraProvider, ColorModeScript } from '@chakra-ui/react';
-import React from 'react';
-import ReactDOM from 'react-dom';
-import { BrowserRouter } from 'react-router-dom';
-
-import { Root } from './components/Root';
-import theme from './theme';
-
-export const app = () => {
-  ReactDOM.render(
-    <>
-      <ColorModeScript initialColorMode={theme.config.initialColorMode} />
-      <BrowserRouter>
-        <ChakraProvider theme={theme}>
-          <Root />
-        </ChakraProvider>
-      </BrowserRouter>
-    </>,
-    document.getElementById('root')
-  );
+const config: ThemeConfig = {
+  initialColorMode: 'system',
 };
 
-app();
+const theme = extendTheme({ config });
 
-if (module.hot) {
-  module.hot.accept(app);
-}
+export default theme;

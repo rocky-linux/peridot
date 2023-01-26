@@ -51,6 +51,7 @@ import {
   Input,
   InputGroup,
   InputLeftElement,
+  Link,
   Select,
   Spinner,
   Stack,
@@ -80,13 +81,18 @@ import {
 } from 'bazel-bin/apollo/proto/v1/client_typescript/models';
 import { reqap } from 'common/ui/reqap';
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link as RouterLink } from 'react-router-dom';
 
 import { api } from '../api';
 import { COLOR_RESF_GREEN } from '../styles';
 
 export const Overview = () => {
-  const inputBackground = useColorModeValue('white', 'gray.800');
+  const inputBackground = useColorModeValue('white', undefined);
+
+  const tableBg = useColorModeValue('white', 'gray.800');
+  const pagerButtonScheme = useColorModeValue('blackAlpha', 'gray');
+  const linkBlue = useColorModeValue('blue.600', 'blue.300');
+  const linkPurple = useColorModeValue('purple.600', 'purple.300');
 
   const [advisories, setAdvisories] = useState<V1Advisory[]>();
   const [lastUpdated, setLastUpdated] = useState<Date>();
@@ -340,7 +346,7 @@ export const Overview = () => {
             size="xs"
             isAttached
             alignItems="stretch"
-            colorScheme="blackAlpha"
+            colorScheme={pagerButtonScheme}
           >
             <IconButton
               aria-label="First Page"
@@ -359,7 +365,7 @@ export const Overview = () => {
               // borderTop="1px solid"
               // borderBottom="1px solid"
               borderColor="gray.200"
-              backgroundColor="white"
+              backgroundColor={tableBg}
               lineHeight="24px"
               px={2}
             >
@@ -401,9 +407,9 @@ export const Overview = () => {
           <AlertDescription>Failed to load errata</AlertDescription>
         </Alert>
       ) : (
-        <Box backgroundColor="white" boxShadow="base">
+        <Box backgroundColor={tableBg} boxShadow="base">
           <TableContainer>
-            <Table size="sm">
+            <Table size="sm" variant="striped">
               <Thead>
                 <Tr>
                   <Th {...stickyProps} width="36px" />
@@ -424,37 +430,33 @@ export const Overview = () => {
                 )}
                 {advisories?.map((a, idx) => (
                   <Tr key={a.name}>
-                    <Td
-                      backgroundColor={idx % 2 ? 'gray.50' : undefined}
-                      textAlign="center"
-                      pr={0}
-                    >
+                    <Td textAlign="center" pr={0}>
                       {severityToBadge(a.severity, a.type)}
                     </Td>
-                    <Td backgroundColor={idx % 2 ? 'gray.50' : undefined}>
+                    <Td>
                       <Link
-                        className="text-peridot-primary visited:text-purple-500"
+                        as={RouterLink}
                         to={`/${a.name}`}
+                        color={linkBlue}
+                        _visited={{ color: linkPurple }}
                       >
                         {a.name}
                       </Link>
                     </Td>
-                    <Td backgroundColor={idx % 2 ? 'gray.50' : undefined}>
+                    <Td>
                       {a.synopsis?.replace(
                         /^(Critical|Important|Moderate|Low): /,
                         ''
                       )}
                     </Td>
-                    <Td backgroundColor={idx % 2 ? 'gray.50' : undefined}>
+                    <Td>
                       {typeToText(a.type)}
                       {a.type === V1AdvisoryType.Security
                         ? ` / ${severityToText(a.severity)}`
                         : ''}
                     </Td>
-                    <Td backgroundColor={idx % 2 ? 'gray.50' : undefined}>
-                      {a.affectedProducts?.join(', ')}
-                    </Td>
-                    <Td backgroundColor={idx % 2 ? 'gray.50' : undefined}>
+                    <Td>{a.affectedProducts?.join(', ')}</Td>
+                    <Td>
                       {Intl.DateTimeFormat(undefined, {
                         day: '2-digit',
                         month: 'short',

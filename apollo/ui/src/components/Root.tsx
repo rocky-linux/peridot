@@ -30,7 +30,17 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-import { Box, HStack, Text, Link as ChakraLink } from '@chakra-ui/react';
+import { MoonIcon, SunIcon } from '@chakra-ui/icons';
+import {
+  Box,
+  HStack,
+  Text,
+  Link as ChakraLink,
+  useColorMode,
+  IconButton,
+  useColorModeValue,
+  DarkMode,
+} from '@chakra-ui/react';
 import { RESFLogo } from 'common/ui/RESFLogo';
 import React from 'react';
 import { Route, Switch } from 'react-router';
@@ -41,6 +51,11 @@ import { Overview } from './Overview';
 import { ShowErrata } from './ShowErrata';
 
 export const Root = () => {
+  const { colorMode, toggleColorMode } = useColorMode();
+
+  const SwitchIcon = useColorModeValue(MoonIcon, SunIcon);
+  const bodyBg = useColorModeValue('gray.100', 'gray.900');
+
   return (
     <Box
       display="flex"
@@ -55,6 +70,7 @@ export const Root = () => {
         display="flex"
         flexDirection="row"
         alignItems="center"
+        justifyContent="space-between"
         py="1"
         px={4}
       >
@@ -75,8 +91,20 @@ export const Root = () => {
             </Text>
           </HStack>
         </Link>
+        <DarkMode>
+          <IconButton
+            size="md"
+            fontSize="lg"
+            aria-label={`Switch to ${
+              colorMode === 'light' ? 'dark' : 'light'
+            } mode`}
+            variant="ghost"
+            onClick={toggleColorMode}
+            icon={<SwitchIcon />}
+          />
+        </DarkMode>
       </Box>
-      <Box as="main" flexGrow={1} overflow="auto">
+      <Box as="main" flexGrow={1} overflow="auto" background={bodyBg}>
         <Switch>
           <Route path="/" exact component={Overview} />
           <Route path="/:id" component={ShowErrata} />

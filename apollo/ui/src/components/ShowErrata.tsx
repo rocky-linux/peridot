@@ -51,6 +51,7 @@ import {
   Tabs,
   Text,
   UnorderedList,
+  useColorModeValue,
   VStack,
 } from '@chakra-ui/react';
 import {
@@ -68,7 +69,7 @@ import { RouteComponentProps } from 'react-router';
 import { Link as RouterLink } from 'react-router-dom';
 
 import { api } from '../api';
-import { COLOR_RESF_BLUE, COLOR_RESF_GREEN } from '../styles';
+import { COLOR_RESF_GREEN } from '../styles';
 
 interface ShowErrataParams {
   id: string;
@@ -79,6 +80,11 @@ export interface ShowErrataProps
 
 export const ShowErrata = (props: ShowErrataProps) => {
   const id = props.match.params.id;
+
+  const cardBg = useColorModeValue('white', 'gray.800');
+  const sideBg = useColorModeValue('gray.100', 'gray.700');
+  const linkBlue = useColorModeValue('blue.600', 'blue.300');
+  const linkPurple = useColorModeValue('purple.600', 'purple.300');
 
   const [errata, setErrata] = useState<V1Advisory>();
   const [isLoading, setIsLoading] = useState(true);
@@ -152,7 +158,7 @@ export const ShowErrata = (props: ShowErrataProps) => {
           <>
             <HStack
               alignItems="center"
-              backgroundColor="white"
+              backgroundColor={cardBg}
               py="2"
               px="4"
               spacing="6"
@@ -168,7 +174,7 @@ export const ShowErrata = (props: ShowErrataProps) => {
                 <Text fontSize="sm">{errata.synopsis}</Text>
               </VStack>
             </HStack>
-            <Tabs backgroundColor="white" p="2">
+            <Tabs backgroundColor={cardBg} p="2">
               <TabList>
                 <Tab>Erratum</Tab>
                 <Tab>Affected Packages</Tab>
@@ -238,7 +244,7 @@ export const ShowErrata = (props: ShowErrataProps) => {
                   minWidth="300px"
                   spacing="5"
                   flexShrink={0}
-                  backgroundColor="gray.100"
+                  backgroundColor={sideBg}
                 >
                   <Text>
                     <b>Issued:</b> {errata.publishedAt?.toLocaleDateString()}
@@ -270,7 +276,10 @@ export const ShowErrata = (props: ShowErrataProps) => {
                           <Link
                             href={x.sourceLink}
                             isExternal
-                            color={COLOR_RESF_BLUE}
+                            color={linkBlue}
+                            _visited={{
+                              color: linkPurple,
+                            }}
                           >
                             {x.sourceBy} - {x.ticket}
                           </Link>
@@ -295,7 +304,10 @@ export const ShowErrata = (props: ShowErrataProps) => {
                                 <Link
                                   href={x.sourceLink}
                                   isExternal
-                                  color={COLOR_RESF_BLUE}
+                                  color={linkBlue}
+                                  _visited={{
+                                    color: linkPurple,
+                                  }}
                                 >
                                   {text}
                                 </Link>
