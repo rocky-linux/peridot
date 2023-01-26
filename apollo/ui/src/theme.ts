@@ -30,12 +30,23 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-import { extendTheme, type ThemeConfig } from '@chakra-ui/react';
+import { extendTheme, type Theme, type ThemeConfig } from '@chakra-ui/react';
 
 const config: ThemeConfig = {
   initialColorMode: 'system',
 };
 
-const theme = extendTheme({ config });
+const styles: Theme['styles'] = {
+  global: (props) => ({
+    ':root': {
+      colorScheme: props.colorMode,
+    },
+  }),
+};
+
+const theme = extendTheme({
+  config,
+  styles,
+});
 
 export default theme;
