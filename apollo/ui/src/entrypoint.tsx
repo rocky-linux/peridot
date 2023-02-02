@@ -32,20 +32,24 @@
 
 import 'tailwind/tailwind.css';
 
-import { ChakraProvider } from '@chakra-ui/react';
+import { ChakraProvider, ColorModeScript } from '@chakra-ui/react';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { BrowserRouter } from 'react-router-dom';
 
 import { Root } from './components/Root';
+import theme from './theme';
 
 export const app = () => {
   ReactDOM.render(
-    <BrowserRouter>
-      <ChakraProvider>
-        <Root />
-      </ChakraProvider>
-    </BrowserRouter>,
+    <>
+      <ColorModeScript initialColorMode={theme.config.initialColorMode} />
+      <BrowserRouter>
+        <ChakraProvider theme={theme}>
+          <Root />
+        </ChakraProvider>
+      </BrowserRouter>
+    </>,
     document.getElementById('root')
   );
 };

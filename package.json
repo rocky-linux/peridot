@@ -112,5 +112,6 @@
     "express": "^4.17.1",
     "helmet": "^4.4.1",
     "http-proxy-middleware": "^1.0.6"
-  }
+  },
+  "packageManager": "yarn@1.22.19"
 }
