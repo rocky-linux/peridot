@@ -106,6 +106,7 @@ export const Overview = () => {
   const [filtersKeyword, setFiltersKeyword] = useState<string>();
   const [filterBefore, setFilterBefore] = useState<Date>();
   const [filterAfter, setFilterAfter] = useState<Date>();
+  const [filterProduct, setFilterProduct] = useState<string>('');
   const [filtersType, setFiltersType] =
     useState<keyof typeof ListAdvisoriesFiltersTypeEnum>();
   const [filtersSeverity, setFiltersSeverity] =
@@ -121,6 +122,7 @@ export const Overview = () => {
           filtersKeyword,
           filtersBefore: filterBefore,
           filtersAfter: filterAfter,
+          filtersProduct: filterProduct,
           filtersSeverity: filtersSeverity
             ? ListAdvisoriesFiltersSeverityEnum[filtersSeverity]
             : undefined,
@@ -157,6 +159,7 @@ export const Overview = () => {
     filterBefore,
     filterAfter,
     filtersSeverity,
+    filterProduct,
     filtersType,
   ]);
 
@@ -264,6 +267,24 @@ export const Overview = () => {
               </Select>
             </FormControl>
           )}
+          <FormControl width="180px" flexShrink={0} flexGrow={1}>
+            <FormLabel fontSize="sm">Product</FormLabel>
+            <Select
+              aria-label="Product"
+              placeholder="All"
+              variant="filled"
+              background={inputBackground}
+              borderRadius="0"
+              value={filterProduct}
+              onChange={(e) => {
+                setFilterProduct(e.currentTarget.value as string);
+              }}
+            >
+              {['Rocky Linux 8', 'Rocky Linux 9'].map((s) => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </Select>
+          </FormControl>
         </HStack>
         <HStack>
           <FormControl width="180px" flexShrink={0} flexGrow={1}>
