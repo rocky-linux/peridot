@@ -277,7 +277,6 @@ export const Overview = () => {
               borderRadius="0"
               value={filterProduct}
               onChange={(e) => {
-                console.log('On change', e.currentTarget.value);
                 setFilterProduct(e.currentTarget.value as string);
               }}
             >
