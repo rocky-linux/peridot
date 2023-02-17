@@ -7,7 +7,6 @@ proto_library(
     srcs = ["admin.proto"],
     visibility = ["//visibility:public"],
     deps = [
-        "//apollo/proto/v1:apollopb_proto",
         "//peridot/proto/v1:peridotpb_proto",
         "@com_envoyproxy_protoc_gen_validate//validate:validate_proto",
         "@go_googleapis//google/api:annotations_proto",
@@ -26,7 +25,6 @@ go_proto_library(
     proto = ":adminpb_proto",
     visibility = ["//visibility:public"],
     deps = [
-        "//apollo/proto/v1:pb",
         "//peridot/proto/v1:pb",
         "@com_envoyproxy_protoc_gen_validate//validate:validate_go_proto",
         "@go_googleapis//google/api:annotations_go_proto",
