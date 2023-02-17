@@ -4,7 +4,6 @@ package resf.peridot.admin.v1;
 
 import "google/api/annotations.proto";
 import "validate/validate.proto";
-import "apollo/proto/v1/advisory.proto";
 import "peridot/proto/v1/task.proto";
 
 option go_package = "peridot.resf.org/peridot/admin/pb;adminpb";

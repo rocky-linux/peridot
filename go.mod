@@ -62,6 +62,7 @@ require (
 	openapi.peridot.resf.org/peridotopenapi v0.0.0-00010101000000-000000000000
 	peridot.resf.org/common v0.0.0-00010101000000-000000000000
 	peridot.resf.org/obsidian/pb v0.0.0-00010101000000-000000000000
+	peridot.resf.org/peridot/admin/pb v0.0.0-00010101000000-000000000000 // indirect
 	peridot.resf.org/peridot/keykeeper/pb v0.0.0-00010101000000-000000000000
 	peridot.resf.org/peridot/pb v0.0.0-00010101000000-000000000000
 	peridot.resf.org/peridot/yumrepofs/pb v0.0.0-00010101000000-000000000000
@@ -80,6 +81,7 @@ replace (
 	bazel.build/semver => ./bazel-bin/build/bazel/semver/semver_go_proto_/bazel.build/semver
 	peridot.resf.org/obsidian/pb => ./bazel-bin/obsidian/proto/v1/obsidianpb_go_proto_/peridot.resf.org/obsidian/pb
 	peridot.resf.org/peridot/pb => ./bazel-bin/peridot/proto/v1/peridotpb_go_proto_/peridot.resf.org/peridot/pb
+	peridot.resf.org/peridot/admin/pb => ./bazel-bin/peridot/proto/v1/admin/adminpb_go_proto_/peridot.resf.org/peridot/admin/pb
 	peridot.resf.org/peridot/keykeeper/pb => ./bazel-bin/peridot/proto/v1/keykeeper/keykeeperpb_go_proto_/peridot.resf.org/peridot/keykeeper/pb
 	peridot.resf.org/peridot/yumrepofs/pb => ./bazel-bin/peridot/proto/v1/yumrepofs/yumrepofspb_go_proto_/peridot.resf.org/peridot/yumrepofs/pb
 	peridot.resf.org/common => ./bazel-bin/proto/commonpb_go_proto_/peridot.resf.org/common
