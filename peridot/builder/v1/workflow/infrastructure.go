@@ -65,6 +65,8 @@ type ProvisionWorkerRequest struct {
 	ParentTaskId sql.NullString `json:"parentTaskId"`
 	Purpose      string         `json:"purpose"`
 	Arch         string         `json:"arch"`
+	ImageArch     string         `json:"imageArch"`
+	BuildPoolType string         `json:"buildPoolType"`
 	ProjectId    string         `json:"projectId"`
 	HighResource bool           `json:"highResource"`
 	Privileged   bool           `json:"privileged"`
@@ -91,6 +93,14 @@ func goArchToArch(arch string) string {
 	default:
 		return "x86_64"
 	}
+}
+
+func buildPoolArch(goArch string, req *ProvisionWorkerRequest) (result string) {
+	result = goArch
+	if len(req.BuildPoolType) > 0 {
+		result = result + "-" + req.BuildPoolType
+	}
+	return result
 }
 
 func (c *Controller) genNameWorker(buildID, purpose string) string {
@@ -171,7 +181,13 @@ func (c *Controller) provisionWorker(ctx workflow.Context, req *ProvisionWorkerR
 	ctx = workflow.WithChildOptions(ctx, workflow.ChildWorkflowOptions{
 		TaskQueue: queue,
 	})
-	err := workflow.ExecuteChildWorkflow(ctx, c.ProvisionWorkerWorkflow, req, queue, imageArch).Get(ctx, &podName)
+	req.ImageArch = imageArch
+	if project.BuildPoolType.Valid {
+		req.BuildPoolType = project.BuildPoolType.String
+	} else {
+		req.BuildPoolType = ""
+	}
+	err := workflow.ExecuteChildWorkflow(ctx, c.ProvisionWorkerWorkflow, req, queue).Get(ctx, &podName)
 	if err != nil {
 		var applicationErr *temporal.ApplicationError
 		if errors.As(err, &applicationErr) {
@@ -200,7 +216,7 @@ func (c *Controller) provisionWorker(ctx workflow.Context, req *ProvisionWorkerR
 // ProvisionWorkerWorkflow provisions a new job specific container using
 // the provided ephemeral provisioner.
 // Returns an identifier
-func (c *Controller) ProvisionWorkerWorkflow(ctx workflow.Context, req *ProvisionWorkerRequest, queue string, imageArch string) (string, error) {
+func (c *Controller) ProvisionWorkerWorkflow(ctx workflow.Context, req *ProvisionWorkerRequest, queue string) (string, error) {
 	var task models.Task
 	taskSideEffect := workflow.SideEffect(ctx, func(ctx workflow.Context) interface{} {
 		var projectId *string
@@ -247,7 +263,7 @@ func (c *Controller) ProvisionWorkerWorkflow(ctx workflow.Context, req *Provisio
 	ctx = workflow.WithActivityOptions(ctx, options)
 
 	var podName string
-	if err := workflow.ExecuteActivity(ctx, c.CreateK8sPodActivity, req, task, imageArch).Get(ctx, &podName); err != nil {
+	if err := workflow.ExecuteActivity(ctx, c.CreateK8sPodActivity, req, task).Get(ctx, &podName); err != nil {
 		return "", err
 	}
 
@@ -448,7 +464,7 @@ func (c *Controller) IngestLogsActivity(ctx context.Context, podName string, tas
 
 // CreateK8sPodActivity creates a new pod in the same namespace
 // with the specified container (the container has to contain peridotbuilder)
-func (c *Controller) CreateK8sPodActivity(ctx context.Context, req *ProvisionWorkerRequest, task *models.Task, imageArch string) (string, error) {
+func (c *Controller) CreateK8sPodActivity(ctx context.Context, req *ProvisionWorkerRequest, task *models.Task) (string, error) {
 	go func() {
 		for {
 			activity.RecordHeartbeat(ctx)
@@ -473,7 +489,9 @@ func (c *Controller) CreateK8sPodActivity(ctx context.Context, req *ProvisionWor
 		production = "true"
 	}
 
+	imageArch := req.ImageArch
 	goArch := archToGoArch(imageArch)
+	nodePoolArch := buildPoolArch(goArch, req)
 
 	_ = c.logToMon([]string{
 		fmt.Sprintf("Creating worker for purpose %s", req.Purpose),
@@ -574,7 +592,7 @@ func (c *Controller) CreateK8sPodActivity(ctx context.Context, req *ProvisionWor
 				"peridot.rockylinux.org/managed-by":              "peridotephemeral",
 				"peridot.rockylinux.org/task-id":                 req.TaskId,
 				"peridot.rockylinux.org/name":                    name,
-				"peridot.rockylinux.org/workflow-tolerates-arch": goArch,
+				"peridot.rockylinux.org/workflow-tolerates-arch": nodePoolArch,
 				// todo(mustafa): Implement janitor (cron workflow?)
 				"janitor.peridot.rockylinux.org/allow-cleanup":   "yes",
 				"janitor.peridot.rockylinux.org/cleanup-timeout": "864000s",
@@ -664,7 +682,7 @@ func (c *Controller) CreateK8sPodActivity(ctx context.Context, req *ProvisionWor
 				{
 					Key:      "peridot.rockylinux.org/workflow-tolerates-arch",
 					Operator: v1.TolerationOpEqual,
-					Value:    goArch,
+					Value:    nodePoolArch,
 					Effect:   v1.TaintEffectNoSchedule,
 				},
 			},
@@ -729,7 +747,7 @@ func (c *Controller) CreateK8sPodActivity(ctx context.Context, req *ProvisionWor
 								{
 									Key:      "peridot.rockylinux.org/workflow-tolerates-arch",
 									Operator: "In",
-									Values:   []string{goArch},
+									Values:   []string{nodePoolArch},
 								},
 							},
 						},
