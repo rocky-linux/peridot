@@ -73,6 +73,7 @@ func (a *Access) ListProjects(filters *peridotpb.ProjectFilters) (ret models.Pro
 			target_vendor,
 			additional_vendor,
 			archs,
+            build_pool_type,
 			follow_import_dist,
 			branch_suffix,
 			git_make_public,
@@ -200,6 +201,7 @@ func (a *Access) CreateProject(project *peridotpb.Project) (*models.Project, err
 		TargetVendor:       project.TargetVendor,
 		AdditionalVendor:   project.AdditionalVendor.Value,
 		Archs:              project.Archs,
+		BuildPoolType:      project.BuildPoolType,
 		FollowImportDist:   project.FollowImportDist,
 		BranchSuffix:       utils.StringValueToNullString(project.BranchSuffix),
 		GitMakePublic:      project.GitMakePublic,
@@ -213,8 +215,9 @@ func (a *Access) CreateProject(project *peridotpb.Project) (*models.Project, err
 		insert into projects
 		(name, major_version, dist_tag_override, target_gitlab_host, target_prefix,
 		target_branch_prefix, source_git_host, source_prefix, source_branch_prefix, cdn_url,
-		stream_mode, target_vendor, additional_vendor, archs, follow_import_dist, branch_suffix, git_make_public, vendor_macro, packager_macro)
-		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
+		stream_mode, target_vendor, additional_vendor, archs, build_pool_type,
+        follow_import_dist, branch_suffix, git_make_public, vendor_macro, packager_macro)
+		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
 		returning id, created_at, updated_at
 		`,
 		ret.Name,
@@ -231,6 +234,7 @@ func (a *Access) CreateProject(project *peridotpb.Project) (*models.Project, err
 		ret.TargetVendor,
 		ret.AdditionalVendor,
 		ret.Archs,
+		ret.BuildPoolType,
 		ret.FollowImportDist,
 		ret.BranchSuffix,
 		ret.GitMakePublic,
@@ -264,6 +268,7 @@ func (a *Access) UpdateProject(id string, project *peridotpb.Project) (*models.P
 		TargetVendor:       project.TargetVendor,
 		AdditionalVendor:   project.AdditionalVendor.Value,
 		Archs:              project.Archs,
+		BuildPoolType:      project.BuildPoolType,
 		FollowImportDist:   project.FollowImportDist,
 		BranchSuffix:       utils.StringValueToNullString(project.BranchSuffix),
 		GitMakePublic:      project.GitMakePublic,
@@ -289,13 +294,14 @@ func (a *Access) UpdateProject(id string, project *peridotpb.Project) (*models.P
 			target_vendor = $12,
 			additional_vendor = $13,
 			archs = $14,
-			follow_import_dist = $15,
-			branch_suffix = $16,
-			git_make_public = $17,
-            vendor_macro = $18,
-            packager_macro = $19,
+			build_pool_type = $15,
+			follow_import_dist = $16,
+			branch_suffix = $17,
+			git_make_public = $18,
+            vendor_macro = $19,
+            packager_macro = $20,
 			updated_at = now()
-		where id = $20
+		where id = $21
 		returning id, created_at, updated_at
 		`,
 		ret.Name,
@@ -312,6 +318,7 @@ func (a *Access) UpdateProject(id string, project *peridotpb.Project) (*models.P
 		ret.TargetVendor,
 		ret.AdditionalVendor,
 		ret.Archs,
+		ret.BuildPoolType,
 		ret.FollowImportDist,
 		ret.BranchSuffix,
 		ret.GitMakePublic,

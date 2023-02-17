@@ -120,12 +120,12 @@ type ArtifactIndex struct {
 // Peridot doesn't need to generate and install arbitrary macro RPMs to define macros.
 // For that reason, we can define macros in the container we create.
 // Module components requires the following macros:
-//   * %dist -> as described above
-//   * %_module_build -> the module increment (iteration)
-//   * %_module_name -> the module name
-//   * %_module_stream -> the module stream
-//   * %_module_version -> generated version (as describe above)
-//   * %_module_context -> generated context (calculate sha1 of the buildrequires section) # todo(mustafa): Currently the yaml content is used to calculate the context
+//   - %dist -> as described above
+//   - %_module_build -> the module increment (iteration)
+//   - %_module_name -> the module name
+//   - %_module_stream -> the module stream
+//   - %_module_version -> generated version (as describe above)
+//   - %_module_context -> generated context (calculate sha1 of the buildrequires section) # todo(mustafa): Currently the yaml content is used to calculate the context
 //
 // The macros above will be written to the following file: /etc/rpm/macros.zz-module
 // This is to ensure that the macros are applied last.
