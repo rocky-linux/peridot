@@ -1,3 +1,0 @@
-# Ports under requires ingressHost to be set during deploy
-http:
-  ingressHost: null
