@@ -46,3 +46,7 @@ targets=(
 for target in "${targets[@]}"; do
   br "$target" amd64
 done
+
+for target in "${targets[@]}"; do
+  GIT_COMMIT="$(git rev-parse HEAD)-arm64" br "$target" arm64
+done

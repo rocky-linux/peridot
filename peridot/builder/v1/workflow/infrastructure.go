@@ -310,12 +310,8 @@ func (c *Controller) DestroyWorkerWorkflow(ctx workflow.Context, req *ProvisionW
 
 // DeleteK8sPodActivity deletes the pod that hosts the ephemeral worker
 func (c *Controller) DeleteK8sPodActivity(ctx context.Context, req *ProvisionWorkerRequest, task *models.Task) error {
-	go func() {
-		for {
-			activity.RecordHeartbeat(ctx)
-			time.Sleep(3 * time.Second)
-		}
-	}()
+	stopChan := makeHeartbeat(ctx, 3*time.Second)
+	defer func() { stopChan <- true }()
 
 	// creates the in-cluster config
 	config, err := rest.InClusterConfig()
@@ -449,12 +445,8 @@ func (c *Controller) IngestLogsActivity(ctx context.Context, podName string, tas
 // CreateK8sPodActivity creates a new pod in the same namespace
 // with the specified container (the container has to contain peridotbuilder)
 func (c *Controller) CreateK8sPodActivity(ctx context.Context, req *ProvisionWorkerRequest, task *models.Task, imageArch string) (string, error) {
-	go func() {
-		for {
-			activity.RecordHeartbeat(ctx)
-			time.Sleep(3 * time.Second)
-		}
-	}()
+	stopChan := makeHeartbeat(ctx, 3*time.Second)
+	defer func() { stopChan <- true }()
 
 	task.Status = peridotpb.TaskStatus_TASK_STATUS_FAILED
 

@@ -48,7 +48,7 @@ export default async function run(webpackConfig) {
   const envPublicUrl = process.env['PERIDOT_FRONTEND_HTTP_PUBLIC_URL'];
   const frontendUrl = process.env['RESF_NS'] ? envPublicUrl : devFrontendUrl;
 
-  const wellKnown = await hydraPublic.discoverOpenIDConfiguration();
+  const wellKnown = await hydraPublic.discoverOidcConfiguration();
   const hdr = await hydraAutoSignup({
     name: 'Peridot',
     client: 'peridot',

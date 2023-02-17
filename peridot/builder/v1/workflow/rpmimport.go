@@ -37,7 +37,6 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/cavaliergopher/rpm"
-	"go.temporal.io/sdk/activity"
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
 	"google.golang.org/grpc/codes"
@@ -262,12 +261,8 @@ func (c *Controller) RpmLookasideBatchImportWorkflow(ctx workflow.Context, req *
 }
 
 func (c *Controller) RpmImportActivity(ctx context.Context, req *peridotpb.RpmImportRequest, taskID string, setTaskStatus bool, stage1 *RpmImportActivityTaskStage1) (*RpmImportActivityTaskStage1, error) {
-	go func() {
-		for {
-			activity.RecordHeartbeat(ctx)
-			time.Sleep(4 * time.Second)
-		}
-	}()
+	stopChan := makeHeartbeat(ctx, 4*time.Second)
+	defer func() { stopChan <- true }()
 
 	var buf bytes.Buffer
 	bts, err := c.storage.ReadObject(req.Rpms)

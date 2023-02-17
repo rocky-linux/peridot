@@ -36,16 +36,21 @@
 import {
   svcNameHttp,
   endpointHttp,
-  NS,
   envOverridable,
+  NS,
 } from '../../../common/frontend_server/upstream.mjs';
 import pkg from '@ory/hydra-client';
-import os from 'os';
 
-const { Configuration, PublicApi, AdminApi } = pkg;
+const { Configuration, OidcApi, OAuth2Api } = pkg;
 
 export function hydraPublicUrl() {
   return envOverridable('hydra_public', 'http', () => {
+    if (!process.env['RESF_ENV']) {
+      if (process.env['HYDRA_PUBLIC_URL']) {
+        return process.env['HYDRA_PUBLIC_URL'];
+      }
+      return 'https://hdr-dev.internal.rdev.ciq.localhost';
+    }
     const svc = svcNameHttp('hydra-public');
     return endpointHttp(svc, NS('hydra-public'), ':4444');
   });
@@ -53,18 +58,21 @@ export function hydraPublicUrl() {
 
 function hydraAdminUrl() {
   return envOverridable('hydra_admin', 'http', () => {
+    if (!process.env['RESF_ENV']) {
+      return 'https://hdr-admin-dev.internal.rdev.ciq.localhost';
+    }
     const svc = svcNameHttp('hydra-admin');
     return endpointHttp(svc, NS('hydra-admin'), ':4445');
   });
 }
 
-const hydraAdmin = new AdminApi(
+const hydraAdmin = new OAuth2Api(
   new Configuration({
     basePath: hydraAdminUrl(),
   })
 );
 
-export const hydraPublic = new PublicApi(
+export const hydraPublic = new OidcApi(
   new Configuration({
     basePath: hydraPublicUrl(),
   })
@@ -85,6 +93,16 @@ function secret() {
 }
 
 export async function hydraAutoSignup(req) {
+  const envNameClientID = `${req.client.toUpperCase()}_CLIENT_ID`;
+  const envNameClientSecret = `${req.client.toUpperCase()}_CLIENT_SECRET`;
+
+  if (process.env[envNameClientID] && process.env[envNameClientSecret]) {
+    return {
+      clientID: process.env[envNameClientID],
+      secret: process.env[envNameClientSecret],
+    };
+  }
+
   let ns = process.env['RESF_NS'];
   if (!ns || ns === '') {
     ns = 'dev';
@@ -96,11 +114,11 @@ export async function hydraAutoSignup(req) {
   }
   const clientModel = {
     client_name: name,
-    client_id: serviceName,
     scope: req.scopes,
     client_secret: secret(),
     redirect_uris: null,
     grant_types: ['authorization_code', 'refresh_token'],
+    owner: serviceName,
   };
   if (req.frontend) {
     clientModel.redirect_uris = [req.redirectUri];
@@ -108,23 +126,20 @@ export async function hydraAutoSignup(req) {
   }
 
   const ret = {
-    clientID: serviceName,
     secret: secret(),
   };
 
-  try {
-    await hydraAdmin.getOAuth2Client(serviceName);
-    try {
-      console.log(`Updated client ${name}`);
-      await hydraAdmin.updateOAuth2Client(serviceName, clientModel);
-    } catch (e) {
-      // noinspection ExceptionCaughtLocallyJS
-      throw e;
-    }
-  } catch (e) {
-    console.log(`Created client ${name}`);
-    await hydraAdmin.createOAuth2Client(clientModel);
+  const resp = await hydraAdmin.listOAuth2Clients(undefined, undefined, undefined, serviceName);
+
+  let client;
+  if (resp.data.length <= 0) {
+    client = await hydraAdmin.createOAuth2Client(clientModel);
+  } else {
+    client = resp.data[0];
+    await hydraAdmin.setOAuth2Client(client.client_id, clientModel);
   }
+  ret.clientID = client.client_id;
 
   return ret;
 }
+

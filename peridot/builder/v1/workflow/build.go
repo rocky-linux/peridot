@@ -621,7 +621,7 @@ func (c *Controller) BuildWorkflow(ctx workflow.Context, req *peridotpb.SubmitBu
 		return nil, err
 	}
 
-	subtask, err := c.db.GetTask(uploadSRPMResult.Subtask.ID.String(), utils.Pointer(project.ID.String()))
+	subtask, err := c.db.GetTask(uploadSRPMResult.Subtask.ID.String(), utils.Pointer[string](project.ID.String()))
 	if err != nil {
 		setInternalError(errorDetails, err)
 		return nil, err
@@ -730,7 +730,7 @@ func (c *Controller) BuildWorkflow(ctx workflow.Context, req *peridotpb.SubmitBu
 				if result.Skip {
 					continue
 				}
-				subtask, err := c.db.GetTask(result.Subtask.ID.String(), utils.Pointer(project.ID.String()))
+				subtask, err := c.db.GetTask(result.Subtask.ID.String(), utils.Pointer[string](project.ID.String()))
 				if err != nil {
 					ret.err = fmt.Errorf("failed to get task: %s", err)
 					return

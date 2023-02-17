@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package resf.peridot.admin.v1;
+
+import "google/api/annotations.proto";
+import "validate/validate.proto";
+import "peridot/proto/v1/task.proto";
+
+option go_package = "peridot.resf.org/peridot/admin/pb;adminpb";
+
+service PeridotAdminService {
+  rpc AddUpdateInformation (AddUpdateInformationRequest) returns (resf.peridot.v1.AsyncTask) {
+    option (google.api.http) = {
+      post: "/v1/admin/add_update_information"
+      body: "*"
+    };
+    option (resf.peridot.v1.task_info) = {
+      response_type: "AddUpdateInformationTask"
+      metadata_type: "AddUpdateInformationRequest"
+    };
+  }
+}
+
+message AddUpdateInformationRequest {
+  string project_id = 1 [(validate.rules).string.min_len = 1];
+  string product_name = 2 [(validate.rules).string.min_len = 1];
+}
+
+message AddUpdateInformationTask {}

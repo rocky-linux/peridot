@@ -31,108 +31,46 @@
 package main
 
 import (
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"go.temporal.io/sdk/client"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
-	commonpb "peridot.resf.org/common"
-	builderv1 "peridot.resf.org/peridot/builder/v1"
+	peridotadminv1 "peridot.resf.org/peridot/admin/v1"
 	peridotcommon "peridot.resf.org/peridot/common"
 	serverconnector "peridot.resf.org/peridot/db/connector"
-	keykeeperpb "peridot.resf.org/peridot/keykeeper/pb"
-	"peridot.resf.org/servicecatalog"
 	"peridot.resf.org/temporalutils"
 	"peridot.resf.org/utils"
-	"sync"
 )
 
 var root = &cobra.Command{
-	Use: "yumrepofs",
+	Use: "peridotadmin",
 	Run: mn,
 }
 
 var cnf = utils.NewFlagConfig()
 
-const MainTaskQueue = "yumrepofs"
-
 func init() {
-	cnf.DefaultPort = 45102
+	cnf.DefaultPort = 15012
 
 	dname := "peridot"
 	cnf.DatabaseName = &dname
-	cnf.Name = "yumrepofsupdater"
+	cnf.Name = "peridotadmin"
 
 	peridotcommon.AddFlags(root.PersistentFlags())
-	root.PersistentFlags().String("dynamodb-table", "peridot-repo-revision-lock", "DynamoDB table name")
 	utils.AddFlags(root.PersistentFlags(), cnf)
 }
 
 func mn(_ *cobra.Command, _ []string) {
 	c, err := temporalutils.NewClient(client.Options{})
 	if err != nil {
-		logrus.Fatalf("could not create temporal client: %v", err)
+		logrus.Fatalln("unable to create Temporal client", err)
 	}
+	defer c.Close()
 
-	sess, err := utils.NewAwsSession(&aws.Config{})
+	s, err := peridotadminv1.NewServer(serverconnector.MustAuto(), c)
 	if err != nil {
-		logrus.Fatalf("could not create aws session: %v", err)
+		logrus.Fatalf("could not init server: %v", err)
 	}
-	ddb := dynamodb.New(sess)
-
-	keykeeperConn, err := grpc.Dial(servicecatalog.KeykeeperGrpc(), grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		logrus.Fatalf("could not connect to keykeeper: %v", err)
-	}
-	keykeeperClient := keykeeperpb.NewKeykeeperServiceClient(keykeeperConn)
-
-	w, err := builderv1.NewWorker(serverconnector.MustAuto(), c, MainTaskQueue, &builderv1.ExtraReq{
-		KeykeeperClient: keykeeperClient,
-		DynamoDB:        ddb,
-	})
-	if err != nil {
-		logrus.Fatalf("could not init worker: %v", err)
-	}
-	defer w.Client.Close()
-
-	// Yumrepofs
-	w.Worker.RegisterWorkflow(w.WorkflowController.RepoUpdaterWorkflow)
-	w.Worker.RegisterActivity(w.WorkflowController.UpdateRepoActivity)
-	w.Worker.RegisterActivity(w.WorkflowController.RequestKeykeeperSignActivity)
-
-	// Updateinfo
-	w.Worker.RegisterWorkflow(w.WorkflowController.UpdateInfoWorkflow)
-	w.Worker.RegisterActivity(w.WorkflowController.SetUpdateInfoActivity)
-
-	var wg sync.WaitGroup
-	wg.Add(2)
-
-	go func() {
-		w.Run()
-		wg.Done()
-	}()
-
-	go func() {
-		// only added so we get a health endpoint
-		s := utils.NewGRPCServer(
-			nil,
-			func(r *utils.Register) {
-				err := commonpb.RegisterHealthCheckServiceHandlerFromEndpoint(r.Context, r.Mux, r.Endpoint, r.Options)
-				if err != nil {
-					logrus.Fatalf("could not register health service: %v", err)
-				}
-			},
-			func(r *utils.RegisterServer) {
-				commonpb.RegisterHealthCheckServiceServer(r.Server, &utils.HealthServer{})
-			},
-		)
-		s.WaitGroup.Wait()
-		wg.Done()
-	}()
-
-	wg.Wait()
+	s.Run()
 }
 
 func main() {

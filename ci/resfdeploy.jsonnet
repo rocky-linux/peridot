@@ -274,7 +274,7 @@ local manifestYamlStream = function (value, indent_array_in_object=false, c_docu
       ]),
       [svcVsDr]:
         manifestYamlStream(
-          [kubernetes.define_service(
+          ([kubernetes.define_service(
             metadata {
               name: srv.name,
               annotations: {
@@ -286,8 +286,8 @@ local manifestYamlStream = function (value, indent_array_in_object=false, c_docu
             portName=srv.portName,
             selector=metadata.name,
             env=mappings.get_env_from_svc(srv.name)
-          ) for srv in services] +
-          if istio_mode then [] else [if std.objectHas(srv, 'expose') && srv.expose then kubernetes.define_ingress(
+          ) for srv in services]) +
+          (if istio_mode then [] else [if std.objectHas(srv, 'expose') && srv.expose then kubernetes.define_ingress(
             metadata {
               name: srv.name,
               annotations: ingress_annotations + {
@@ -301,8 +301,8 @@ local manifestYamlStream = function (value, indent_array_in_object=false, c_docu
             host=if helm_mode then '{{ .Values.%s.ingressHost }}' % srv.portName else mappings.get(srv.name, user),
             port=srv.port,
             srvName=srv.name + '-service',
-          ) else null for srv in services] +
-          if !istio_mode then [] else [kubernetes.define_virtual_service(metadata { name: srv.name + '-internal' }, {
+          ) else null for srv in services]) +
+          (if !istio_mode then [] else [kubernetes.define_virtual_service(metadata { name: srv.name + '-internal' }, {
             hosts: [vshost(srv)],
             gateways: [],
             http: [
@@ -318,8 +318,8 @@ local manifestYamlStream = function (value, indent_array_in_object=false, c_docu
                 } + (if std.objectHas(info, 'internal_route_options') then info.internal_route_options else {})],
               },
             ],
-          },) for srv in services] +
-          if !istio_mode then [] else [if std.objectHas(srv, 'expose') && srv.expose then kubernetes.define_virtual_service(
+          },) for srv in services]) +
+          (if !istio_mode then [] else [if std.objectHas(srv, 'expose') && srv.expose then kubernetes.define_virtual_service(
             metadata {
               name: srv.name,
               annotations: {
@@ -343,8 +343,8 @@ local manifestYamlStream = function (value, indent_array_in_object=false, c_docu
                 },
               ],
             }
-          ) else null for srv in services] +
-          if !istio_mode then [] else [{
+          ) else null for srv in services]) +
+          (if !istio_mode then [] else [{
               apiVersion: 'security.istio.io/v1beta1',
               kind: 'RequestAuthentication',
               metadata: metadata {
@@ -364,8 +364,8 @@ local manifestYamlStream = function (value, indent_array_in_object=false, c_docu
                   fromHeaders: [{ name: 'x-goog-iap-jwt-assertion' }],
                 }] else [],
             },
-          } for srv in services] +
-          if !istio_mode then [] else [{
+          } for srv in services]) +
+          (if !istio_mode then [] else [{
             apiVersion: 'security.istio.io/v1beta1',
             kind: 'AuthorizationPolicy',
             metadata: metadata {
@@ -389,8 +389,8 @@ local manifestYamlStream = function (value, indent_array_in_object=false, c_docu
                 }]
               }],
             },
-          } for srv in services] +
-          if !istio_mode then [] else [kubernetes.define_destination_rule(metadata { name: srv.name }, {
+          } for srv in services]) +
+          (if !istio_mode then [] else [kubernetes.define_destination_rule(metadata { name: srv.name }, {
             host: vshost(srv),
             trafficPolicy: {
               tls: {
@@ -406,7 +406,7 @@ local manifestYamlStream = function (value, indent_array_in_object=false, c_docu
                 },
               },
             ],
-          },) for srv in services]
+          },) for srv in services])
         ),
       [if std.objectHas(info, 'custom_job_items') then custom else null]:
         manifestYamlStream(if std.objectHas(info, 'custom_job_items') then info.custom_job_items(metadata, extra_info) else [{}]),
