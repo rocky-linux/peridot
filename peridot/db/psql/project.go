@@ -32,7 +32,6 @@ package serverpsql
 
 import (
 	"fmt"
-
 	"github.com/jmoiron/sqlx/types"
 	"github.com/lib/pq"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -78,7 +77,9 @@ func (a *Access) ListProjects(filters *peridotpb.ProjectFilters) (ret models.Pro
 			branch_suffix,
 			git_make_public,
 			vendor_macro,
-			packager_macro
+			packager_macro,
+			srpm_stage_packages,
+			build_stage_packages
 		from projects
 		where
 			($1 :: uuid is null or id = $1 :: uuid)
@@ -350,8 +351,7 @@ func (a *Access) SetBuildRootPackages(projectId string, srpmPackages pq.StringAr
 
 	_, err := a.query.Exec(
 		`
-		update projects set srpm_stage_packages = $2, build_stage_packages = $3
-		where id = $1
+		update projects set srpm_stage_packages = $2, build_stage_packages = $3 where id = $1
 		`,
 		projectId,
 		srpmPackages,

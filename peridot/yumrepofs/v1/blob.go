@@ -112,6 +112,8 @@ func (s *Server) GetBlob(ctx context.Context, req *yumrepofspb.GetBlobRequest) (
 		dataB64 = revision.GroupsXml
 	case "MODULES":
 		dataB64 = revision.ModulesYaml
+	case "UPDATEINFO":
+		dataB64 = revision.UpdateinfoXml
 	default:
 		return nil, ErrInvalidBlob
 	}

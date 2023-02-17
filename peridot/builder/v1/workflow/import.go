@@ -56,7 +56,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"github.com/xanzy/go-gitlab"
-	"go.temporal.io/sdk/activity"
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
 	"google.golang.org/grpc/codes"
@@ -605,12 +604,8 @@ func (c *Controller) ImportPackageWorkflow(ctx workflow.Context, req *peridotpb.
 }
 
 func (c *Controller) PackageSrcGitActivity(ctx context.Context, packageName string, project *models.Project, parentTaskId string) (*peridotpb.PackageSrcGitResponse, error) {
-	go func() {
-		for {
-			activity.RecordHeartbeat(ctx)
-			time.Sleep(4 * time.Second)
-		}
-	}()
+	stopChan := makeHeartbeat(ctx, 4*time.Second)
+	defer func() { stopChan <- true }()
 
 	task, err := c.db.CreateTask(nil, "noarch", peridotpb.TaskType_TASK_TYPE_IMPORT_SRC_GIT, utils.StringP(project.ID.String()), &parentTaskId)
 	if err != nil {
@@ -681,6 +676,7 @@ func (c *Controller) PackageSrcGitActivity(ctx context.Context, packageName stri
 		if err != nil {
 			return nil, err
 		}
+		tarBts := buf.Bytes()
 
 		h := sha256.New()
 		_, err = h.Write(buf.Bytes())
@@ -691,7 +687,16 @@ func (c *Controller) PackageSrcGitActivity(ctx context.Context, packageName stri
 		sum := hex.EncodeToString(sumBytes)
 		name := fmt.Sprintf("%s.tar.gz", elem.Name())
 
-		_, err = c.storage.PutObjectBytes(sum, buf.Bytes())
+		f, err := w.Filesystem.OpenFile(filepath.Join("SOURCES", name), os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
+		if err != nil {
+			return nil, err
+		}
+		_, err = io.Copy(f, bytes.NewReader(tarBts))
+		if err != nil {
+			return nil, err
+		}
+
+		_, err = c.storage.PutObjectBytes(sum, tarBts)
 		if err != nil {
 			return nil, err
 		}
@@ -707,12 +712,8 @@ func (c *Controller) PackageSrcGitActivity(ctx context.Context, packageName stri
 }
 
 func (c *Controller) UpdateDistGitForSrcGitActivity(ctx context.Context, packageName string, project *models.Project, packageRes *peridotpb.PackageSrcGitResponse) (*peridotpb.ImportRevision, error) {
-	go func() {
-		for {
-			activity.RecordHeartbeat(ctx)
-			time.Sleep(4 * time.Second)
-		}
-	}()
+	stopChan := makeHeartbeat(ctx, 4*time.Second)
+	defer func() { stopChan <- true }()
 
 	task, err := c.db.CreateTask(nil, "noarch", peridotpb.TaskType_TASK_TYPE_IMPORT_SRC_GIT_TO_DIST_GIT, utils.StringP(project.ID.String()), &packageRes.TaskId)
 	if err != nil {
@@ -751,6 +752,7 @@ func (c *Controller) UpdateDistGitForSrcGitActivity(ctx context.Context, package
 			}
 		}
 	}
+	_ = srcW.Filesystem.Remove(".gitlab-ci.yml")
 
 	// Try checking out the dist-git repo
 	createRepo := false
@@ -1048,12 +1050,8 @@ func (c *Controller) srpmprocToImportRevisions(project *models.Project, pkg stri
 // Matches current Rocky workflow with distrobuild+srpmrpoc.
 // This activity also uses srpmproc as a library instead of a CLI tool
 func (c *Controller) UpstreamDistGitActivity(ctx context.Context, greq *UpstreamDistGitActivityRequest) (*UpstreamDistGitActivityResponse, error) {
-	go func() {
-		for {
-			activity.RecordHeartbeat(ctx)
-			time.Sleep(4 * time.Second)
-		}
-	}()
+	stopChan := makeHeartbeat(ctx, 4*time.Second)
+	defer func() { stopChan <- true }()
 
 	project := greq.Project
 	parentTaskId := greq.ParentTaskId

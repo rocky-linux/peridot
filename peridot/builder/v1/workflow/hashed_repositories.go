@@ -183,6 +183,9 @@ func (c *Controller) CreateHashedRepositoriesActivity(req *peridotpb.CreateHashe
 			}
 			var primaryXml []byte
 			err = decompressWithGz(primaryXmlGz, &primaryXml)
+			if err != nil {
+				return nil, fmt.Errorf("decompress primary xml: %w", err)
+			}
 			primaryXml = []byte(strings.ReplaceAll(string(primaryXml), "rpm:", "rpm_"))
 			if err != nil {
 				return nil, fmt.Errorf("could not decompress primary.xml: %v", err)

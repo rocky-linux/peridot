@@ -53,7 +53,6 @@ import (
 	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/rocky-linux/srpmproc/pkg/srpmproc"
-	"go.temporal.io/sdk/activity"
 	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 	"peridot.resf.org/peridot/db/models"
@@ -326,12 +325,8 @@ func (c *Controller) uploadArtifact(projectId string, parentTaskId string, fileP
 }
 
 func (c *Controller) BuildSRPMActivity(ctx context.Context, upstreamPrefix string, scmHash string, projectId string, packageName string, packageVersion *models.PackageVersion, task *models.Task, extraOptions *peridotpb.ExtraBuildOptions) error {
-	go func() {
-		for {
-			activity.RecordHeartbeat(ctx)
-			time.Sleep(30 * time.Second)
-		}
-	}()
+	stopChan := makeHeartbeat(ctx, 30*time.Second)
+	defer func() { stopChan <- true }()
 
 	err := c.db.SetTaskStatus(task.ID.String(), peridotpb.TaskStatus_TASK_STATUS_RUNNING)
 	if err != nil {
@@ -513,12 +508,8 @@ type UploadActivityResult struct {
 }
 
 func (c *Controller) UploadSRPMActivity(ctx context.Context, projectId string, parentTaskId string) (*UploadActivityResult, error) {
-	go func() {
-		for {
-			activity.RecordHeartbeat(ctx)
-			time.Sleep(4 * time.Second)
-		}
-	}()
+	stopChan := makeHeartbeat(ctx, 4*time.Second)
+	defer func() { stopChan <- true }()
 
 	srpmFilePath, err := findSrpm()
 	if err != nil {

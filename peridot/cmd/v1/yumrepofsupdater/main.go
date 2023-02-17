@@ -102,6 +102,10 @@ func mn(_ *cobra.Command, _ []string) {
 	w.Worker.RegisterActivity(w.WorkflowController.UpdateRepoActivity)
 	w.Worker.RegisterActivity(w.WorkflowController.RequestKeykeeperSignActivity)
 
+	// Updateinfo
+	w.Worker.RegisterWorkflow(w.WorkflowController.UpdateInfoWorkflow)
+	w.Worker.RegisterActivity(w.WorkflowController.SetUpdateInfoActivity)
+
 	var wg sync.WaitGroup
 	wg.Add(2)
 

@@ -50,7 +50,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"go.temporal.io/sdk/activity"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 	"peridot.resf.org/apollo/rpmutils"
 	"peridot.resf.org/peridot/db/models"
@@ -368,7 +367,7 @@ func (c *Controller) buildMacros(project *models.Project, packageVersion *models
 }
 
 func (c *Controller) setBuildMacros(project *models.Project, packageVersion *models.PackageVersion) error {
-	err := os.Remove("/etc/rpm/macros.dist")
+	err := os.RemoveAll("/etc/rpm/macros.dist")
 	if err != nil && !os.IsNotExist(err) {
 		return err
 	}
@@ -474,6 +473,7 @@ config_opts['releasever'] = '{majorVersion}'
 config_opts['package_manager'] = 'dnf'
 config_opts['extra_chroot_dirs'] = [ '/run/lock' ]
 config_opts['rpmbuild_command'] = '{rpmbuildCommand}'
+{additionalVendorConfig}
 
 config_opts['plugin_conf']['ccache_enable'] = False
 config_opts['plugin_conf']['root_cache_enable'] = False
@@ -557,6 +557,14 @@ config_opts['dnf.conf'] = """
 
 	yumConfig := c.yumConfig(project)
 
+	additionalVendorConfig := ""
+	if project.TargetVendor == "suse" {
+		additionalVendorConfig = `config_opts['useradd'] = '/usr/sbin/useradd -o -m -u {{chrootuid}} -g {{chrootgid}} -d {{chroothome}} {{chrootuser}}'
+config_opts['ssl_ca_bundle_path'] = '/var/lib/ca-certificates/ca-bundle.pem'
+config_opts['package_manager_max_attempts'] = 4
+config_opts['package_manager_attempt_delay'] = 20`
+	}
+
 	rpmbuildNetworking := "False"
 	if extra.EnableNetworking {
 		rpmbuildNetworking = "True"
@@ -574,6 +582,7 @@ config_opts['dnf.conf'] = """
 		"{targetVendor}", project.TargetVendor,
 		"{moduleSetupCommands}", strings.Join(moduleSetupCommands, ","),
 		"{rpmbuildNetworking}", rpmbuildNetworking,
+		"{additionalVendorConfig}", additionalVendorConfig,
 	).Replace(mockConfig)
 
 	return rendered, nil
@@ -597,12 +606,8 @@ func (c *Controller) writeMockConfig(project *models.Project, packageVersion *mo
 // Current implementation is broken for modules
 // todo(mustafa): Evaluate if we can skip chroot again
 func (c *Controller) BuildArchActivity(ctx context.Context, projectId string, packageName string, disableChecks bool, packageVersion *models.PackageVersion, uploadSRPMResult *UploadActivityResult, task *models.Task, arch string, extraOptions *peridotpb.ExtraBuildOptions) error {
-	go func() {
-		for {
-			activity.RecordHeartbeat(ctx)
-			time.Sleep(10 * time.Second)
-		}
-	}()
+	stopChan := makeHeartbeat(ctx, 10*time.Second)
+	defer func() { stopChan <- true }()
 
 	err := c.db.SetTaskStatus(task.ID.String(), peridotpb.TaskStatus_TASK_STATUS_RUNNING)
 	if err != nil {
@@ -732,12 +737,8 @@ func (c *Controller) BuildArchActivity(ctx context.Context, projectId string, pa
 }
 
 func (c *Controller) UploadArchActivity(ctx context.Context, projectId string, parentTaskId string) ([]*UploadActivityResult, error) {
-	go func() {
-		for {
-			activity.RecordHeartbeat(ctx)
-			time.Sleep(4 * time.Second)
-		}
-	}()
+	stopChan := makeHeartbeat(ctx, 4*time.Second)
+	defer func() { stopChan <- true }()
 
 	rpms, err := findRpms()
 	if err != nil {
