@@ -199,6 +199,8 @@ message BuildFilters {
   // The status filter only returns builds that
   // has the given status
   TaskStatus status = 1;
+
+  google.protobuf.StringValue package_name = 2;
 }
 
 message ListBuildsRequest {

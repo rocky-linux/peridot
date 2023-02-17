@@ -112,6 +112,10 @@ func (a *Access) ListBuilds(filters *peridotpb.BuildFilters, projectId string, p
 	if filters == nil {
 		filters = &peridotpb.BuildFilters{}
 	}
+	var packageName *string
+	if filters.PackageName != nil {
+		packageName = &filters.PackageName.Value
+	}
 
 	var ret models.Builds
 	err := a.query.Select(
@@ -135,11 +139,13 @@ func (a *Access) ListBuilds(filters *peridotpb.BuildFilters, projectId string, p
 		where
             b.project_id = $1
             and ($2 :: int is null or $2 :: int = 0 or t.status = $2 :: int)
+            and ($3 :: text is null or $3 :: text = '' or p.name = $3 :: text)
 		order by b.created_at desc
-		limit $3 offset $4
+		limit $4 offset $5
 		`,
 		projectId,
 		filters.Status,
+		packageName,
 		limit,
 		utils.GetOffset(page, limit),
 	)
