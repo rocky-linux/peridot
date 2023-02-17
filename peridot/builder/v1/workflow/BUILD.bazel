@@ -33,7 +33,6 @@ go_library(
         "//peridot/proto/v1/yumrepofs:pb",
         "//peridot/rpmbuild",
         "//peridot/yummeta",
-        "//publisher/updateinfo",
         "//servicecatalog",
         "//utils",
         "//vendor/cirello.io/dynamolock",
