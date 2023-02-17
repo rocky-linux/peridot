@@ -1,0 +1,26 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "admin",
+    srcs = [
+        "server.go",
+        "updateinfo.go",
+    ],
+    importpath = "peridot.resf.org/peridot/admin/v1",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//peridot/builder/v1:builder",
+        "//peridot/db",
+        "//peridot/impl/v1:impl",
+        "//peridot/proto/v1:pb",
+        "//peridot/proto/v1/admin:pb",
+        "//proto:common",
+        "//utils",
+        "//vendor/github.com/sirupsen/logrus",
+        "//vendor/go.temporal.io/sdk/client",
+        "@org_golang_google_grpc//:go_default_library",
+        "@org_golang_google_grpc//codes",
+        "@org_golang_google_grpc//credentials/insecure",
+        "@org_golang_google_grpc//status",
+    ],
+)

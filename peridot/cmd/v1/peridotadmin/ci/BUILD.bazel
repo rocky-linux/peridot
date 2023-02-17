@@ -1,0 +1,18 @@
+load("//rules_resf:defs.bzl", "RESFDEPLOY_OUTS_MIGRATE", "container", "peridot_k8s")
+
+container(
+    base = "//bases/bazel/go",
+    files = [
+        "//peridot/cmd/v1/peridotadmin",
+    ],
+    image_name = "peridotadmin",
+)
+
+peridot_k8s(
+    name = "peridotadmin",
+    src = "deploy.jsonnet",
+    outs = RESFDEPLOY_OUTS_MIGRATE,
+    chart_yaml = "Chart.yaml",
+    values_yaml = "values.yaml",
+    deps = ["//ci"],
+)
