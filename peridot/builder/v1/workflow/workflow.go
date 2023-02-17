@@ -31,10 +31,12 @@
 package workflow
 
 import (
+	"context"
 	"fmt"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/go-git/go-billy/v5/osfs"
 	"github.com/sirupsen/logrus"
+	"go.temporal.io/sdk/activity"
 	"go.temporal.io/sdk/client"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/protobuf/proto"
@@ -47,6 +49,7 @@ import (
 	"peridot.resf.org/peridot/plugin"
 	"peridot.resf.org/peridot/rpmbuild"
 	"peridot.resf.org/utils"
+	"time"
 )
 
 const (
@@ -255,4 +258,22 @@ func (c *Controller) logToMon(lines []string, taskId string, parentTaskId string
 	}
 
 	return nil
+}
+
+// makeHeartBeat provides a mechanism to start and stop heartbeats to a Temporal Activity.
+func makeHeartbeat(ctx context.Context, pulseFrequency time.Duration, details ...interface{}) chan<- bool {
+	stopChan := make(chan bool, 1)
+	go func() {
+		stop := false
+		for !stop {
+			activity.RecordHeartbeat(ctx, details...)
+			time.Sleep(pulseFrequency)
+			select {
+			case stop = <-stopChan:
+			default:
+			}
+		}
+	}()
+
+	return stopChan
 }

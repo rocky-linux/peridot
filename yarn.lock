@@ -2117,10 +2117,10 @@
     mkdirp "^1.0.4"
     rimraf "^3.0.2"
 
-"@ory/hydra-client@^1.10.6":
-  version "1.11.8"
-  resolved "https://registry.yarnpkg.com/@ory/hydra-client/-/hydra-client-1.11.8.tgz#f163861e4c8b401e98b7b53092ea24eb80ab814c"
-  integrity sha512-fVTPjB/JWUrsI1uGnXf0eiYDClnH9fepGmJ+z1eg6b0EH5AQoaNc7nBU9QpEj/8pQjYy0p5hWEvOXGHWo9fJtw==
+"@ory/hydra-client@^2.0.2":
+  version "2.0.2"
+  resolved "https://registry.yarnpkg.com/@ory/hydra-client/-/hydra-client-2.0.2.tgz#fd4e91f37dc2feaae9683a2620ab8d293aa1bc7c"
+  integrity sha512-1er8AHxZgOUGhipaTYeiZJVrPfCdiyycDGA2i93xdz4M/22FekC3E6www0+GKjbA1ifST3J1aIhssqel0ksFPA==
   dependencies:
     axios "^0.21.4"
 

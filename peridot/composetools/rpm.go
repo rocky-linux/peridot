@@ -46,7 +46,7 @@ var (
 )
 
 var (
-	debugSuffixes         = []string{"-debuginfo", "-debugsource"}
+	debugSuffixes         = []string{"-debuginfo", "-debugsource", "-debuginfo-common"}
 	soGlob                = glob.MustCompile("*.so.*")
 	gtk2EnginesGlob       = glob.MustCompile("/usr/lib*/gtk-2.0/*/engines")
 	gtk2ModulesGlob       = glob.MustCompile("/usr/lib*/gtk-2.0/*/modules")

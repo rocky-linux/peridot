@@ -44,8 +44,8 @@ import (
 	"github.com/gobwas/glob"
 	"github.com/google/uuid"
 	"github.com/rocky-linux/srpmproc/modulemd"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
-	"go.temporal.io/sdk/activity"
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -93,15 +93,17 @@ type CompiledGlobFilter struct {
 }
 
 type CachedRepo struct {
-	Arch           string
-	Repo           *models.Repository
-	PrimaryRoot    *yummeta.PrimaryRoot
-	FilelistsRoot  *yummeta.FilelistsRoot
-	OtherRoot      *yummeta.OtherRoot
-	Modulemd       []*modulemd.ModuleMd
-	GroupsXml      string
-	DefaultsYaml   []byte
-	ModuleDefaults []*modulemd.Defaults
+	Arch                string
+	Repo                *models.Repository
+	PrimaryRoot         *yummeta.PrimaryRoot
+	FilelistsRoot       *yummeta.FilelistsRoot
+	OtherRoot           *yummeta.OtherRoot
+	Modulemd            []*modulemd.ModuleMd
+	GroupsXml           string
+	DefaultsYaml        []byte
+	ModuleDefaults      []*modulemd.Defaults
+	UpdateInfoB64       string
+	UpdateInfoDataEntry *yummeta.RepoMdData
 }
 
 type Cache struct {
@@ -331,6 +333,7 @@ func GenerateArchMapForArtifacts(artifacts models.TaskArtifacts, project *models
 			}
 		} else {
 			if composetools.IsDebugPackage(name) {
+				logrus.Printf("checking if %s is a debug package", name)
 				arch = arch + "-debug"
 			}
 			artifactArchMap[arch] = append(artifactArchMap[arch], &newArtifact)
@@ -465,12 +468,8 @@ func (c *Controller) RepoUpdaterWorkflow(ctx workflow.Context, req *UpdateRepoRe
 }
 
 func (c *Controller) RequestKeykeeperSignActivity(ctx context.Context, buildId string, keyName string) (string, error) {
-	go func() {
-		for {
-			activity.RecordHeartbeat(ctx)
-			time.Sleep(4 * time.Second)
-		}
-	}()
+	stopChan := makeHeartbeat(ctx, 4*time.Second)
+	defer func() { stopChan <- true }()
 
 	task, err := c.keykeeper.SignArtifacts(ctx, &keykeeperpb.SignArtifactsRequest{
 		BuildId: buildId,
@@ -487,12 +486,8 @@ func (c *Controller) RequestKeykeeperSignActivity(ctx context.Context, buildId s
 }
 
 func (c *Controller) UpdateRepoActivity(ctx context.Context, req *UpdateRepoRequest, task *models.Task, gpgId *string, signTaskIds []string) (*yumrepofspb.UpdateRepoTask, error) {
-	go func() {
-		for {
-			activity.RecordHeartbeat(ctx)
-			time.Sleep(4 * time.Second)
-		}
-	}()
+	stopChan := makeHeartbeat(ctx, 4*time.Second)
+	defer func() { stopChan <- true }()
 
 	signArtifactsTasks := &keykeeperpb.BatchSignArtifactsTask{
 		Tasks: []*keykeeperpb.SignArtifactsTask{},
@@ -908,6 +903,11 @@ func (c *Controller) UpdateRepoActivity(ctx context.Context, req *UpdateRepoRequ
 			})
 		}
 
+		// Add updateinfo if not empty
+		if repo.UpdateInfoDataEntry != nil {
+			repomdRoot.Data = append(repomdRoot.Data, repo.UpdateInfoDataEntry)
+		}
+
 		var newRepoMd []byte
 		err = xmlMarshal(repomdRoot, &newRepoMd)
 		if err != nil {
@@ -930,7 +930,7 @@ func (c *Controller) UpdateRepoActivity(ctx context.Context, req *UpdateRepoRequ
 			PrimaryXml:         newPrimaryGzB64,
 			FilelistsXml:       newFilelistsGzB64,
 			OtherXml:           newOtherGzB64,
-			UpdateinfoXml:      "",
+			UpdateinfoXml:      repo.UpdateInfoB64,
 			ModuleDefaultsYaml: defaultsYamlB64,
 			ModulesYaml:        newModulesGzB64,
 			GroupsXml:          newGroupsGzB64,
@@ -1158,6 +1158,8 @@ func (c *Controller) makeRepoChanges(tx peridotdb.Access, req *UpdateRepoRequest
 			idArchNoDebug := fmt.Sprintf("%s-%s", repo.Name, noDebugArch)
 			var currentRevision *models.RepositoryRevision
 			var groupsXml string
+			var updateInfoXml string
+			var updateInfoDataEntry *yummeta.RepoMdData
 			if cache.Repos[idArchNoDebug] != nil {
 				c.log.Infof("found cache for %s", idArchNoDebug)
 				if cache.Repos[idArchNoDebug].Modulemd != nil {
@@ -1176,6 +1178,8 @@ func (c *Controller) makeRepoChanges(tx peridotdb.Access, req *UpdateRepoRequest
 					otherRoot = *cache.Repos[idArch].OtherRoot
 				}
 				groupsXml = cache.Repos[idArch].GroupsXml
+				updateInfoXml = cache.Repos[idArch].UpdateInfoB64
+				updateInfoDataEntry = cache.Repos[idArch].UpdateInfoDataEntry
 			} else {
 				c.log.Infof("no cache for %s", idArch)
 				var noDebugRevision *models.RepositoryRevision
@@ -1243,6 +1247,26 @@ func (c *Controller) makeRepoChanges(tx peridotdb.Access, req *UpdateRepoRequest
 						}
 					}
 					groupsXml = currentRevision.GroupsXml
+					updateInfoXml = currentRevision.UpdateinfoXml
+
+					if updateInfoXml != "" {
+						repomdXml, err := base64.StdEncoding.DecodeString(currentRevision.RepomdXml)
+						if err != nil {
+							return nil, fmt.Errorf("decode repomd xml: %w", err)
+						}
+						var repomdRoot yummeta.RepoMdRoot
+						err = xml.Unmarshal(repomdXml, &repomdRoot)
+						if err != nil {
+							return nil, fmt.Errorf("could not unmarshal repomd.xml: %v", err)
+						}
+
+						for _, data := range repomdRoot.Data {
+							if data.Type == "updateinfo" {
+								updateInfoDataEntry = data
+								break
+							}
+						}
+					}
 				}
 				if noDebugRevision != nil {
 					if noDebugRevision.ModulesYaml != "" {
@@ -1300,15 +1324,17 @@ func (c *Controller) makeRepoChanges(tx peridotdb.Access, req *UpdateRepoRequest
 					name = nvr[1]
 				}
 
-				noDebugInfoName := strings.ReplaceAll(strings.ReplaceAll(name, "-debuginfo", ""), "-debugsource", "")
+				noDebugInfoName := strings.ReplaceAll(strings.ReplaceAll(strings.ReplaceAll(name, "-debuginfo-common", ""), "-debugsource", ""), "-debuginfo", "")
 				archName := fmt.Sprintf("%s.%s", name, artifact.Arch)
 				if strings.HasSuffix(arch, "-debug") {
 					archName = fmt.Sprintf("%s.%s", noDebugInfoName, artifact.Arch)
 				}
 
 				shouldAdd := !req.Delete
+				// If debug-info common package, then it should be added
+				// if arch has "-debug" suffix
+				// If repo has a list for inclusion, then the artifact has to pass that first
 				if arch != "src" && moduleStream == nil && !req.Delete {
-					// If repo has a list for inclusion, then the artifact has to pass that first
 					if len(repo.IncludeFilter) > 0 {
 						// If the artifact isn't forced, it should be in the include list or additional multilib list
 						if !artifact.Forced && !utils.StrContains(archName, repo.IncludeFilter) && !utils.StrContains(noDebugInfoName, repo.AdditionalMultilib) {
@@ -1495,16 +1521,15 @@ func (c *Controller) makeRepoChanges(tx peridotdb.Access, req *UpdateRepoRequest
 			var deleteIds []string
 			if (!req.NoDeletePrevious || moduleStream != nil) || req.Delete {
 				for _, pkg := range primaryRoot.Packages {
-					shouldAdd := !req.Delete
-					if !req.Delete {
-						for _, artifact := range currentActiveArtifacts {
-							noRpmName := strings.TrimSuffix(filepath.Base(artifact.Name), ".rpm")
-							if filepath.Base(artifact.Name) == filepath.Base(pkg.Location.Href) && !utils.StrContains(noRpmName, changes.ModifiedPackages) && !utils.StrContains(noRpmName, changes.AddedPackages) && !utils.StrContains(noRpmName, skipDeleteArtifacts) {
-								shouldAdd = false
-								if req.NoDeleteInChain {
-									if utils.StrContains(noRpmName, cache.NoDeleteChain) {
-										shouldAdd = true
-									}
+					shouldAdd := true
+
+					for _, artifact := range currentActiveArtifacts {
+						noRpmName := strings.TrimSuffix(filepath.Base(artifact.Name), ".rpm")
+						if filepath.Base(artifact.Name) == filepath.Base(pkg.Location.Href) && !utils.StrContains(noRpmName, changes.ModifiedPackages) && !utils.StrContains(noRpmName, changes.AddedPackages) && !utils.StrContains(noRpmName, skipDeleteArtifacts) {
+							shouldAdd = false
+							if req.NoDeleteInChain {
+								if utils.StrContains(noRpmName, cache.NoDeleteChain) {
+									shouldAdd = true
 								}
 							}
 						}
@@ -1513,6 +1538,7 @@ func (c *Controller) makeRepoChanges(tx peridotdb.Access, req *UpdateRepoRequest
 					if utils.StrContains(noRpmNamePkg, changes.RemovedPackages) {
 						shouldAdd = false
 					}
+
 					if !shouldAdd {
 						c.log.Infof("deleting %s", pkg.Location.Href)
 						deleteIds = append(deleteIds, pkg.Checksum.Value)
@@ -1601,15 +1627,17 @@ func (c *Controller) makeRepoChanges(tx peridotdb.Access, req *UpdateRepoRequest
 
 			nRepo := repo
 			cache.Repos[idArch] = &CachedRepo{
-				Arch:           arch,
-				Repo:           &nRepo,
-				PrimaryRoot:    &primaryRoot,
-				FilelistsRoot:  &filelistsRoot,
-				OtherRoot:      &otherRoot,
-				Modulemd:       modulesRoot,
-				DefaultsYaml:   defaultsYaml,
-				ModuleDefaults: moduleDefaults,
-				GroupsXml:      groupsXml,
+				Arch:                arch,
+				Repo:                &nRepo,
+				PrimaryRoot:         &primaryRoot,
+				FilelistsRoot:       &filelistsRoot,
+				OtherRoot:           &otherRoot,
+				Modulemd:            modulesRoot,
+				DefaultsYaml:        defaultsYaml,
+				ModuleDefaults:      moduleDefaults,
+				GroupsXml:           groupsXml,
+				UpdateInfoB64:       updateInfoXml,
+				UpdateInfoDataEntry: updateInfoDataEntry,
 			}
 			if strings.HasSuffix(arch, "-debug") || arch == "src" {
 				cache.Repos[idArch].Modulemd = nil

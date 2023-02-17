@@ -63,16 +63,16 @@ func (b *Build) ToProto() (*peridotpb.Build, error) {
 	var ir []*peridotpb.ImportRevision
 
 	if b.TaskResponse.Valid && b.TaskStatus == peridotpb.TaskStatus_TASK_STATUS_SUCCEEDED {
-		anyResponse := anypb.Any{}
-		err := protojson.Unmarshal(b.TaskResponse.JSONText, &anyResponse)
+		anyResponse := &anypb.Any{}
+		err := protojson.Unmarshal(b.TaskResponse.JSONText, anyResponse)
 		if err != nil {
 			return nil, err
 		}
 
 		if anyResponse.TypeUrl == "type.googleapis.com/resf.peridot.v1.ModuleBuildTask" {
-			taskResponse := peridotpb.ModuleBuildTask{}
+			taskResponse := &peridotpb.ModuleBuildTask{}
 
-			err = anyResponse.UnmarshalTo(&taskResponse)
+			err = anyResponse.UnmarshalTo(taskResponse)
 			if err != nil {
 				return nil, err
 			}
@@ -81,9 +81,9 @@ func (b *Build) ToProto() (*peridotpb.Build, error) {
 				ir = append(ir, stream.ImportRevision)
 			}
 		} else if anyResponse.TypeUrl == "type.googleapis.com/resf.peridot.v1.SubmitBuildTask" {
-			taskResponse := peridotpb.SubmitBuildTask{}
+			taskResponse := &peridotpb.SubmitBuildTask{}
 
-			err = anyResponse.UnmarshalTo(&taskResponse)
+			err = anyResponse.UnmarshalTo(taskResponse)
 			if err != nil {
 				return nil, err
 			}

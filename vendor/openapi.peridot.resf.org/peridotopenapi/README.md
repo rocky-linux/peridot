@@ -95,6 +95,7 @@ Class | Method | HTTP request | Description
 *ImportServiceApi* | [**ListImports**](docs/ImportServiceApi.md#listimports) | **Get** /v1/projects/{projectId}/imports | ListImports lists all imports for a project.
 *PackageServiceApi* | [**GetPackage**](docs/PackageServiceApi.md#getpackage) | **Get** /v1/projects/{projectId}/packages/{field}/{value} | GetPackage returns a package by its id or name
 *PackageServiceApi* | [**ListPackages**](docs/PackageServiceApi.md#listpackages) | **Get** /v1/projects/{projectId}/packages | ListPackages returns all packages with filters applied
+*ProjectServiceApi* | [**CloneSwap**](docs/ProjectServiceApi.md#cloneswap) | **Post** /v1/projects/{targetProjectId}/cloneswap | 
 *ProjectServiceApi* | [**CreateHashedRepositories**](docs/ProjectServiceApi.md#createhashedrepositories) | **Post** /v1/projects/{projectId}/repositories/hashed | 
 *ProjectServiceApi* | [**CreateProject**](docs/ProjectServiceApi.md#createproject) | **Post** /v1/projects | 
 *ProjectServiceApi* | [**DeleteExternalRepository**](docs/ProjectServiceApi.md#deleteexternalrepository) | **Delete** /v1/projects/{projectId}/external_repositories/{id} | 
@@ -128,6 +129,7 @@ Class | Method | HTTP request | Description
  - [InlineObject6](docs/InlineObject6.md)
  - [InlineObject7](docs/InlineObject7.md)
  - [InlineObject8](docs/InlineObject8.md)
+ - [InlineObject9](docs/InlineObject9.md)
  - [ProtobufAny](docs/ProtobufAny.md)
  - [RpcStatus](docs/RpcStatus.md)
  - [StreamResultOfApiHttpBody](docs/StreamResultOfApiHttpBody.md)

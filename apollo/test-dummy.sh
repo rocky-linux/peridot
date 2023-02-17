@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 #
 # Copyright (c) All respective contributors to the Peridot Project. All rights reserved.
 # Copyright (c) 2021-2022 Rocky Enterprise Software Foundation, Inc. All rights reserved.
@@ -31,22 +31,4 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-targets=(
-  "//peridot/cmd/v1/peridotserver/ci:peridotserver.push"
-  "//peridot/cmd/v1/peridotephemeral/ci:peridotephemeral.push"
-  "//peridot/cmd/v1/keykeeper/ci:keykeeper.push"
-  "//peridot/cmd/v1/yumrepofs/ci:yumrepofs.push"
-  "//peridot/cmd/v1/yumrepofsupdater/ci:yumrepofsupdater.push"
-  "//peridot/cmd/v1/yumrepofsupdater/ci:yumrepofsupdater.push"
-  "//obsidian/cmd/v1/obsidian/ci:obsidian.push"
-  "//peridot/ui:peridot-frontend.push"
-  "//obsidian/ui:obsidian-frontend.push"
-)
-
-for target in "${targets[@]}"; do
-  br "$target" amd64
-done
-
-for target in "${targets[@]}"; do
-  GIT_COMMIT="$(git rev-parse HEAD)-arm64" br "$target" arm64
-done
+exit 0
