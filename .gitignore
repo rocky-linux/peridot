@@ -42,7 +42,9 @@ vendor/peridot.resf.org
 .ijwb/.idea/**/usage.statistics.xml
 .ijwb/.idea/**/dictionaries
 .ijwb/.idea/**/shelf
-.idea/**
+
+# top-level IDE configuration - user specific contents
+/.idea/**
 
 # AWS User-specific
 .ijwb/.idea/**/aws.xml

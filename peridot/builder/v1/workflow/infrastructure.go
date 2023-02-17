@@ -61,15 +61,15 @@ import (
 )
 
 type ProvisionWorkerRequest struct {
-	TaskId       string         `json:"taskId"`
-	ParentTaskId sql.NullString `json:"parentTaskId"`
-	Purpose      string         `json:"purpose"`
-	Arch         string         `json:"arch"`
+	TaskId        string         `json:"taskId"`
+	ParentTaskId  sql.NullString `json:"parentTaskId"`
+	Purpose       string         `json:"purpose"`
+	Arch          string         `json:"arch"`
 	ImageArch     string         `json:"imageArch"`
 	BuildPoolType string         `json:"buildPoolType"`
-	ProjectId    string         `json:"projectId"`
-	HighResource bool           `json:"highResource"`
-	Privileged   bool           `json:"privileged"`
+	ProjectId     string         `json:"projectId"`
+	HighResource  bool           `json:"highResource"`
+	Privileged    bool           `json:"privileged"`
 }
 
 func archToGoArch(arch string) string {
