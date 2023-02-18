@@ -64,6 +64,7 @@ type Project struct {
 	AdditionalVendor   string         `json:"additionalVendor" db:"additional_vendor"`
 
 	Archs            pq.StringArray `json:"archs" db:"archs"`
+	BuildPoolType    sql.NullString `json:"buildPoolType" db:"build_pool_type"`
 	FollowImportDist bool           `json:"followImportDist" db:"follow_import_dist"`
 	BranchSuffix     sql.NullString `json:"branchSuffix" db:"branch_suffix"`
 	GitMakePublic    bool           `json:"gitMakePublic" db:"git_make_public"`
