@@ -31,30 +31,30 @@
 package serverpsql
 
 import (
-	"fmt"
-	"github.com/jmoiron/sqlx/types"
-	"github.com/lib/pq"
-	"google.golang.org/protobuf/encoding/protojson"
-	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/types/known/anypb"
-	"peridot.resf.org/peridot/db/models"
-	peridotpb "peridot.resf.org/peridot/pb"
-	"peridot.resf.org/utils"
+    "fmt"
+    "github.com/jmoiron/sqlx/types"
+    "github.com/lib/pq"
+    "google.golang.org/protobuf/encoding/protojson"
+    "google.golang.org/protobuf/proto"
+    "google.golang.org/protobuf/types/known/anypb"
+    "peridot.resf.org/peridot/db/models"
+    peridotpb "peridot.resf.org/peridot/pb"
+    "peridot.resf.org/utils"
 )
 
 func (a *Access) ListProjects(filters *peridotpb.ProjectFilters) (ret models.Projects, err error) {
-	if filters == nil {
-		filters = &peridotpb.ProjectFilters{}
-	}
+    if filters == nil {
+        filters = &peridotpb.ProjectFilters{}
+    }
 
-	var ids pq.StringArray = nil
-	if filters.Ids != nil {
-		ids = filters.Ids
-	}
+    var ids pq.StringArray = nil
+    if filters.Ids != nil {
+        ids = filters.Ids
+    }
 
-	err = a.query.Select(
-		&ret,
-		`
+    err = a.query.Select(
+        &ret,
+        `
 		select
 			id,
 			created_at,
@@ -88,19 +88,19 @@ func (a *Access) ListProjects(filters *peridotpb.ProjectFilters) (ret models.Pro
 			and ($3 :: uuid[] is null or id = any($3 :: uuid[]))
 		order by created_at desc
 		`,
-		utils.StringValueP(filters.Id),
-		utils.StringValueP(filters.Name),
-		ids,
-	)
+        utils.StringValueP(filters.Id),
+        utils.StringValueP(filters.Name),
+        ids,
+    )
 
-	return ret, err
+    return ret, err
 }
 
 func (a *Access) GetProjectKeys(projectId string) (*models.ProjectKey, error) {
-	var ret models.ProjectKey
-	err := a.query.Get(
-		&ret,
-		`
+    var ret models.ProjectKey
+    err := a.query.Get(
+        &ret,
+        `
 		select
 			id,
 			created_at,
@@ -110,21 +110,21 @@ func (a *Access) GetProjectKeys(projectId string) (*models.ProjectKey, error) {
 		from project_keys
 		where project_id = $1
 		`,
-		projectId,
-	)
-	if err != nil {
-		return nil, err
-	}
+        projectId,
+    )
+    if err != nil {
+        return nil, err
+    }
 
-	return &ret, nil
+    return &ret, nil
 }
 
 // GetProjectModuleConfiguration returns the module configurations for the given project.
 func (a *Access) GetProjectModuleConfiguration(projectId string) (*peridotpb.ModuleConfiguration, error) {
-	var ret types.JSONText
-	err := a.query.Get(
-		&ret,
-		`
+    var ret types.JSONText
+    err := a.query.Get(
+        &ret,
+        `
         select
             proto
         from project_module_configuration
@@ -132,86 +132,86 @@ func (a *Access) GetProjectModuleConfiguration(projectId string) (*peridotpb.Mod
 			project_id = $1
 			and active = true
         `,
-		projectId,
-	)
-	if err != nil {
-		return nil, err
-	}
+        projectId,
+    )
+    if err != nil {
+        return nil, err
+    }
 
-	anyPb := &anypb.Any{}
-	err = protojson.Unmarshal(ret, anyPb)
-	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal module configuration (protojson): %v", err)
-	}
+    anyPb := &anypb.Any{}
+    err = protojson.Unmarshal(ret, anyPb)
+    if err != nil {
+        return nil, fmt.Errorf("failed to unmarshal module configuration (protojson): %v", err)
+    }
 
-	pb := &peridotpb.ModuleConfiguration{}
-	err = anypb.UnmarshalTo(anyPb, pb, proto.UnmarshalOptions{})
-	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal module configuration: %v", err)
-	}
+    pb := &peridotpb.ModuleConfiguration{}
+    err = anypb.UnmarshalTo(anyPb, pb, proto.UnmarshalOptions{})
+    if err != nil {
+        return nil, fmt.Errorf("failed to unmarshal module configuration: %v", err)
+    }
 
-	return pb, nil
+    return pb, nil
 }
 
 func (a *Access) CreateProjectModuleConfiguration(projectId string, config *peridotpb.ModuleConfiguration) error {
-	anyPb, err := anypb.New(config)
-	if err != nil {
-		return fmt.Errorf("failed to marshal module configuration: %v", err)
-	}
+    anyPb, err := anypb.New(config)
+    if err != nil {
+        return fmt.Errorf("failed to marshal module configuration: %v", err)
+    }
 
-	protoJson, err := protojson.Marshal(anyPb)
-	if err != nil {
-		return fmt.Errorf("failed to marshal module configuration (protojson): %v", err)
-	}
+    protoJson, err := protojson.Marshal(anyPb)
+    if err != nil {
+        return fmt.Errorf("failed to marshal module configuration (protojson): %v", err)
+    }
 
-	_, err = a.query.Exec(
-		`
+    _, err = a.query.Exec(
+        `
         insert into project_module_configuration (project_id, proto, active)
         values ($1, $2, true)
 		on conflict (project_id) do update
 			set proto = $2, active = true
         `,
-		projectId,
-		protoJson,
-	)
-	if err != nil {
-		return err
-	}
+        projectId,
+        protoJson,
+    )
+    if err != nil {
+        return err
+    }
 
-	return nil
+    return nil
 }
 
 func (a *Access) CreateProject(project *peridotpb.Project) (*models.Project, error) {
-	if err := project.ValidateAll(); err != nil {
-		return nil, err
-	}
+    if err := project.ValidateAll(); err != nil {
+        return nil, err
+    }
 
-	ret := models.Project{
-		Name:               project.Name.Value,
-		MajorVersion:       int(project.MajorVersion.Value),
-		DistTagOverride:    utils.StringValueToNullString(project.DistTag),
-		TargetGitlabHost:   project.TargetGitlabHost.Value,
-		TargetPrefix:       project.TargetPrefix.Value,
-		TargetBranchPrefix: project.TargetBranchPrefix.Value,
-		SourceGitHost:      utils.StringValueToNullString(project.SourceGitHost),
-		SourcePrefix:       utils.StringValueToNullString(project.SourcePrefix),
-		SourceBranchPrefix: utils.StringValueToNullString(project.SourceBranchPrefix),
-		CdnUrl:             utils.StringValueToNullString(project.CdnUrl),
-		StreamMode:         project.StreamMode,
-		TargetVendor:       project.TargetVendor,
-		AdditionalVendor:   project.AdditionalVendor.Value,
-		Archs:              project.Archs,
-		BuildPoolType:      project.BuildPoolType,
-		FollowImportDist:   project.FollowImportDist,
-		BranchSuffix:       utils.StringValueToNullString(project.BranchSuffix),
-		GitMakePublic:      project.GitMakePublic,
-		VendorMacro:        utils.StringValueToNullString(project.VendorMacro),
-		PackagerMacro:      utils.StringValueToNullString(project.PackagerMacro),
-	}
+    ret := models.Project{
+        Name:               project.Name.Value,
+        MajorVersion:       int(project.MajorVersion.Value),
+        DistTagOverride:    utils.StringValueToNullString(project.DistTag),
+        TargetGitlabHost:   project.TargetGitlabHost.Value,
+        TargetPrefix:       project.TargetPrefix.Value,
+        TargetBranchPrefix: project.TargetBranchPrefix.Value,
+        SourceGitHost:      utils.StringValueToNullString(project.SourceGitHost),
+        SourcePrefix:       utils.StringValueToNullString(project.SourcePrefix),
+        SourceBranchPrefix: utils.StringValueToNullString(project.SourceBranchPrefix),
+        CdnUrl:             utils.StringValueToNullString(project.CdnUrl),
+        StreamMode:         project.StreamMode,
+        TargetVendor:       project.TargetVendor,
+        AdditionalVendor:   project.AdditionalVendor.Value,
+        Archs:              project.Archs,
+        BuildPoolType:      project.BuildPoolType,
+        FollowImportDist:   project.FollowImportDist,
+        BranchSuffix:       utils.StringValueToNullString(project.BranchSuffix),
+        GitMakePublic:      project.GitMakePublic,
+        VendorMacro:        utils.StringValueToNullString(project.VendorMacro),
+        PackagerMacro:      utils.StringValueToNullString(project.PackagerMacro),
+    }
 
-	err := a.query.Get(
-		&ret,
-		`
+    err := a.query.Get(
+        &ret,
+        `
 		insert into projects
 		(name, major_version, dist_tag_override, target_gitlab_host, target_prefix,
 		target_branch_prefix, source_git_host, source_prefix, source_branch_prefix, cdn_url,
@@ -220,65 +220,65 @@ func (a *Access) CreateProject(project *peridotpb.Project) (*models.Project, err
 		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
 		returning id, created_at, updated_at
 		`,
-		ret.Name,
-		ret.MajorVersion,
-		ret.DistTagOverride,
-		ret.TargetGitlabHost,
-		ret.TargetPrefix,
-		ret.TargetBranchPrefix,
-		ret.SourceGitHost,
-		ret.SourcePrefix,
-		ret.SourceBranchPrefix,
-		ret.CdnUrl,
-		ret.StreamMode,
-		ret.TargetVendor,
-		ret.AdditionalVendor,
-		ret.Archs,
-		ret.BuildPoolType,
-		ret.FollowImportDist,
-		ret.BranchSuffix,
-		ret.GitMakePublic,
-		ret.VendorMacro,
-		ret.PackagerMacro,
-	)
-	if err != nil {
-		return nil, err
-	}
+        ret.Name,
+        ret.MajorVersion,
+        ret.DistTagOverride,
+        ret.TargetGitlabHost,
+        ret.TargetPrefix,
+        ret.TargetBranchPrefix,
+        ret.SourceGitHost,
+        ret.SourcePrefix,
+        ret.SourceBranchPrefix,
+        ret.CdnUrl,
+        ret.StreamMode,
+        ret.TargetVendor,
+        ret.AdditionalVendor,
+        ret.Archs,
+        ret.BuildPoolType,
+        ret.FollowImportDist,
+        ret.BranchSuffix,
+        ret.GitMakePublic,
+        ret.VendorMacro,
+        ret.PackagerMacro,
+    )
+    if err != nil {
+        return nil, err
+    }
 
-	return &ret, nil
+    return &ret, nil
 }
 
 func (a *Access) UpdateProject(id string, project *peridotpb.Project) (*models.Project, error) {
-	if err := project.ValidateAll(); err != nil {
-		return nil, err
-	}
+    if err := project.ValidateAll(); err != nil {
+        return nil, err
+    }
 
-	ret := models.Project{
-		Name:               project.Name.Value,
-		MajorVersion:       int(project.MajorVersion.Value),
-		DistTagOverride:    utils.StringValueToNullString(project.DistTag),
-		TargetGitlabHost:   project.TargetGitlabHost.Value,
-		TargetPrefix:       project.TargetPrefix.Value,
-		TargetBranchPrefix: project.TargetBranchPrefix.Value,
-		SourceGitHost:      utils.StringValueToNullString(project.SourceGitHost),
-		SourcePrefix:       utils.StringValueToNullString(project.SourcePrefix),
-		SourceBranchPrefix: utils.StringValueToNullString(project.SourceBranchPrefix),
-		CdnUrl:             utils.StringValueToNullString(project.CdnUrl),
-		StreamMode:         project.StreamMode,
-		TargetVendor:       project.TargetVendor,
-		AdditionalVendor:   project.AdditionalVendor.Value,
-		Archs:              project.Archs,
-		BuildPoolType:      project.BuildPoolType,
-		FollowImportDist:   project.FollowImportDist,
-		BranchSuffix:       utils.StringValueToNullString(project.BranchSuffix),
-		GitMakePublic:      project.GitMakePublic,
-		VendorMacro:        utils.StringValueToNullString(project.VendorMacro),
-		PackagerMacro:      utils.StringValueToNullString(project.PackagerMacro),
-	}
+    ret := models.Project{
+        Name:               project.Name.Value,
+        MajorVersion:       int(project.MajorVersion.Value),
+        DistTagOverride:    utils.StringValueToNullString(project.DistTag),
+        TargetGitlabHost:   project.TargetGitlabHost.Value,
+        TargetPrefix:       project.TargetPrefix.Value,
+        TargetBranchPrefix: project.TargetBranchPrefix.Value,
+        SourceGitHost:      utils.StringValueToNullString(project.SourceGitHost),
+        SourcePrefix:       utils.StringValueToNullString(project.SourcePrefix),
+        SourceBranchPrefix: utils.StringValueToNullString(project.SourceBranchPrefix),
+        CdnUrl:             utils.StringValueToNullString(project.CdnUrl),
+        StreamMode:         project.StreamMode,
+        TargetVendor:       project.TargetVendor,
+        AdditionalVendor:   project.AdditionalVendor.Value,
+        Archs:              project.Archs,
+        BuildPoolType:      project.BuildPoolType.Value,
+        FollowImportDist:   project.FollowImportDist,
+        BranchSuffix:       utils.StringValueToNullString(project.BranchSuffix),
+        GitMakePublic:      project.GitMakePublic,
+        VendorMacro:        utils.StringValueToNullString(project.VendorMacro),
+        PackagerMacro:      utils.StringValueToNullString(project.PackagerMacro),
+    }
 
-	err := a.query.Get(
-		&ret,
-		`
+    err := a.query.Get(
+        &ret,
+        `
 		update projects set
 			name = $1,
 			major_version = $2,
@@ -304,65 +304,65 @@ func (a *Access) UpdateProject(id string, project *peridotpb.Project) (*models.P
 		where id = $21
 		returning id, created_at, updated_at
 		`,
-		ret.Name,
-		ret.MajorVersion,
-		ret.DistTagOverride,
-		ret.TargetGitlabHost,
-		ret.TargetPrefix,
-		ret.TargetBranchPrefix,
-		ret.SourceGitHost,
-		ret.SourcePrefix,
-		ret.SourceBranchPrefix,
-		ret.CdnUrl,
-		ret.StreamMode,
-		ret.TargetVendor,
-		ret.AdditionalVendor,
-		ret.Archs,
-		ret.BuildPoolType,
-		ret.FollowImportDist,
-		ret.BranchSuffix,
-		ret.GitMakePublic,
-		ret.VendorMacro,
-		ret.PackagerMacro,
-		id,
-	)
-	if err != nil {
-		return nil, err
-	}
+        ret.Name,
+        ret.MajorVersion,
+        ret.DistTagOverride,
+        ret.TargetGitlabHost,
+        ret.TargetPrefix,
+        ret.TargetBranchPrefix,
+        ret.SourceGitHost,
+        ret.SourcePrefix,
+        ret.SourceBranchPrefix,
+        ret.CdnUrl,
+        ret.StreamMode,
+        ret.TargetVendor,
+        ret.AdditionalVendor,
+        ret.Archs,
+        ret.BuildPoolType,
+        ret.FollowImportDist,
+        ret.BranchSuffix,
+        ret.GitMakePublic,
+        ret.VendorMacro,
+        ret.PackagerMacro,
+        id,
+    )
+    if err != nil {
+        return nil, err
+    }
 
-	return &ret, nil
+    return &ret, nil
 }
 
 func (a *Access) SetProjectKeys(projectId string, username string, password string) error {
-	_, err := a.query.Exec(
-		`
+    _, err := a.query.Exec(
+        `
 		insert into project_keys (project_id, gitlab_username, gitlab_secret)
 		values ($1, $2, $3)
 		on conflict (project_id) do update
 			set gitlab_username = $2, gitlab_secret = $3
 		`,
-		projectId,
-		username,
-		password,
-	)
-	return err
+        projectId,
+        username,
+        password,
+    )
+    return err
 }
 
 func (a *Access) SetBuildRootPackages(projectId string, srpmPackages pq.StringArray, buildPackages pq.StringArray) error {
-	if srpmPackages == nil {
-		srpmPackages = pq.StringArray{}
-	}
-	if buildPackages == nil {
-		buildPackages = pq.StringArray{}
-	}
+    if srpmPackages == nil {
+        srpmPackages = pq.StringArray{}
+    }
+    if buildPackages == nil {
+        buildPackages = pq.StringArray{}
+    }
 
-	_, err := a.query.Exec(
-		`
+    _, err := a.query.Exec(
+        `
 		update projects set srpm_stage_packages = $2, build_stage_packages = $3 where id = $1
 		`,
-		projectId,
-		srpmPackages,
-		buildPackages,
-	)
-	return err
+        projectId,
+        srpmPackages,
+        buildPackages,
+    )
+    return err
 }
