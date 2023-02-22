@@ -6,7 +6,7 @@ local DSN = db.dsn('hydra');
 
 {
   image: 'quay.io/peridot/spicedb',
-  tag: 'v0.2.16',
+  tag: 'v0.3.21',
   legacyDb: true,
   dsn: {
     name: 'DSN',

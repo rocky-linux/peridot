@@ -19,15 +19,6 @@ resfdeploy.new({
   image: common.image,
   tag: common.tag,
   dsn: common.dsn,
-  internal_route_options: {
-    headers: {
-      request: {
-        add: {
-          'Authorization': 'Bearer %s' % common.env[0].value,
-        }
-      }
-    }
-  },
   requests: if kubernetes.prod() then {
     cpu: '0.2',
     memory: '512M',
