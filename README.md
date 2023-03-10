@@ -12,9 +12,22 @@ __Other components pending__
 
 
 ## Development
-Before the setup install `jq`, `bazelisk`, `docker` and `kubectl`.
+Before the setup install `jq`, `golang`, `make`, `bazelisk`, `docker`, `helm`, and `kubectl`:
+
+On Linux, jq, golang, make and docker can be installed using the package manager.
+
+Links for installing the other software:
+* Bazelisk: https://github.com/bazelbuild/bazelisk/releases
+* Helm: https://helm.sh/docs/intro/install/
+* Kubectl: https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/
+
 A local Kubernetes cluster is also required. Docker Desktop is a good solution.
 
+Configure kubectl to manage the local Kubernetes cluster by placing the
+KubeConfig yaml into `$HOME/.kube/config` and do `chmod 600 $HOME/.kube/config`
+
+Then download istio into a local directory:
+https://istio.io/latest/docs/setup/getting-started/
 
 #### Initial setup (will soon be replaced by one command dev cluster)
 ```bash
