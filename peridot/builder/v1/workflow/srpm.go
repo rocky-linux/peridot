@@ -425,8 +425,15 @@ func (c *Controller) BuildSRPMActivity(ctx context.Context, upstreamPrefix strin
 		c.log.Infof("no extra options to process for package")
 	}
 
-	extraOptions.DisabledModules = disableModules
-	extraOptions.Modules = enableModules
+	if extraOptions.DisabledModules == nil {
+		extraOptions.DisabledModules = []string{}
+	}
+	extraOptions.DisabledModules = append(extraOptions.DisabledModules, disableModules...)
+
+	if extraOptions.Modules == nil {
+		extraOptions.Modules = []string{}
+	}
+	extraOptions.Modules = append(extraOptions.Modules, enableModules...)
 
 	hostArch := os.Getenv("REAL_BUILD_ARCH")
 	extraOptions.EnableNetworking = true
