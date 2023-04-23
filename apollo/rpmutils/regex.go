@@ -48,7 +48,7 @@ var (
 
 func NVR() *regexp.Regexp {
 	if nvr == nil {
-		nvr = regexp.MustCompile("^(\\S+)-([\\w~%.+]+)-(\\w+(?:\\.[\\w~%+]+)+?)(?:\\.(\\w+))?(?:\\.rpm)?$")
+		nvr = regexp.MustCompile("^(\\S+)-([\\w~%.+^]+)-(\\w+(?:\\.[\\w~%+]+)+?)(?:\\.(\\w+))?(?:\\.rpm)?$")
 	}
 	return nvr
 }
@@ -62,7 +62,7 @@ func NVRNoArch() *regexp.Regexp {
 
 func NVRUnusualRelease() *regexp.Regexp {
 	if nvrUnusualRelease == nil {
-		nvrUnusualRelease = regexp.MustCompile("^(\\S+)-([\\w~%.+]+)-(\\w+?)(?:\\.(\\w+))?(?:\\.rpm)?$")
+		nvrUnusualRelease = regexp.MustCompile("^(\\S+)-([\\w~%.+^]+)-(\\w+?)(?:\\.(\\w+))?(?:\\.rpm)?$")
 	}
 	return nvrUnusualRelease
 }
