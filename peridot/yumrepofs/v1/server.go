@@ -34,6 +34,7 @@ import (
 	"context"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
+	"github.com/aws/aws-sdk-go/aws/endpoints"
 	"github.com/aws/aws-sdk-go/aws/session"
 	awss3 "github.com/aws/aws-sdk-go/service/s3"
 	"github.com/go-git/go-billy/v5/osfs"
@@ -66,7 +67,9 @@ func NewServer(db peridotdb.Access, session *session.Session) (*Server, error) {
 		return nil, err
 	}
 
-	cfg := &aws.Config{}
+	cfg := &aws.Config{
+		UseDualStackEndpoint: endpoints.DualStackEndpointStateEnabled,
+	}
 	if assumeRole := viper.GetString("s3-assume-role"); assumeRole != "" {
 		cfg.Credentials = stscreds.NewCredentials(session, assumeRole)
 	}

@@ -19,6 +19,7 @@ go_library(
         "//utils",
         "//vendor/github.com/aws/aws-sdk-go/aws",
         "//vendor/github.com/aws/aws-sdk-go/aws/credentials/stscreds",
+        "//vendor/github.com/aws/aws-sdk-go/aws/endpoints",
         "//vendor/github.com/aws/aws-sdk-go/aws/session",
         "//vendor/github.com/aws/aws-sdk-go/service/s3",
         "//vendor/github.com/go-git/go-billy/v5/osfs",
