@@ -122,14 +122,6 @@ export const SyncForm = (props: SyncFormProps) => {
               label="Branch"
               name="branch"
             />
-            <TextField
-              sx={{ display: 'flex' }}
-              required
-              size="small"
-              label="File"
-              name="file"
-              defaultValue="catalog.cfg"
-            />
           </div>
         </div>
         <div className="w-full flex justify-end mt-4">
