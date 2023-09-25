@@ -65,3 +65,7 @@ For best experience use IntelliJ+Bazel but `govendor` creates structure that is 
 `ibazel run //TARGET:TARGET.server` - example: `ibazel run //apollo/ui:apollo.server`
 #### Find UI server targets
 `bazel query 'attr(tags, "resf_frontend_server", //...)'`
+
+## Reporting Issues / Bugs
+
+Before opening any issues in this GitHub repository, please take a moment to read the wiki page [Reporting Bugs and RFE's](https://wiki.rockylinux.org/rocky/bugs/)
