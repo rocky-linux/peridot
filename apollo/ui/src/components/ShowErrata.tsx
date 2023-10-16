@@ -177,7 +177,7 @@ export const ShowErrata = (props: ShowErrataProps) => {
             <Tabs backgroundColor={cardBg} p="2">
               <TabList>
                 <Tab>Erratum</Tab>
-                <Tab>Affected Packages</Tab>
+                <Tab>Updated Packages</Tab>
               </TabList>
               <Box
                 display="flex"
