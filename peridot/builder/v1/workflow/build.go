@@ -681,7 +681,7 @@ func (c *Controller) BuildWorkflow(ctx workflow.Context, req *peridotpb.SubmitBu
 			archCtx := workflow.WithActivityOptions(ctx, workflow.ActivityOptions{
 				ScheduleToStartTimeout: 12 * time.Hour,
 				StartToCloseTimeout:    48 * time.Hour,
-				HeartbeatTimeout:       2 * time.Hour,
+				HeartbeatTimeout:       12 * time.Hour,
 				TaskQueue:              archTaskQueue,
 				RetryPolicy: &temporal.RetryPolicy{
 					MaximumAttempts: 1,
