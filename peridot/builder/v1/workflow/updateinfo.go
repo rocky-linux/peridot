@@ -281,7 +281,7 @@ func (c *Controller) UpdateInfoWorkflow(ctx workflow.Context, req *adminpb.AddUp
 	stage2Ctx := workflow.WithActivityOptions(ctx, workflow.ActivityOptions{
 		ScheduleToStartTimeout: 25 * time.Hour,
 		StartToCloseTimeout:    30 * time.Hour,
-		HeartbeatTimeout:       30 * time.Second,
+		HeartbeatTimeout:       5 * time.Minute,
 		TaskQueue:              c.mainQueue,
 		// Yumrepofs is locking for a short period so let's not wait too long to retry
 		RetryPolicy: &temporal.RetryPolicy{
