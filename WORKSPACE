@@ -214,9 +214,9 @@ atlassian_deps()
 
 http_jar(
     name = "bazel_diff",
-    sha256 = "59f2a614f90b4c2a6c83f1e6146d8722dfaac3a1d8f42734dcbb6ccf373a1cbd",
+    sha256 = "a88c267227a770b787ec939b64cca907efa6e1a1c0d5c55283d7332ddb05d3b5",
     urls = [
-        "https://github.com/Tinder/bazel-diff/releases/download/4.0.5/bazel-diff_deploy.jar",
+        "https://github.com/Tinder/bazel-diff/releases/download/4.8.2/bazel-diff_deploy.jar",
     ],
 )
 # --end bazel-diff--
