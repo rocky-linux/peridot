@@ -90,6 +90,7 @@ func (a *Access) GetLatestImportRevisionsForPackageInProject(packageName string,
 			pv.release
 		from
 			import_revisions ir
+        inner join imports i on i.id = ir.import_id
 		inner join project_package_versions ppv on ppv.package_version_id = ir.package_version_id
 		inner join package_versions pv on pv.id = ir.package_version_id
 		inner join packages p on p.id = ppv.package_id
@@ -97,6 +98,7 @@ func (a *Access) GetLatestImportRevisionsForPackageInProject(packageName string,
 		where
 			p.name = $1
 			and ppv.project_id = $2
+            and i.project_id = $2
 			and ppv.active = true
 		order by ir.created_at desc
 		`,
