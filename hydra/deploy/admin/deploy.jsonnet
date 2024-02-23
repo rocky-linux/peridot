@@ -16,7 +16,7 @@ resfdeploy.new({
   command: '/bin/sh',
   // We can use dangerous-force-http because we're using mTLS internally
   // and terminate TLS at ingress point.
-  args: common.sh_args($.dsn, '/usr/bin/hydra serve admin --dangerous-force-http'),
+  args: common.sh_args($.dsn, '/usr/bin/hydra serve admin'),
   image: common.image,
   tag: common.tag,
   dsn: {
