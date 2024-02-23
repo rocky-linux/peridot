@@ -9,7 +9,7 @@ local authn = if kubernetes.prod() then 'https://id.build.resf.org' else 'http:/
 
 {
   image: 'oryd/hydra',
-  tag: 'v1.11.7',
+  tag: 'v2.0.3',
   legacyDb: true,
   env: [
     {
