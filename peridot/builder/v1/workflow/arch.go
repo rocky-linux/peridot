@@ -473,6 +473,12 @@ config_opts['releasever'] = '{majorVersion}'
 config_opts['package_manager'] = 'dnf'
 config_opts['extra_chroot_dirs'] = [ '/run/lock' ]
 config_opts['rpmbuild_command'] = '{rpmbuildCommand}'
+config_opts['use_bootstrap_image'] = False
+config_opts['plugin_conf']['rpmautospec_enable'] = True
+config_opts['plugin_conf']['rpmautospec_opts'] = {
+  'requires': ['rpmautospec'],
+  'cmd_base': ['/usr/bin/rpmautospec', 'process-distgit'],
+}
 {additionalVendorConfig}
 
 config_opts['plugin_conf']['ccache_enable'] = False
