@@ -133,7 +133,8 @@ export async function hydraAutoSignup(req) {
 
   let client;
   if (resp.data.length <= 0) {
-    client = await hydraAdmin.createOAuth2Client(clientModel);
+    const createResp = await hydraAdmin.createOAuth2Client(clientModel);
+    client = createResp.data;
   } else {
     client = resp.data[0];
     await hydraAdmin.setOAuth2Client(client.client_id, clientModel);
