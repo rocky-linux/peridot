@@ -10,6 +10,6 @@ go_library(
         "//vendor/github.com/ProtonMail/gopenpgp/v2/constants",
         "//vendor/github.com/ProtonMail/gopenpgp/v2/internal",
         "//vendor/github.com/pkg/errors",
-        "@com_github_ProtonMail_go_crypto//openpgp/armor",
+        "@com_github_protonmail_go_crypto//openpgp/armor",
     ],
 )

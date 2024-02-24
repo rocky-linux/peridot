@@ -25,7 +25,7 @@ go_library(
         "//vendor/github.com/go-git/go-billy/v5/osfs",
         "//vendor/github.com/sirupsen/logrus",
         "//vendor/github.com/spf13/viper",
-        "@go_googleapis//google/api:httpbody_go_proto",
+        "@org_golang_google_genproto_googleapis_api//httpbody",
         "@org_golang_google_grpc//:go_default_library",
         "@org_golang_google_grpc//codes",
         "@org_golang_google_grpc//metadata",

@@ -35,7 +35,7 @@ import (
 	"fmt"
 	v1 "github.com/authzed/authzed-go/proto/authzed/api/v1"
 	"github.com/authzed/authzed-go/v1"
-	hydraclient "github.com/ory/hydra-client-go/client"
+	hydraclient "github.com/ory/hydra-client-go/v2"
 	"github.com/sirupsen/logrus"
 	"go.temporal.io/sdk/client"
 	"google.golang.org/grpc"
@@ -88,8 +88,8 @@ type Server struct {
 	temporal       client.Client
 	temporalWorker *builderv1.Worker
 	authz          *authzed.Client
-	hydra          *hydraclient.OryHydra
-	hydraAdmin     *hydraclient.OryHydra
+	hydra          *hydraclient.APIClient
+	hydraAdmin     *hydraclient.APIClient
 	storage        lookaside.Storage
 }
 
@@ -108,21 +108,21 @@ func NewServer(db peridotdb.Access, c client.Client, storage lookaside.Storage) 
 	if err != nil {
 		return nil, fmt.Errorf("could not parse hydra public url, error: %s", err)
 	}
-	hydraSDK := hydraclient.NewHTTPClientWithConfig(nil, &hydraclient.TransportConfig{
-		Schemes:  []string{publicURL.Scheme},
-		Host:     publicURL.Host,
-		BasePath: publicURL.Path,
-	})
+	hydraSDKConfiguration := hydraclient.NewConfiguration()
+	hydraSDKConfiguration.Servers[0].URL = publicURL.String()
+	hydraSDKConfiguration.Host = publicURL.Host
+	hydraSDKConfiguration.Scheme = publicURL.Scheme
+	hydraSDK := hydraclient.NewAPIClient(hydraSDKConfiguration)
 
 	adminURL, err := url.Parse(servicecatalog.HydraAdmin())
 	if err != nil {
 		return nil, fmt.Errorf("could not parse hydra admin url, error: %s", err)
 	}
-	hydraAdminSDK := hydraclient.NewHTTPClientWithConfig(nil, &hydraclient.TransportConfig{
-		Schemes:  []string{adminURL.Scheme},
-		Host:     adminURL.Host,
-		BasePath: adminURL.Path,
-	})
+	hydraAdminSDKConfiguration := hydraclient.NewConfiguration()
+	hydraAdminSDKConfiguration.Servers[0].URL = adminURL.String()
+	hydraAdminSDKConfiguration.Host = adminURL.Host
+	hydraAdminSDKConfiguration.Scheme = adminURL.Scheme
+	hydraAdminSDK := hydraclient.NewAPIClient(hydraAdminSDKConfiguration)
 
 	return &Server{
 		log:            logrus.New(),

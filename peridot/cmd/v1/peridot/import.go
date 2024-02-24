@@ -63,7 +63,7 @@ func impCmdMn(_ *cobra.Command, args []string) {
 	projectId := mustGetProjectID()
 
 	importCl := getClient(serviceImport).(peridotopenapi.ImportServiceApi)
-	body := peridotopenapi.ImportPackageRequestIsTheRequestMessageForImportServiceImportPackage{
+	body := peridotopenapi.ImportServiceImportPackageBody{
 		PackageName: &args[0],
 		SetInactive: &setInactive,
 	}

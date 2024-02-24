@@ -32,11 +32,11 @@ package obsidianimplv1
 
 import (
 	"context"
-	"github.com/ory/hydra-client-go/client/admin"
-	hydramodels "github.com/ory/hydra-client-go/models"
+	"peridot.resf.org/utils"
+
+	"github.com/ory/hydra-client-go/v2"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/proto"
 	obsidianpb "peridot.resf.org/obsidian/pb"
 )
 
@@ -81,10 +81,7 @@ func (s *Server) ConsentDecision(ctx context.Context, req *obsidianpb.ConsentDec
 		return nil, status.Error(codes.InvalidArgument, challengeRequired)
 	}
 
-	consentReq, err := s.hydra.Admin.GetConsentRequest(&admin.GetConsentRequestParams{
-		Context:          ctx,
-		ConsentChallenge: req.Challenge,
-	})
+	consentReq, _, err := s.hydra.OAuth2API.GetOAuth2ConsentRequest(ctx).ConsentChallenge(req.Challenge).Execute()
 	if err != nil {
 		s.log.Error(err)
 		return nil, status.Error(codes.Internal, authError)
@@ -102,20 +99,16 @@ func (s *Server) ConsentDecision(ctx context.Context, req *obsidianpb.ConsentDec
 		}
 		redirectURL = res.RedirectUrl
 	} else {
-		res, err := s.hydra.Admin.RejectConsentRequest(&admin.RejectConsentRequestParams{
-			Body: &hydramodels.RejectRequest{
-				StatusCode:       int64(codes.Aborted),
-				ErrorDescription: "User does not consent to data sharing",
-				Error:            "no_consent",
-			},
-			ConsentChallenge: req.Challenge,
-			Context:          ctx,
-		})
+		res, _, err := s.hydra.OAuth2API.RejectOAuth2ConsentRequest(ctx).RejectOAuth2Request(client.RejectOAuth2Request{
+			Error:            utils.Pointer[string]("no_consent"),
+			ErrorDescription: utils.Pointer[string]("User does not consent to data sharing"),
+			StatusCode:       utils.Pointer[int64](int64(codes.Aborted)),
+		}).ConsentChallenge(req.Challenge).Execute()
 		if err != nil {
 			s.log.Errorf("error rejecting consent request: %s", err.Error())
 			return nil, status.Error(codes.Internal, authError)
 		}
-		redirectURL = *res.Payload.RedirectTo
+		redirectURL = res.RedirectTo
 	}
 
 	return &obsidianpb.ConsentDecisionResponse{
@@ -128,10 +121,7 @@ func (s *Server) LogoutDecision(ctx context.Context, req *obsidianpb.LogoutDecis
 		return nil, status.Error(codes.InvalidArgument, logoutChallengeRequired)
 	}
 
-	logout, err := s.hydra.Admin.GetLogoutRequest(&admin.GetLogoutRequestParams{
-		LogoutChallenge: req.Challenge,
-		Context:         ctx,
-	})
+	logout, _, err := s.hydra.OAuth2API.GetOAuth2LogoutRequest(ctx).LogoutChallenge(req.Challenge).Execute()
 	if err != nil {
 		s.log.Error(err)
 		return nil, status.Error(codes.Internal, authError)
@@ -139,41 +129,25 @@ func (s *Server) LogoutDecision(ctx context.Context, req *obsidianpb.LogoutDecis
 
 	var redirectURL string
 	if req.Accept {
-		_, err = s.hydra.Admin.RevokeConsentSessions(&admin.RevokeConsentSessionsParams{
-			All:     proto.Bool(true),
-			Subject: logout.Payload.Subject,
-			Context: ctx,
-		})
+		_, err = s.hydra.OAuth2API.RevokeOAuth2ConsentSessions(ctx).Subject(*logout.Subject).All(true).Execute()
 		if err != nil {
 			s.log.Errorf("error revoking consent sessions: %s", err.Error())
 			return nil, status.Error(codes.Internal, "error revoking consent sessions")
 		}
 
-		acceptReq, err := s.hydra.Admin.AcceptLogoutRequest(&admin.AcceptLogoutRequestParams{
-			LogoutChallenge: req.Challenge,
-			Context:         ctx,
-		})
+		acceptReq, _, err := s.hydra.OAuth2API.AcceptOAuth2LogoutRequest(ctx).LogoutChallenge(req.Challenge).Execute()
 		if err != nil {
 			s.log.Errorf("error accepting logout request: %s", err.Error())
 			return nil, status.Error(codes.Internal, "error accepting logout request")
 		}
-		redirectURL = *acceptReq.Payload.RedirectTo
+		redirectURL = acceptReq.RedirectTo
 	} else {
-		_, err := s.hydra.Admin.RejectLogoutRequest(&admin.RejectLogoutRequestParams{
-			Body: &hydramodels.RejectRequest{
-				StatusCode:       int64(codes.Aborted),
-				ErrorDescription: "User denied logout request",
-				Error:            "user_denied",
-			},
-			LogoutChallenge: req.Challenge,
-			Context:         nil,
-			HTTPClient:      nil,
-		})
+		_, err = s.hydra.OAuth2API.RejectOAuth2LogoutRequest(ctx).LogoutChallenge(req.Challenge).Execute()
 		if err != nil {
 			s.log.Errorf("error rejecting logout request: %s", err.Error())
 			return nil, status.Error(codes.Internal, "error rejecting logout request")
 		}
-		redirectURL = logout.Payload.RequestURL
+		redirectURL = *logout.RequestUrl
 	}
 
 	return &obsidianpb.LogoutDecisionResponse{

@@ -1,0 +1,23 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "compiler",
+    srcs = [
+        "context.go",
+        "error.go",
+        "extensions.go",
+        "helpers.go",
+        "main.go",
+        "reader.go",
+    ],
+    importmap = "peridot.resf.org/vendor/github.com/google/gnostic-models/compiler",
+    importpath = "github.com/google/gnostic-models/compiler",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/google/gnostic-models/extensions",
+        "//vendor/github.com/google/gnostic-models/jsonschema",
+        "//vendor/gopkg.in/yaml.v3:yaml_v3",
+        "@com_github_golang_protobuf//proto:go_default_library",
+        "@com_github_golang_protobuf//ptypes/any",
+    ],
+)

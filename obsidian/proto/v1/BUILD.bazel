@@ -10,7 +10,7 @@ proto_library(
     visibility = ["//visibility:public"],
     deps = [
         "@com_envoyproxy_protoc_gen_validate//validate:validate_proto",
-        "@go_googleapis//google/api:annotations_proto",
+        "@googleapis//google/api:annotations_proto",
     ],
 )
 
@@ -20,14 +20,14 @@ go_proto_library(
         "//:go_apiv2",
         "//:go_grpc",
         "//:go_validate",
-        "@com_github_grpc_ecosystem_grpc_gateway_v2//protoc-gen-grpc-gateway:go_gen_grpc_gateway",
+        "//:go_gen_grpc_gateway",
     ],
     importpath = "peridot.resf.org/obsidian/pb",
     proto = ":obsidianpb_proto",
     visibility = ["//visibility:public"],
     deps = [
         "@com_envoyproxy_protoc_gen_validate//validate:validate_go_proto",
-        "@go_googleapis//google/api:annotations_go_proto",
+        "@org_golang_google_genproto_googleapis_api//annotations",
     ],
 )
 

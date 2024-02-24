@@ -33,8 +33,9 @@ package obsidianimplv1
 import (
 	"context"
 	"github.com/gogo/status"
-	"github.com/ory/hydra-client-go/client/admin"
-	"github.com/ory/hydra-client-go/models"
+	client "github.com/ory/hydra-client-go/v2"
+	"peridot.resf.org/utils"
+
 	"google.golang.org/grpc/codes"
 	obsidianpb "peridot.resf.org/obsidian/pb"
 )
@@ -47,120 +48,108 @@ const (
 func (s *Server) ProcessLoginRequest(challenge string) (*obsidianpb.SessionStatusResponse, error) {
 	ctx := context.TODO()
 
-	loginReq, err := s.hydra.Admin.GetLoginRequest(&admin.GetLoginRequestParams{
-		LoginChallenge: challenge,
-		Context:        ctx,
-	})
+	loginReq, _, err := s.hydra.OAuth2API.GetOAuth2LoginRequest(ctx).LoginChallenge(challenge).Execute()
 	if err != nil {
 		s.log.Error(err)
 		return nil, status.Error(codes.Internal, authError)
 	}
 
-	if *loginReq.Payload.Challenge != challenge {
+	if loginReq.Challenge != challenge {
 		s.log.Error(err)
 		return nil, status.Error(codes.Internal, authError)
 	}
 
-	if *loginReq.Payload.Skip {
+	if loginReq.Skip {
 		return s.AcceptLoginRequest(ctx, challenge, loginReq)
 	}
 
 	return &obsidianpb.SessionStatusResponse{
 		Valid:      true,
-		ClientName: loginReq.Payload.Client.ClientName,
-		Scopes:     loginReq.Payload.RequestedScope,
+		ClientName: *loginReq.Client.ClientName,
+		Scopes:     loginReq.RequestedScope,
 	}, nil
 }
 
 func (s *Server) ProcessConsentRequest(challenge string) (*obsidianpb.SessionStatusResponse, error) {
 	ctx := context.TODO()
 
-	consentReq, err := s.hydra.Admin.GetConsentRequest(&admin.GetConsentRequestParams{
-		Context:          ctx,
-		ConsentChallenge: challenge,
-	})
+	consentReq, _, err := s.hydra.OAuth2API.GetOAuth2ConsentRequest(ctx).ConsentChallenge(challenge).Execute()
 	if err != nil {
 		s.log.Error(err)
 		return nil, status.Error(codes.Internal, authError)
 	}
 
-	if *consentReq.Payload.Challenge != challenge {
+	if consentReq.Challenge != challenge {
 		s.log.Error(err)
 		return nil, status.Error(codes.Internal, authError)
 	}
 
-	if consentReq.Payload.Skip {
+	if *consentReq.Skip {
 		return s.AcceptConsentRequest(ctx, challenge, consentReq)
 	}
 
 	return &obsidianpb.SessionStatusResponse{
 		Valid:      true,
-		ClientName: consentReq.Payload.Client.ClientName,
-		Scopes:     consentReq.Payload.RequestedScope,
+		ClientName: *consentReq.Client.ClientName,
+		Scopes:     consentReq.RequestedScope,
 	}, nil
 }
 
-func (s *Server) AcceptConsentRequest(ctx context.Context, challenge string, consentReq *admin.GetConsentRequestOK) (*obsidianpb.SessionStatusResponse, error) {
-	user, err := s.db.GetUserByID(consentReq.Payload.Subject)
+func (s *Server) AcceptConsentRequest(ctx context.Context, challenge string, consentReq *client.OAuth2ConsentRequest) (*obsidianpb.SessionStatusResponse, error) {
+	user, err := s.db.GetUserByID(*consentReq.Subject)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, noUser)
 	}
 
-	consent, err := s.hydra.Admin.AcceptConsentRequest(&admin.AcceptConsentRequestParams{
-		Context:          ctx,
-		ConsentChallenge: challenge,
-		Body: &models.AcceptConsentRequest{
-			Remember:                 true,
-			GrantScope:               consentReq.Payload.RequestedScope,
-			GrantAccessTokenAudience: consentReq.Payload.RequestedAccessTokenAudience,
-			Session: &models.ConsentRequestSession{
+	consent, _, err := s.hydra.OAuth2API.AcceptOAuth2ConsentRequest(ctx).
+		ConsentChallenge(challenge).
+		AcceptOAuth2ConsentRequest(client.AcceptOAuth2ConsentRequest{
+			Context:                  ctx,
+			Remember:                 utils.Pointer[bool](true),
+			GrantScope:               consentReq.RequestedScope,
+			GrantAccessTokenAudience: consentReq.RequestedAccessTokenAudience,
+			Session: &client.AcceptOAuth2ConsentRequestSession{
 				AccessToken: map[string]interface{}{
 					"id": user.ID,
 				},
-				IDToken: map[string]interface{}{
+				IdToken: map[string]interface{}{
 					"id":         user.ID,
 					"name":       user.Name.String,
 					"email":      user.Email,
 					"created_at": user.CreatedAt,
 				},
 			},
-		},
-	})
-	if err != nil {
-		s.log.Error(err)
-		return nil, status.Error(codes.Internal, authError)
-	}
+		}).Execute()
 
 	return &obsidianpb.SessionStatusResponse{
 		Valid:       true,
-		RedirectUrl: *consent.Payload.RedirectTo,
-		ClientName:  consentReq.Payload.Client.ClientName,
-		Scopes:      consentReq.Payload.RequestedScope,
+		RedirectUrl: consent.RedirectTo,
+		ClientName:  *consentReq.Client.ClientName,
+		Scopes:      consentReq.RequestedScope,
 	}, nil
 }
 
-func (s *Server) AcceptLoginRequest(ctx context.Context, challenge string, loginReq *admin.GetLoginRequestOK) (*obsidianpb.SessionStatusResponse, error) {
-	acceptLogin, err := s.hydra.Admin.AcceptLoginRequest(&admin.AcceptLoginRequestParams{
-		LoginChallenge: challenge,
-		Body: &models.AcceptLoginRequest{
-			Subject:  loginReq.Payload.Subject,
-			Remember: true,
-		},
-		Context: ctx,
-	})
+func (s *Server) AcceptLoginRequest(ctx context.Context, challenge string, loginReq *client.OAuth2LoginRequest) (*obsidianpb.SessionStatusResponse, error) {
+	acceptLogin, _, err := s.hydra.OAuth2API.AcceptOAuth2LoginRequest(ctx).
+		LoginChallenge(challenge).
+		AcceptOAuth2LoginRequest(client.AcceptOAuth2LoginRequest{
+			Context:  ctx,
+			Remember: utils.Pointer[bool](true),
+			Subject:  loginReq.Subject,
+		}).Execute()
 	if err != nil {
 		return nil, status.Error(codes.Internal, authError)
 	}
 
-	user, err := s.db.GetUserByID(*loginReq.Payload.Subject)
+	user, err := s.db.GetUserByID(loginReq.Subject)
 	if err != nil || user == nil || user.ID == "" {
 		return nil, status.Error(codes.InvalidArgument, noUser)
 	}
 
 	return &obsidianpb.SessionStatusResponse{
 		Valid:       true,
-		RedirectUrl: *acceptLogin.Payload.RedirectTo,
-		ClientName:  loginReq.Payload.Client.ClientName,
-		Scopes:      loginReq.Payload.RequestedScope,
+		RedirectUrl: acceptLogin.RedirectTo,
+		ClientName:  *loginReq.Client.ClientName,
+		Scopes:      loginReq.RequestedScope,
 	}, nil
 }

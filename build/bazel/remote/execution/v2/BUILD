@@ -14,9 +14,9 @@ proto_library(
         "//build/bazel/semver:semver_proto",
         "@com_google_protobuf//:duration_proto",
         "@com_google_protobuf//:timestamp_proto",
-        "@go_googleapis//google/api:annotations_proto",
-        "@go_googleapis//google/longrunning:longrunning_proto",
-        "@go_googleapis//google/rpc:status_proto",
+        "@googleapis//google/api:annotations_proto",
+        "@googleapis//google/longrunning:operations_proto",
+        "@googleapis//google/rpc:status_proto",
     ],
 )
 
@@ -31,9 +31,9 @@ go_proto_library(
     proto = ":remoteexecution_proto",
     deps = [
         "//build/bazel/semver:semver_go_proto",
-        "@go_googleapis//google/api:annotations_go_proto",
-        "@go_googleapis//google/longrunning:longrunning_go_proto",
-        "@go_googleapis//google/rpc:status_go_proto",
+        "@org_golang_google_genproto//googleapis/longrunning",
+        "@org_golang_google_genproto_googleapis_api//annotations",
+        "@org_golang_google_genproto_googleapis_rpc//status",
         "@org_golang_google_protobuf//types/known/durationpb",
         "@org_golang_google_protobuf//types/known/timestamppb",
     ],

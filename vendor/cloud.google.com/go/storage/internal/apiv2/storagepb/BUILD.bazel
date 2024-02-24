@@ -1,0 +1,23 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "storagepb",
+    srcs = ["storage.pb.go"],
+    importmap = "peridot.resf.org/vendor/cloud.google.com/go/storage/internal/apiv2/storagepb",
+    importpath = "cloud.google.com/go/storage/internal/apiv2/storagepb",
+    visibility = ["//vendor/cloud.google.com/go/storage:__subpackages__"],
+    deps = [
+        "//vendor/cloud.google.com/go/iam/apiv1/iampb",
+        "@org_golang_google_genproto//googleapis/type/date",
+        "@org_golang_google_genproto_googleapis_api//annotations",
+        "@org_golang_google_grpc//:go_default_library",
+        "@org_golang_google_grpc//codes",
+        "@org_golang_google_grpc//status",
+        "@org_golang_google_protobuf//reflect/protoreflect",
+        "@org_golang_google_protobuf//runtime/protoimpl",
+        "@org_golang_google_protobuf//types/known/durationpb",
+        "@org_golang_google_protobuf//types/known/emptypb",
+        "@org_golang_google_protobuf//types/known/fieldmaskpb",
+        "@org_golang_google_protobuf//types/known/timestamppb",
+    ],
+)

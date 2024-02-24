@@ -3,11 +3,12 @@ package grpcutil
 import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
-	rpb "google.golang.org/grpc/reflection/grpc_reflection_v1alpha"
+	rpbv1 "google.golang.org/grpc/reflection/grpc_reflection_v1"
+	"google.golang.org/grpc/reflection/grpc_reflection_v1alpha"
 )
 
 // NewAuthlessReflectionInterceptor creates a proxy GRPCServer which automatically converts
-// ServerReflectionServer instances to onces that skip grpc auth middleware.
+// ServerReflectionServer instances to ones that skip grpc auth middleware.
 //
 // change:
 // reflection.Register(srv)
@@ -26,12 +27,25 @@ func (ir interceptingRegistrar) GetServiceInfo() map[string]grpc.ServiceInfo {
 }
 
 func (ir interceptingRegistrar) RegisterService(desc *grpc.ServiceDesc, impl interface{}) {
-	reflectionSrv := impl.(rpb.ServerReflectionServer)
-	ir.delegate.RegisterService(desc, &authlessReflection{ServerReflectionServer: reflectionSrv})
+	reflectionSrvv1, ok := impl.(rpbv1.ServerReflectionServer)
+	if ok {
+		ir.delegate.RegisterService(desc, &authlessReflectionV1{ServerReflectionServer: reflectionSrvv1})
+	}
+
+	reflectionSrvv1alpha, ok := impl.(grpc_reflection_v1alpha.ServerReflectionServer)
+	if ok {
+		ir.delegate.RegisterService(desc, &authlessReflectionV1Alpha{ServerReflectionServer: reflectionSrvv1alpha})
+	}
 }
 
-type authlessReflection struct {
+type authlessReflectionV1 struct {
 	IgnoreAuthMixin
 
-	rpb.ServerReflectionServer
+	rpbv1.ServerReflectionServer
+}
+
+type authlessReflectionV1Alpha struct {
+	IgnoreAuthMixin
+
+	grpc_reflection_v1alpha.ServerReflectionServer
 }

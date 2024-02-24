@@ -49,7 +49,7 @@ func projectCreateHashedReposMn(_ *cobra.Command, args []string) {
 	cl := getClient(serviceProject).(peridotopenapi.ProjectServiceApi)
 
 	hashedRes, _, err := cl.CreateHashedRepositories(getContext(), projectID).
-		Body(peridotopenapi.InlineObject8{
+		Body(peridotopenapi.ProjectServiceCreateHashedRepositoriesBody{
 			Repositories: &args,
 		}).
 		Execute()

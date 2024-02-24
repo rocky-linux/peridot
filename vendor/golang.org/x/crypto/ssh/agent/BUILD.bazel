@@ -11,8 +11,5 @@ go_library(
     importmap = "peridot.resf.org/vendor/golang.org/x/crypto/ssh/agent",
     importpath = "golang.org/x/crypto/ssh/agent",
     visibility = ["//visibility:public"],
-    deps = [
-        "//vendor/golang.org/x/crypto/ed25519",
-        "//vendor/golang.org/x/crypto/ssh",
-    ],
+    deps = ["//vendor/golang.org/x/crypto/ssh"],
 )

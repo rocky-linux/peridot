@@ -10,4 +10,5 @@ go_library(
     importmap = "peridot.resf.org/vendor/github.com/spf13/afero/mem",
     importpath = "github.com/spf13/afero/mem",
     visibility = ["//visibility:public"],
+    deps = ["//vendor/github.com/spf13/afero/internal/common"],
 )

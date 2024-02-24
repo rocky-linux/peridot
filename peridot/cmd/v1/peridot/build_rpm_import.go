@@ -103,7 +103,7 @@ func buildRpmImportMn(_ *cobra.Command, args []string) {
 
 	cl := getClient(serviceBuild).(peridotopenapi.BuildServiceApi)
 	importRes, _, err := cl.RpmLookasideBatchImport(getContext(), projectId).
-		Body(peridotopenapi.InlineObject4{
+		Body(peridotopenapi.BuildServiceRpmLookasideBatchImportBody{
 			LookasideBlobs: &blobs,
 			ForceOverride:  &buildRpmImportForceOverride,
 		}).Execute()

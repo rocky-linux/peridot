@@ -67,7 +67,7 @@ func buildPackageMn(_ *cobra.Command, args []string) {
 	projectId := mustGetProjectID()
 
 	buildCl := getClient(serviceBuild).(peridotopenapi.BuildServiceApi)
-	body := peridotopenapi.InlineObject2{
+	body := peridotopenapi.BuildServiceSubmitBuildBody{
 		PackageName:   &args[0],
 		DisableChecks: &disableChecks,
 		Branches:      &branches,

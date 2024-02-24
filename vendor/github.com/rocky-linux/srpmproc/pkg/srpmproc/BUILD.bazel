@@ -34,6 +34,6 @@ go_library(
         "//vendor/github.com/rocky-linux/srpmproc/pkg/misc",
         "//vendor/github.com/rocky-linux/srpmproc/pkg/modes",
         "//vendor/github.com/rocky-linux/srpmproc/pkg/rpmutils",
-        "@org_golang_google_protobuf//encoding/prototext:go_default_library",
+        "@org_golang_google_protobuf//encoding/prototext",
     ],
 )

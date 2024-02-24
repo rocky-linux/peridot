@@ -108,7 +108,7 @@ go_library(
         "//vendor/github.com/google/go-querystring/query",
         "//vendor/github.com/hashicorp/go-cleanhttp",
         "//vendor/github.com/hashicorp/go-retryablehttp",
-        "//vendor/golang.org/x/oauth2",
         "//vendor/golang.org/x/time/rate",
+        "@org_golang_x_oauth2//:oauth2",
     ],
 )

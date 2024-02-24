@@ -401,6 +401,10 @@ func (c *Controller) BuildSRPMActivity(ctx context.Context, upstreamPrefix strin
 		return fmt.Errorf("could not import using srpmproc: %v", err)
 	}
 
+	// The SOURCES dir should always be available. Some packages don't have that
+	// and Mock complains. Loudly. About that
+	_ = os.MkdirAll(filepath.Join(cloneDir, "SOURCES"), 0755)
+
 	err = runCmd("chown", "-R", "peridotbuilder:mock", cloneDir)
 	if err != nil {
 		return fmt.Errorf("could not chown clone dir: %v", err)
@@ -441,9 +445,6 @@ func (c *Controller) BuildSRPMActivity(ctx context.Context, upstreamPrefix strin
 	if err != nil {
 		return fmt.Errorf("could not write mock config: %v", err)
 	}
-	// The SOURCES dir should always be available. Some packages don't have that
-	// and Mock complains. Loudly. About that
-	_ = os.MkdirAll(filepath.Join(cloneDir, "SOURCES"), 0644)
 
 	args := []string{
 		"mock",

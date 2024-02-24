@@ -35,14 +35,12 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"peridot.resf.org/utils"
 	"strings"
 
-	"peridot.resf.org/servicecatalog"
-
-	"github.com/ory/hydra-client-go/client"
-	"github.com/ory/hydra-client-go/client/admin"
-	"github.com/ory/hydra-client-go/models"
+	"github.com/ory/hydra-client-go/v2"
 	"github.com/sirupsen/logrus"
+	"peridot.resf.org/servicecatalog"
 )
 
 type AutoSignupRequest struct {
@@ -85,11 +83,11 @@ func AutoSignup(req *AutoSignupRequest) *AutoSignupResponse {
 		logrus.Fatalf("invalid hydra url: %v", err)
 	}
 
-	hydraSDK := client.NewHTTPClientWithConfig(nil, &client.TransportConfig{
-		Schemes:  []string{adminURL.Scheme},
-		Host:     adminURL.Host,
-		BasePath: adminURL.Path,
-	})
+	hydraSDKConfiguration := client.NewConfiguration()
+	hydraSDKConfiguration.Servers[0].URL = adminURL.String()
+	hydraSDKConfiguration.Host = adminURL.Host
+	hydraSDKConfiguration.Scheme = adminURL.Scheme
+	hydraSDK := client.NewAPIClient(hydraSDKConfiguration)
 
 	ctx := context.TODO()
 
@@ -103,11 +101,11 @@ func AutoSignup(req *AutoSignupRequest) *AutoSignupResponse {
 		visibleName = req.Name
 	}
 	serviceName := fmt.Sprintf("autos-%s", name)
-	clientModel := &models.OAuth2Client{
-		ClientName:   visibleName,
-		ClientID:     serviceName,
-		Scope:        strings.Join(req.Scopes, " "),
-		ClientSecret: secret(),
+	clientModel := client.OAuth2Client{
+		ClientName:   &visibleName,
+		ClientId:     &serviceName,
+		Scope:        utils.Pointer[string](strings.Join(req.Scopes, " ")),
+		ClientSecret: utils.Pointer[string](secret()),
 	}
 	if req.Frontend {
 		clientModel.RedirectUris = redirectUri(req)
@@ -118,26 +116,16 @@ func AutoSignup(req *AutoSignupRequest) *AutoSignupResponse {
 		Secret:   secret(),
 	}
 
-	_, err = hydraSDK.Admin.GetOAuth2Client(&admin.GetOAuth2ClientParams{
-		Context: ctx,
-		ID:      serviceName,
-	})
+	_, _, err = hydraSDK.OAuth2API.GetOAuth2Client(ctx, serviceName).Execute()
 	if err != nil {
 		logrus.Error(err)
-		_, err := hydraSDK.Admin.CreateOAuth2Client(&admin.CreateOAuth2ClientParams{
-			Context: ctx,
-			Body:    clientModel,
-		})
+		_, _, err := hydraSDK.OAuth2API.CreateOAuth2Client(ctx).OAuth2Client(clientModel).Execute()
 		if err != nil {
 			logrus.Fatalf("could not create hydra client: %v", err)
 		}
 		logrus.Infof("created hydra client %s", serviceName)
 	} else {
-		_, err := hydraSDK.Admin.UpdateOAuth2Client(&admin.UpdateOAuth2ClientParams{
-			Context: ctx,
-			Body:    clientModel,
-			ID:      serviceName,
-		})
+		_, _, err := hydraSDK.OAuth2API.SetOAuth2Client(ctx, serviceName).OAuth2Client(clientModel).Execute()
 		if err != nil {
 			logrus.Fatalf("could not update hydra client: %v", err)
 		}

@@ -33,12 +33,13 @@ package obsidianimplv1
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"os"
 
 	"github.com/coreos/go-oidc/v3/oidc"
-	"github.com/ory/hydra-client-go/client/admin"
-	hydramodels "github.com/ory/hydra-client-go/models"
+
+	"github.com/ory/hydra-client-go/v2"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/grpc"
@@ -98,7 +99,7 @@ func (s *Server) InitiateOAuth2Session(ctx context.Context, req *obsidianpb.Init
 		return nil, err
 	}
 
-	redirectURL := conf.AuthCodeURL(*loginReq.Payload.Challenge)
+	redirectURL := conf.AuthCodeURL(loginReq.Challenge)
 	err = grpc.SetHeader(ctx, metadata.Pairs("location", redirectURL))
 	if err != nil {
 		return nil, status.Error(codes.Internal, "failed to set redirect url")
@@ -163,7 +164,7 @@ func (s *Server) ConfirmOAuth2Session(ctx context.Context, req *obsidianpb.Confi
 	// Check if the user is already associated with provider
 	existingUser, err := s.db.GetUserByOAuth2ProviderExternalID(provider.ID.String(), idToken.Subject)
 	if err != nil {
-		if err != sql.ErrNoRows {
+		if !errors.Is(err, sql.ErrNoRows) {
 			s.log.Errorf("failed to get user by oauth2 provider external id: %s", err)
 			return nil, utils.InternalError
 		} else {
@@ -187,23 +188,18 @@ func (s *Server) ConfirmOAuth2Session(ctx context.Context, req *obsidianpb.Confi
 			if err == nil {
 				// The user has to link with this provider first
 				alreadyExistsErr := status.Errorf(codes.AlreadyExists, "user with email %s already exists, you need to sign in with an already established provider to link a new one", email)
-				rejectRes, err := s.hydra.Admin.RejectLoginRequest(&admin.RejectLoginRequestParams{
-					Body: &hydramodels.RejectRequest{
-						StatusCode:       int64(codes.AlreadyExists),
-						ErrorDescription: "User already exists",
-						ErrorHint:        "Sign in to your account, link this provider and try again",
-						Error:            "user_already_exists",
-					},
-					LoginChallenge: req.State,
-					Context:        nil,
-					HTTPClient:     nil,
-				})
+				rejectRes, _, err := s.hydra.OAuth2API.RejectOAuth2LoginRequest(ctx).LoginChallenge(req.State).RejectOAuth2Request(client.RejectOAuth2Request{
+					StatusCode:       utils.Pointer[int64](int64(codes.AlreadyExists)),
+					ErrorDescription: utils.Pointer[string]("User already exists"),
+					ErrorHint:        utils.Pointer[string]("Sign in to your account, link this provider and try again"),
+					Error:            utils.Pointer[string]("user_already_exists"),
+				}).Execute()
 				if err != nil {
 					return nil, alreadyExistsErr
 				}
 
 				// Redirect to Hydra location
-				err = grpc.SetHeader(ctx, metadata.Pairs("location", *rejectRes.Payload.RedirectTo))
+				err = grpc.SetHeader(ctx, metadata.Pairs("location", rejectRes.RedirectTo))
 				if err != nil {
 					return nil, alreadyExistsErr
 				}
@@ -238,7 +234,7 @@ func (s *Server) ConfirmOAuth2Session(ctx context.Context, req *obsidianpb.Confi
 	committed = true
 
 	// Set user ID and accept the login request
-	loginReq.Payload.Subject = &existingUser.ID
+	loginReq.Subject = existingUser.ID
 	res, err := s.AcceptLoginRequest(ctx, req.State, loginReq)
 	if err != nil {
 		return nil, err
@@ -253,18 +249,15 @@ func (s *Server) ConfirmOAuth2Session(ctx context.Context, req *obsidianpb.Confi
 	return &obsidianpb.ConfirmOAuth2SessionResponse{}, nil
 }
 
-func (s *Server) getProviderAndLoginRequest(ctx context.Context, challenge string, providerId string) (*admin.GetLoginRequestOK, *models.OAuth2Provider, *oauth2.Config, error) {
-	loginReq, err := s.hydra.Admin.GetLoginRequest(&admin.GetLoginRequestParams{
-		LoginChallenge: challenge,
-		Context:        ctx,
-	})
+func (s *Server) getProviderAndLoginRequest(ctx context.Context, challenge string, providerId string) (*client.OAuth2LoginRequest, *models.OAuth2Provider, *oauth2.Config, error) {
+	loginReq, _, err := s.hydra.OAuth2API.GetOAuth2LoginRequest(ctx).LoginChallenge(challenge).Execute()
 	if err != nil || loginReq == nil {
 		return nil, nil, nil, status.Error(codes.NotFound, "login request not found")
 	}
 
 	provider, err := s.db.GetOAuth2ProviderByID(providerId)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil, nil, status.Error(codes.NotFound, "provider not found")
 		}
 		s.log.Errorf("failed to get OAuth2 provider: %s", err)
