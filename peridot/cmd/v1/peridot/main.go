@@ -59,6 +59,7 @@ func init() {
 	build.AddCommand(buildPackage)
 
 	root.AddCommand(project)
+	project.AddCommand(projectInfo)
 	project.AddCommand(projectCreateHashedRepos)
 	project.AddCommand(projectCatalogSync)
 

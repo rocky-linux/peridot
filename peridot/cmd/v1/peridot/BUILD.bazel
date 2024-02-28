@@ -11,6 +11,7 @@ go_library(
         "lookaside_upload.go",
         "main.go",
         "project.go",
+        "project_info.go",
         "project_catalog_sync.go",
         "project_create_hashed_repos.go",
         "utils.go",
