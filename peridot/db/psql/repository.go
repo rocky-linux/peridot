@@ -45,6 +45,16 @@ func (a *Access) GetExternalRepositoriesForProject(projectId string) (ret models
 	return ret, nil
 }
 
+func (a *Access) GetExternalRepository(projectId string, repoId string) (*models.ExternalRepository, error) {
+	var r models.ExternalRepository
+	err := a.query.Select(&r, "select id, created_at, project_id, url, priority, module_hotfixes from external_repositories where project_id = $1 and id = $2 order by created_at desc", projectId, repoId)
+	if err != nil {
+		return nil, err
+	}
+
+	return &r, nil
+}
+
 func (a *Access) DeleteExternalRepositoryForProject(projectId string, id string) error {
 	_, err := a.query.Exec("delete from external_repositories where project_id = $1 and id = $2", projectId, id)
 	return err

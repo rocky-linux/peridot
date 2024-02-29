@@ -236,6 +236,47 @@ func (s *Server) GetRepository(ctx context.Context, req *peridotpb.GetRepository
 	}, nil
 }
 
+func (s *Server) ListExternalRepositories(ctx context.Context, req *peridotpb.ListExternalRepositoriesRequest) (*peridotpb.ListExternalRepositoriesResponse, error) {
+	if err := req.ValidateAll(); err != nil {
+		return nil, err
+	}
+	if err := s.checkPermission(ctx, ObjectProject, req.ProjectId.Value, PermissionView); err != nil {
+		return nil, err
+	}
+
+	repos, err := s.db.GetExternalRepositoriesForProject(req.ProjectId.Value)
+	if err != nil {
+		s.log.Errorf("could not list repositories: %v", err)
+		return nil, utils.CouldNotRetrieveObjects
+	}
+
+	return &peridotpb.ListExternalRepositoriesResponse {
+		Repositories: repos.ToProto(),
+	}, nil
+}
+
+func (s *Server) GetExternalRepository(ctx context.Context, req *peridotpb.GetExternalRepositoryRequest) (*peridotpb.GetExternalRepositoryResponse, error) {
+	if err := req.ValidateAll(); err != nil {
+		return nil, err
+	}
+	if err := s.checkPermission(ctx, ObjectProject, req.ProjectId.Value, PermissionView); err != nil {
+		return nil, err
+	}
+
+	repos, err := s.db.GetExternalRepositoryForProject(req.ProjectId.Value, &req.Id.Value, false)
+	if err != nil {
+		s.log.Errorf("could not list repositories: %v", err)
+		return nil, utils.CouldNotRetrieveObjects
+	}
+	if len(repos) == 0 {
+		return nil, utils.CouldNotFindObject
+	}
+
+	return &peridotpb.GetRepositoryResponse{
+		Repository: repos[0].ToProto(),
+	}, nil
+}
+
 func (s *Server) GetProjectCredentials(ctx context.Context, req *peridotpb.GetProjectCredentialsRequest) (*peridotpb.GetProjectCredentialsResponse, error) {
 	if err := req.ValidateAll(); err != nil {
 		return nil, err
