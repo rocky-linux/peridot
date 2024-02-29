@@ -13,8 +13,13 @@ go_library(
         "project.go",
         "project_info.go",
         "project_list.go",
+        "project_repo.go",
+        "project_repo_get.go",
+        "project_repo_list.go",
         "project_catalog_sync.go",
         "project_create_hashed_repos.go",
+        "project_external_repo.go",
+        "project_external_repo_list.go",
         "utils.go",
     ],
     data = [
