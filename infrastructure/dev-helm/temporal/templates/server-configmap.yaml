@@ -19,9 +19,10 @@ data:
 
     persistence:
       defaultStore: {{ $.Values.server.config.persistence.defaultStore }}
-      visibilityStore: visibility
     {{- if or $.Values.elasticsearch.enabled $.Values.elasticsearch.external }}
-      advancedVisibilityStore: es-visibility
+      visibilityStore: es-visibility
+    {{- else }}
+      visibilityStore: visibility
     {{- end }}
       numHistoryShards: {{ $.Values.server.config.numHistoryShards }}
       datastores:
@@ -38,11 +39,9 @@ data:
             {{- toYaml . | nindent 12 }}
             {{- end }}
           {{- end }}
-          {{- if $.Values.server.config.persistence.faultinjection}}
-          {{- if $.Values.server.config.persistence.faultinjection.rate }}
+          {{- with $.Values.server.config.persistence.default.faultInjection}}
           faultInjection:
-            rate: {{ $.Values.server.config.persistence.faultinjection.rate }}
-          {{- end }}
+              {{- toYaml . | nindent 12 }}
           {{- end }}
           {{- if eq (include "temporal.persistence.driver" (list $ "default")) "sql" }}
           sql:
@@ -58,15 +57,6 @@ data:
             {{- end }}
           {{- end }}
         visibility:
-          {{- if eq (include "temporal.persistence.driver" (list $ "visibility")) "cassandra" }}
-          cassandra:
-            hosts: "{{ include "temporal.persistence.cassandra.hosts" (list $ "visibility") }}"
-            port: {{ include "temporal.persistence.cassandra.port" (list $ "visibility") }}
-            password: "{{ `{{ .Env.TEMPORAL_VISIBILITY_STORE_PASSWORD }}` }}"
-            {{- with (omit $.Values.server.config.persistence.visibility.cassandra "hosts" "port" "password" "existingSecret") }}
-            {{- toYaml . | nindent 12 }}
-            {{- end }}
-          {{- end }}
           {{- if eq (include "temporal.persistence.driver" (list $ "default")) "sql" }}
           sql:
             pluginName: "{{ include "temporal.persistence.sql.driver" (list $ "visibility") }}"
@@ -103,14 +93,30 @@ data:
 
       pprof:
         port: 7936
-        
+
       metrics:
         tags:
           type: {{ $service }}
+          {{- with $.Values.server.metrics.tags }}
+          {{- toYaml . | nindent 10 }}
+          {{- end }}
+        {{- if $.Values.server.config.prometheus }}
+        prometheus:
+          {{- with $.Values.server.config.prometheus }}
+          {{- toYaml . | nindent 10 }}
+          {{- end }}
+        {{- else }}
         prometheus:
           timerType: histogram
           listenAddress: "0.0.0.0:9090"
+        {{- end }}
 
+      {{- if $.Values.server.config.tls }}
+      tls:
+        {{- with $.Values.server.config.tls }}
+        {{- toYaml . | nindent 10 }}
+        {{- end }}
+      {{- end }}
 
     services:
       frontend:
@@ -156,12 +162,35 @@ data:
           rpcAddress: "127.0.0.1:7933"
     {{- end }}
 
+    {{- if $.Values.server.config.dcRedirectionPolicy }}
+    dcRedirectionPolicy:
+    {{- with $.Values.server.config.dcRedirectionPolicy }}
+    {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{- else }}
     dcRedirectionPolicy:
       policy: "noop"
       toDC: ""
+    {{- end }}
 
+    {{- if $.Values.server.archival }}
+    archival:
+    {{- with $.Values.server.archival }}
+    {{- toYaml . | nindent 6 }}
+    {{- end }}
+    {{- else }}
     archival:
       status: "disabled"
+    {{- end }}
+
+    {{- if $.Values.server.namespaceDefaults }}
+    namespaceDefaults:
+    {{- with $.Values.server.namespaceDefaults }}
+    {{- toYaml . | nindent 6 }}
+    {{- end }}
+    {{- else }}
+
+    {{- end }}
 
     publicClient:
       hostPort: "{{ include "temporal.componentname" (list $ "frontend") }}:{{ $.Values.server.frontend.service.port }}"
