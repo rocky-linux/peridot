@@ -31,13 +31,14 @@
 package main
 
 import (
+	"crypto/sha256"
 	"encoding/base64"
+	"encoding/hex"
 	"log"
 	"os"
 	"strings"
 	"time"
-	"crypto/sha256"
-    "encoding/hex"
+
 	"github.com/spf13/cobra"
 	"openapi.peridot.resf.org/peridotopenapi"
 )
@@ -74,12 +75,12 @@ func isFile(path string) bool {
 	return true
 }
 
-func buildRpmImportMn(c *cobra.Command, args []string) {
+func buildRpmImportMn(_ *cobra.Command, args []string) {
 	// Ensure project id exists
 	projectId := mustGetProjectID()
 
-	var skipUpload bool = false
-	var skipImport bool = false
+	var skipUpload = false
+	var skipImport = false
 
 	if skipStep != "" {
 		switch strings.ToLower(skipStep) {
@@ -103,19 +104,22 @@ func buildRpmImportMn(c *cobra.Command, args []string) {
 	var blobs []string
 	projectCl := getClient(serviceProject).(peridotopenapi.ProjectServiceApi)
 	for _, arg := range args {
+
 		bts, err := os.ReadFile(arg)
 		errFatal(err)
-		base64EncodedBytes := base64.StdEncoding.EncodeToString(bts)
+
 		hash := sha256.Sum256(bts)
 		shasum := hex.EncodeToString(hash[:])
 
 		if !skipUpload {
+			base64EncodedBytes := base64.StdEncoding.EncodeToString(bts)
 			_, _, err := projectCl.LookasideFileUpload(getContext()).Body(peridotopenapi.V1LookasideFileUploadRequest{
 				File: &base64EncodedBytes,
 			}).Execute()
 			errFatal(err)
 			log.Printf("Uploaded %s to lookaside", arg)
 		}
+		log.Printf("Will upload %s to lookaside for %s", shasum, arg)
 		blobs = append(blobs, shasum)
 	}
 

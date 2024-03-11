@@ -65,7 +65,7 @@ pkg_rpm(
     license = "MIT",
     summary = "Peridot Command Line Interface",
     version = "0.2.1",
-    release = "0",
+    release = "1",
     architecture = "x86_64",
     description = "A command line interface to interact with the Peridot build system",
     source_date_epoch = 0,
