@@ -35,6 +35,6 @@
 trap "trap - SIGTERM && kill -- -$$" SIGINT SIGTERM EXIT
 
 USER="$(whoami)"
-kubectl -n "$USER-dev" port-forward svc/spicedb-dev-grpc-dev-service 50051 &
-kubectl -n "$USER-dev" port-forward svc/hydra-admin-dev-http-dev-service 4445 &
-kubectl -n "$USER-dev" port-forward svc/hydra-public-dev-http-dev-service 4444
+kubectl -n "$USER-dev" port-forward svc/spicedb-grpc-dev-service 50051 &
+kubectl -n "$USER-dev" port-forward svc/hydra-admin-http-dev-service 4445 &
+kubectl -n "$USER-dev" port-forward svc/hydra-public-http-dev-service 4444
