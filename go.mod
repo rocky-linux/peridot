@@ -48,9 +48,8 @@ require (
 	github.com/xanzy/go-gitlab v0.50.4
 	go.temporal.io/api v1.6.1-0.20211110205628-60c98e9cbfe2
 	go.temporal.io/sdk v1.13.1
-	golang.org/x/crypto v0.0.0-20220622213112-05595931fe9d // indirect
+	golang.org/x/crypto v0.17.0 // indirect
 	golang.org/x/oauth2 v0.0.0-20220223155221-ee480838109b
-	golang.org/x/tools v0.1.6-0.20210726203631-07bc1bf47fb2 // indirect
 	google.golang.org/genproto v0.0.0-20211104193956-4c6863e31247
 	google.golang.org/grpc v1.44.0
 	google.golang.org/protobuf v1.28.1
@@ -79,12 +78,13 @@ replace (
 	bazel.build/protobuf => ./bazel-bin/build/bazel/protobuf/bazelbuild_go_proto_/bazel.build/protobuf
 	bazel.build/remote/execution/v2 => ./bazel-bin/build/bazel/remote/execution/v2/remoteexecution_go_proto_/bazel.build/remote/execution/v2
 	bazel.build/semver => ./bazel-bin/build/bazel/semver/semver_go_proto_/bazel.build/semver
+	github.com/envoyproxy/protoc-gen-validate/validate => ./bazel-bin/vendor/github.com/envoyproxy/protoc-gen-validate/validate/go_default_library_/github.com/envoyproxy/protoc-gen-validate/validate
+	peridot.resf.org/common => ./bazel-bin/proto/commonpb_go_proto_/peridot.resf.org/common
 	peridot.resf.org/obsidian/pb => ./bazel-bin/obsidian/proto/v1/obsidianpb_go_proto_/peridot.resf.org/obsidian/pb
-	peridot.resf.org/peridot/pb => ./bazel-bin/peridot/proto/v1/peridotpb_go_proto_/peridot.resf.org/peridot/pb
 	peridot.resf.org/peridot/admin/pb => ./bazel-bin/peridot/proto/v1/admin/adminpb_go_proto_/peridot.resf.org/peridot/admin/pb
 	peridot.resf.org/peridot/keykeeper/pb => ./bazel-bin/peridot/proto/v1/keykeeper/keykeeperpb_go_proto_/peridot.resf.org/peridot/keykeeper/pb
+	peridot.resf.org/peridot/pb => ./bazel-bin/peridot/proto/v1/peridotpb_go_proto_/peridot.resf.org/peridot/pb
 	peridot.resf.org/peridot/yumrepofs/pb => ./bazel-bin/peridot/proto/v1/yumrepofs/yumrepofspb_go_proto_/peridot.resf.org/peridot/yumrepofs/pb
-	peridot.resf.org/common => ./bazel-bin/proto/commonpb_go_proto_/peridot.resf.org/common
-	github.com/envoyproxy/protoc-gen-validate/validate => ./bazel-bin/vendor/github.com/envoyproxy/protoc-gen-validate/validate/go_default_library_/github.com/envoyproxy/protoc-gen-validate/validate
 )
+
 // sync-replace-end
