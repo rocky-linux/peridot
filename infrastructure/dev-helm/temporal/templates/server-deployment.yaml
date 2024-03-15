@@ -128,7 +128,7 @@ spec:
             - name: metrics
               containerPort: 9090
               protocol: TCP
-            - name: grpc-membership
+            - name: membership
               protocol: TCP
               containerPort: {{ include (printf "temporal.%s.membershipPort" $service) $ }}
           {{- if ne $service "worker"}}

@@ -37,4 +37,5 @@ trap "trap - SIGTERM && kill -- -$$" SIGINT SIGTERM EXIT
 USER="$(whoami)"
 kubectl -n "$USER-dev" port-forward svc/spicedb-grpc-dev-service 50051 &
 kubectl -n "$USER-dev" port-forward svc/hydra-admin-http-dev-service 4445 &
-kubectl -n "$USER-dev" port-forward svc/hydra-public-http-dev-service 4444
+kubectl -n "$USER-dev" port-forward svc/hydra-public-http-dev-service 4444 &
+sudo kubectl --kubeconfig $KUBECONFIG -n "istio-system" port-forward --address 0.0.0.0 deployment/istio-ingressgateway 80:8080 443:8443
