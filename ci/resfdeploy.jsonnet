@@ -63,7 +63,7 @@ local manifestYamlStream = function (value, indent_array_in_object=false, c_docu
       protocol: 'TCP',
     }]);
     local services = if std.objectHas(info, 'services') then info.services else
-      [{ name: '%s-%s-%s' % [metadata.name, port.name, env], port: port.containerPort, expose: if std.objectHas(port, 'expose') then port.expose else false } for env in envs for port in ports];
+      [{ name: '%s-%s-%s' % [metadata.name, port.name, env], port: port.containerPort, portName: port.name, expose: if std.objectHas(port, 'expose') then port.expose else false } for env in envs for port in ports];
 
     local file_yaml_prefix = if helm_mode then 'helm-' else '';
     local nssa = '%s001-ns-sa.yaml' % file_yaml_prefix;
@@ -283,6 +283,7 @@ local manifestYamlStream = function (value, indent_array_in_object=false, c_docu
             },
             srv.port,
             srv.port,
+            portName=srv.portName,
             selector=metadata.name,
             env=mappings.get_env_from_svc(srv.name)
           ) for srv in services]) +
