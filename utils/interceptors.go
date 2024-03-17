@@ -33,11 +33,8 @@ package utils
 import (
 	"context"
 	"fmt"
-	"github.com/go-openapi/runtime"
-	"github.com/go-openapi/strfmt"
-	"github.com/ory/hydra-client-go/client"
-	"github.com/ory/hydra-client-go/client/admin"
-	"github.com/ory/hydra-client-go/client/public"
+	"github.com/ory/hydra-client-go/v2"
+
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -72,7 +69,7 @@ func ServerEndInterceptor(srv interface{}, ss grpc.ServerStream, _ *grpc.StreamS
 	return handler(srv, ss)
 }
 
-func checkAuth(ctx context.Context, hydraSDK *client.OryHydra, hydraAdmin *client.OryHydra) (context.Context, error) {
+func checkAuth(ctx context.Context, hydraSDK *client.APIClient, hydraAdmin *client.APIClient) (context.Context, error) {
 	// fetch metadata from grpc
 	meta, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
@@ -91,46 +88,35 @@ func checkAuth(ctx context.Context, hydraSDK *client.OryHydra, hydraAdmin *clien
 		return ctx, status.Error(codes.InvalidArgument, "invalid authorization token")
 	}
 
-	userInfo, err := hydraSDK.Public.Userinfo(
-		&public.UserinfoParams{
-			Context: ctx,
-		},
-		runtime.ClientAuthInfoWriterFunc(func(request runtime.ClientRequest, registry strfmt.Registry) error {
-			return request.SetHeaderParam("Authorization", authHeader[0])
-		}),
-	)
+	userInfo, _, err := hydraSDK.OidcAPI.GetOidcUserInfo(context.WithValue(ctx, client.ContextAccessToken, authToken[1])).Execute()
 	if err != nil {
 		return ctx, err
 	}
-	if userInfo.Payload.Sub == "" && hydraAdmin != nil {
-		introspect, err := hydraAdmin.Admin.IntrospectOAuth2Token(
-			&admin.IntrospectOAuth2TokenParams{
-				Context: ctx,
-				Token:   authToken[1],
-			},
-		)
+	if *userInfo.Sub == "" && hydraAdmin != nil {
+		introspect, _, err := hydraAdmin.OAuth2API.IntrospectOAuth2Token(ctx).Token(authToken[1]).Execute()
 		if err != nil {
 			logrus.Errorf("error introspecting token: %s", err)
 			return ctx, status.Errorf(codes.Unauthenticated, "invalid authorization token")
 		}
 
-		userInfo.Payload.Sub = introspect.Payload.ClientID
-		userInfo.Payload.Name = introspect.Payload.Sub
-		userInfo.Payload.Email = fmt.Sprintf("%s@%s", introspect.Payload.Sub, "serviceaccount.resf.org")
+		userInfo.Sub = introspect.ClientId
+		userInfo.Name = introspect.Sub
+		newEmail := fmt.Sprintf("%s@%s", *introspect.Sub, "serviceaccount.resf.org")
+		userInfo.Email = &newEmail
 	}
-	if userInfo.Payload.Sub == "" {
+	if *userInfo.Sub == "" {
 		return ctx, status.Errorf(codes.Unauthenticated, "invalid authorization token")
 	}
 
 	// supply subject and token to further requests
-	pairs := metadata.Pairs("x-user-id", userInfo.Payload.Sub, "x-user-name", userInfo.Payload.Name, "x-user-email", userInfo.Payload.Email, "x-auth-token", authToken[1])
+	pairs := metadata.Pairs("x-user-id", *userInfo.Sub, "x-user-name", *userInfo.Name, "x-user-email", *userInfo.Email, "x-auth-token", authToken[1])
 	ctx = metadata.NewIncomingContext(ctx, metadata.Join(meta, pairs))
 
 	return ctx, nil
 }
 
 // AuthInterceptor requires OAuth2 authentication for all routes except listed
-func AuthInterceptor(hydraSDK *client.OryHydra, hydraAdminSDK *client.OryHydra, excludedMethods []string, enforce bool, next InterceptorFunc) InterceptorFunc {
+func AuthInterceptor(hydraSDK *client.APIClient, hydraAdminSDK *client.APIClient, excludedMethods []string, enforce bool, next InterceptorFunc) InterceptorFunc {
 	return func(ctx context.Context, req interface{}, usi *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 		// skip authentication for excluded methods
 		if !StrContains(usi.FullMethod, excludedMethods) {
@@ -154,7 +140,7 @@ type serverStream struct {
 func (ss *serverStream) Context() context.Context {
 	return ss.ctx
 }
-func ServerAuthInterceptor(hydraSDK *client.OryHydra, hydraAdminSDK *client.OryHydra, excludedMethods []string, enforce bool, next ServerInterceptorFunc) ServerInterceptorFunc {
+func ServerAuthInterceptor(hydraSDK *client.APIClient, hydraAdminSDK *client.APIClient, excludedMethods []string, enforce bool, next ServerInterceptorFunc) ServerInterceptorFunc {
 	return func(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
 		newStream := serverStream{
 			ServerStream: ss,

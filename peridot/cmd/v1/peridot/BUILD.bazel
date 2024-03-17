@@ -26,9 +26,9 @@ go_library(
         "//vendor/github.com/sirupsen/logrus",
         "//vendor/github.com/spf13/cobra",
         "//vendor/github.com/spf13/viper",
-        "//vendor/golang.org/x/oauth2",
-        "//vendor/golang.org/x/oauth2/clientcredentials",
         "//vendor/openapi.peridot.resf.org/peridotopenapi",
+        "@org_golang_x_oauth2//:oauth2",
+        "@org_golang_x_oauth2//clientcredentials",
     ],
 )
 

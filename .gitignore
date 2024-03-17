@@ -117,5 +117,8 @@ fabric.properties
 .ijwb/.idea/runConfigurations.xml
 .ijwb/.idea/google-java-format.xml
 .ijwb/.idea/dataSources.xml
+.ijwb/.idea/copilot
+.ijwb/.idea/api_linter_proj.xml
 
 .envrc.local
+.DS_Store

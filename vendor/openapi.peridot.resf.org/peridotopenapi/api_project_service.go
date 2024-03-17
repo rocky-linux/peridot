@@ -229,10 +229,10 @@ type ApiCloneSwapRequest struct {
 	ctx _context.Context
 	ApiService ProjectServiceApi
 	targetProjectId string
-	body *InlineObject9
+	body *ProjectServiceCloneSwapBody
 }
 
-func (r ApiCloneSwapRequest) Body(body InlineObject9) ApiCloneSwapRequest {
+func (r ApiCloneSwapRequest) Body(body ProjectServiceCloneSwapBody) ApiCloneSwapRequest {
 	r.body = &body
 	return r
 }
@@ -351,10 +351,10 @@ type ApiCreateHashedRepositoriesRequest struct {
 	ctx _context.Context
 	ApiService ProjectServiceApi
 	projectId string
-	body *InlineObject8
+	body *ProjectServiceCreateHashedRepositoriesBody
 }
 
-func (r ApiCreateHashedRepositoriesRequest) Body(body InlineObject8) ApiCreateHashedRepositoriesRequest {
+func (r ApiCreateHashedRepositoriesRequest) Body(body ProjectServiceCreateHashedRepositoriesBody) ApiCreateHashedRepositoriesRequest {
 	r.body = &body
 	return r
 }
@@ -1513,10 +1513,10 @@ type ApiSetProjectCredentialsRequest struct {
 	ctx _context.Context
 	ApiService ProjectServiceApi
 	projectId string
-	body *InlineObject6
+	body *ProjectServiceSetProjectCredentialsBody
 }
 
-func (r ApiSetProjectCredentialsRequest) Body(body InlineObject6) ApiSetProjectCredentialsRequest {
+func (r ApiSetProjectCredentialsRequest) Body(body ProjectServiceSetProjectCredentialsBody) ApiSetProjectCredentialsRequest {
 	r.body = &body
 	return r
 }
@@ -1635,10 +1635,10 @@ type ApiSyncCatalogRequest struct {
 	ctx _context.Context
 	ApiService ProjectServiceApi
 	projectId string
-	body *InlineObject5
+	body *ProjectServiceSyncCatalogBody
 }
 
-func (r ApiSyncCatalogRequest) Body(body InlineObject5) ApiSyncCatalogRequest {
+func (r ApiSyncCatalogRequest) Body(body ProjectServiceSyncCatalogBody) ApiSyncCatalogRequest {
 	r.body = &body
 	return r
 }
@@ -1757,10 +1757,10 @@ type ApiUpdateProjectRequest struct {
 	ctx _context.Context
 	ApiService ProjectServiceApi
 	projectId string
-	body *InlineObject
+	body *ProjectServiceUpdateProjectBody
 }
 
-func (r ApiUpdateProjectRequest) Body(body InlineObject) ApiUpdateProjectRequest {
+func (r ApiUpdateProjectRequest) Body(body ProjectServiceUpdateProjectBody) ApiUpdateProjectRequest {
 	r.body = &body
 	return r
 }

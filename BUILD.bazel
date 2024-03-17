@@ -13,8 +13,10 @@ exports_files([
 # gazelle:exclude vendor/google.golang.org
 # gazelle:exclude vendor/github.com/golang/protobuf
 # gazelle:exclude vendor/golang.org/x/net
+# gazelle:exclude vendor/golang.org/x/oauth2
+# gazelle:exclude vendor/github.com/googleapis/gax-go/v2
 # gazelle:exclude vendor/github.com/ProtonMail/go-crypto
-# gazelle:go_grpc_compilers //:go_apiv2,//:go_grpc,//:go_validate,@com_github_grpc_ecosystem_grpc_gateway_v2//protoc-gen-grpc-gateway:go_gen_grpc_gateway
+# gazelle:go_grpc_compilers //:go_apiv2,//:go_grpc,//:go_validate,//:go_gen_grpc_gateway
 # gazelle:resolve go github.com/grpc-ecosystem/grpc-gateway/v2/runtime @com_github_grpc_ecosystem_grpc_gateway_v2//runtime:go_default_library
 # gazelle:resolve go github.com/grpc-ecosystem/grpc-gateway/v2/utilities @com_github_grpc_ecosystem_grpc_gateway_v2//utilities:go_default_library
 # gazelle:resolve go github.com/envoyproxy/protoc-gen-validate/validate @com_envoyproxy_protoc_gen_validate//validate:validate_go_proto
@@ -25,8 +27,36 @@ exports_files([
 # gazelle:resolve proto go protoc-gen-openapiv2/options/annotations.proto @com_github_grpc_ecosystem_grpc_gateway_v2//protoc-gen-openapiv2/options:options_go_proto
 # gazelle:resolve proto protoc-gen-openapiv2/options/openapiv2.proto @com_github_grpc_ecosystem_grpc_gateway_v2//protoc-gen-openapiv2/options:options_proto
 # gazelle:resolve proto go protoc-gen-openapiv2/options/openapiv2.proto @com_github_grpc_ecosystem_grpc_gateway_v2//protoc-gen-openapiv2/options:options_go_proto
+# gazelle:resolve proto google/longrunning/operations.proto @googleapis//google/longrunning:operations_proto
+# gazelle:resolve proto go google/longrunning/operations.proto @org_golang_google_genproto//googleapis/longrunning
+# gazelle:resolve proto proto google/api/annotations.proto @googleapis//google/api:annotations_proto
+# gazelle:resolve proto go google/api/annotations.proto @org_golang_google_genproto_googleapis_api//annotations
+# gazelle:resolve proto proto google/api/httpbody.proto @googleapis//google/api:httpbody_proto
+# gazelle:resolve proto go google/api/httpbody.proto @org_golang_google_genproto_googleapis_api//httpbody
+# gazelle:resolve proto proto google/api/field_behavior.proto @googleapis//google/api:field_behavior_proto
+# gazelle:resolve proto go google/api/field_behavior.proto @org_golang_google_genproto_googleapis_api//:api
+# gazelle:resolve proto proto google/api/client.proto @googleapis//google/api:client_proto
+# gazelle:resolve proto go google/api/client.proto @org_golang_google_genproto_googleapis_api//:api
+# gazelle:resolve proto proto google/api/resource.proto @googleapis//google/api:resource_proto
+# gazelle:resolve proto go google/api/resource.proto @org_golang_google_genproto_googleapis_api//:api
+# gazelle:resolve proto proto google/rpc/status.proto @googleapis//google/rpc:status_proto
+# gazelle:resolve proto go google/rpc/status.proto @org_golang_google_genproto_googleapis_rpc//status
+# gazelle:resolve proto proto google/rpc/error_details.proto @googleapis//google/rpc:error_details_proto
+# gazelle:resolve proto go google/rpc/error_details.proto @org_golang_google_genproto_googleapis_rpc//errdetails
+# gazelle:resolve proto proto google/rpc/code.proto @googleapis//google/rpc:code_proto
+# gazelle:resolve proto go google/rpc/code.proto @org_golang_google_genproto_googleapis_rpc//code
 gazelle(
     name = "gazelle",
+)
+
+gazelle(
+    name = "repositories",
+    args = [
+        "-from_file=go.mod",
+        "-to_macro=repositories.bzl%go_repositories",
+        "-prune",
+    ],
+    command = "update-repos",
 )
 
 java_binary(
@@ -112,6 +142,20 @@ go_proto_compiler(
         "@org_golang_google_grpc//:go_default_library",
         "@org_golang_google_grpc//codes:go_default_library",
         "@org_golang_google_grpc//status:go_default_library",
+    ],
+)
+
+go_proto_compiler(
+    name = "go_gen_grpc_gateway",
+    plugin = "@com_github_grpc_ecosystem_grpc_gateway_v2//protoc-gen-grpc-gateway",
+    suffix = ".pb.gw.go",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_grpc_ecosystem_grpc_gateway_v2//runtime:go_default_library",
+        "@com_github_grpc_ecosystem_grpc_gateway_v2//utilities:go_default_library",
+        "@org_golang_google_grpc//grpclog:go_default_library",
+        "@org_golang_google_grpc//metadata:go_default_library",
+        "@org_golang_google_protobuf//proto",
     ],
 )
 

@@ -1,0 +1,32 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "ocgrpc",
+    srcs = [
+        "client.go",
+        "client_metrics.go",
+        "client_stats_handler.go",
+        "doc.go",
+        "server.go",
+        "server_metrics.go",
+        "server_stats_handler.go",
+        "stats_common.go",
+        "trace_common.go",
+    ],
+    importmap = "peridot.resf.org/vendor/go.opencensus.io/plugin/ocgrpc",
+    importpath = "go.opencensus.io/plugin/ocgrpc",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/go.opencensus.io/metric/metricdata",
+        "//vendor/go.opencensus.io/stats",
+        "//vendor/go.opencensus.io/stats/view",
+        "//vendor/go.opencensus.io/tag",
+        "//vendor/go.opencensus.io/trace",
+        "//vendor/go.opencensus.io/trace/propagation",
+        "@org_golang_google_grpc//codes",
+        "@org_golang_google_grpc//grpclog",
+        "@org_golang_google_grpc//metadata",
+        "@org_golang_google_grpc//stats",
+        "@org_golang_google_grpc//status",
+    ],
+)

@@ -10,6 +10,7 @@ go_library(
         "const_win_unix.go",
         "copyOnWriteFs.go",
         "httpFs.go",
+        "iofs.go",
         "ioutil.go",
         "lstater.go",
         "match.go",
@@ -26,7 +27,9 @@ go_library(
     importpath = "github.com/spf13/afero",
     visibility = ["//visibility:public"],
     deps = [
+        "//vendor/github.com/spf13/afero/internal/common",
         "//vendor/github.com/spf13/afero/mem",
+        "//vendor/golang.org/x/text/runes",
         "//vendor/golang.org/x/text/transform",
         "//vendor/golang.org/x/text/unicode/norm",
     ],

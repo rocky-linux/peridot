@@ -676,10 +676,10 @@ type ApiRpmImportRequest struct {
 	ctx _context.Context
 	ApiService BuildServiceApi
 	projectId string
-	body *InlineObject3
+	body *BuildServiceRpmImportBody
 }
 
-func (r ApiRpmImportRequest) Body(body InlineObject3) ApiRpmImportRequest {
+func (r ApiRpmImportRequest) Body(body BuildServiceRpmImportBody) ApiRpmImportRequest {
 	r.body = &body
 	return r
 }
@@ -798,10 +798,10 @@ type ApiRpmLookasideBatchImportRequest struct {
 	ctx _context.Context
 	ApiService BuildServiceApi
 	projectId string
-	body *InlineObject4
+	body *BuildServiceRpmLookasideBatchImportBody
 }
 
-func (r ApiRpmLookasideBatchImportRequest) Body(body InlineObject4) ApiRpmLookasideBatchImportRequest {
+func (r ApiRpmLookasideBatchImportRequest) Body(body BuildServiceRpmLookasideBatchImportBody) ApiRpmLookasideBatchImportRequest {
 	r.body = &body
 	return r
 }
@@ -920,10 +920,10 @@ type ApiSubmitBuildRequest struct {
 	ctx _context.Context
 	ApiService BuildServiceApi
 	projectId string
-	body *InlineObject2
+	body *BuildServiceSubmitBuildBody
 }
 
-func (r ApiSubmitBuildRequest) Body(body InlineObject2) ApiSubmitBuildRequest {
+func (r ApiSubmitBuildRequest) Body(body BuildServiceSubmitBuildBody) ApiSubmitBuildRequest {
 	r.body = &body
 	return r
 }
@@ -1042,10 +1042,10 @@ type ApiSubmitBuildBatchRequest struct {
 	ctx _context.Context
 	ApiService BuildServiceApi
 	projectId string
-	body *InlineObject1
+	body *BuildServiceSubmitBuildBatchBody
 }
 
-func (r ApiSubmitBuildBatchRequest) Body(body InlineObject1) ApiSubmitBuildBatchRequest {
+func (r ApiSubmitBuildBatchRequest) Body(body BuildServiceSubmitBuildBatchBody) ApiSubmitBuildBatchRequest {
 	r.body = &body
 	return r
 }

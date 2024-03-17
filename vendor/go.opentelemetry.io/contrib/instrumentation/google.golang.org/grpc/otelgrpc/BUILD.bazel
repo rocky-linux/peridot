@@ -1,0 +1,37 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "otelgrpc",
+    srcs = [
+        "config.go",
+        "doc.go",
+        "interceptor.go",
+        "interceptorinfo.go",
+        "metadata_supplier.go",
+        "semconv.go",
+        "stats_handler.go",
+        "version.go",
+    ],
+    importmap = "peridot.resf.org/vendor/go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc",
+    importpath = "go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc/internal",
+        "//vendor/go.opentelemetry.io/otel",
+        "//vendor/go.opentelemetry.io/otel/attribute",
+        "//vendor/go.opentelemetry.io/otel/baggage",
+        "//vendor/go.opentelemetry.io/otel/codes",
+        "//vendor/go.opentelemetry.io/otel/metric",
+        "//vendor/go.opentelemetry.io/otel/metric/noop",
+        "//vendor/go.opentelemetry.io/otel/propagation",
+        "//vendor/go.opentelemetry.io/otel/semconv/v1.17.0:v1_17_0",
+        "//vendor/go.opentelemetry.io/otel/trace",
+        "@org_golang_google_grpc//:go_default_library",
+        "@org_golang_google_grpc//codes",
+        "@org_golang_google_grpc//metadata",
+        "@org_golang_google_grpc//peer",
+        "@org_golang_google_grpc//stats",
+        "@org_golang_google_grpc//status",
+        "@org_golang_google_protobuf//proto",
+    ],
+)

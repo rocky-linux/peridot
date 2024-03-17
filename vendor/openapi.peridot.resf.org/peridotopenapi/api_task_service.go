@@ -17,6 +17,7 @@ import (
 	_nethttp "net/http"
 	_neturl "net/url"
 	"strings"
+	"os"
 )
 
 // Linger please
@@ -81,9 +82,9 @@ type TaskServiceApi interface {
 
 	/*
 	 * StreamTaskLogsExecute executes the request
-	 * @return StreamResultOfApiHttpBody
+	 * @return *os.File
 	 */
-	StreamTaskLogsExecute(r ApiStreamTaskLogsRequest) (StreamResultOfApiHttpBody, *_nethttp.Response, error)
+	StreamTaskLogsExecute(r ApiStreamTaskLogsRequest) (*os.File, *_nethttp.Response, error)
 }
 
 // TaskServiceApiService TaskServiceApi service
@@ -462,7 +463,7 @@ func (r ApiStreamTaskLogsRequest) Parent(parent bool) ApiStreamTaskLogsRequest {
 	return r
 }
 
-func (r ApiStreamTaskLogsRequest) Execute() (StreamResultOfApiHttpBody, *_nethttp.Response, error) {
+func (r ApiStreamTaskLogsRequest) Execute() (*os.File, *_nethttp.Response, error) {
 	return r.ApiService.StreamTaskLogsExecute(r)
 }
 
@@ -484,16 +485,16 @@ func (a *TaskServiceApiService) StreamTaskLogs(ctx _context.Context, projectId s
 
 /*
  * Execute executes the request
- * @return StreamResultOfApiHttpBody
+ * @return *os.File
  */
-func (a *TaskServiceApiService) StreamTaskLogsExecute(r ApiStreamTaskLogsRequest) (StreamResultOfApiHttpBody, *_nethttp.Response, error) {
+func (a *TaskServiceApiService) StreamTaskLogsExecute(r ApiStreamTaskLogsRequest) (*os.File, *_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodGet
 		localVarPostBody     interface{}
 		localVarFormFileName string
 		localVarFileName     string
 		localVarFileBytes    []byte
-		localVarReturnValue  StreamResultOfApiHttpBody
+		localVarReturnValue  *os.File
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "TaskServiceApiService.StreamTaskLogs")

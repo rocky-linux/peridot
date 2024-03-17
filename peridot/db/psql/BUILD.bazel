@@ -25,8 +25,8 @@ go_library(
         "//vendor/github.com/jmoiron/sqlx",
         "//vendor/github.com/jmoiron/sqlx/types",
         "//vendor/github.com/lib/pq",
-        "@org_golang_google_protobuf//encoding/protojson:go_default_library",
-        "@org_golang_google_protobuf//proto:go_default_library",
-        "@org_golang_google_protobuf//types/known/anypb:go_default_library",
+        "@org_golang_google_protobuf//encoding/protojson",
+        "@org_golang_google_protobuf//proto",
+        "@org_golang_google_protobuf//types/known/anypb",
     ],
 )

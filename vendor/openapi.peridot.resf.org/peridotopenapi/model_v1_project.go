@@ -39,6 +39,7 @@ type V1Project struct {
 	GitMakePublic *bool `json:"gitMakePublic,omitempty"`
 	VendorMacro *string `json:"vendorMacro,omitempty"`
 	PackagerMacro *string `json:"packagerMacro,omitempty"`
+	BuildPoolType *string `json:"buildPoolType,omitempty"`
 }
 
 // NewV1Project instantiates a new V1Project object
@@ -762,6 +763,38 @@ func (o *V1Project) SetPackagerMacro(v string) {
 	o.PackagerMacro = &v
 }
 
+// GetBuildPoolType returns the BuildPoolType field value if set, zero value otherwise.
+func (o *V1Project) GetBuildPoolType() string {
+	if o == nil || o.BuildPoolType == nil {
+		var ret string
+		return ret
+	}
+	return *o.BuildPoolType
+}
+
+// GetBuildPoolTypeOk returns a tuple with the BuildPoolType field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *V1Project) GetBuildPoolTypeOk() (*string, bool) {
+	if o == nil || o.BuildPoolType == nil {
+		return nil, false
+	}
+	return o.BuildPoolType, true
+}
+
+// HasBuildPoolType returns a boolean if a field has been set.
+func (o *V1Project) HasBuildPoolType() bool {
+	if o != nil && o.BuildPoolType != nil {
+		return true
+	}
+
+	return false
+}
+
+// SetBuildPoolType gets a reference to the given string and assigns it to the BuildPoolType field.
+func (o *V1Project) SetBuildPoolType(v string) {
+	o.BuildPoolType = &v
+}
+
 func (o V1Project) MarshalJSON() ([]byte, error) {
 	toSerialize := map[string]interface{}{}
 	if o.Id != nil {
@@ -829,6 +862,9 @@ func (o V1Project) MarshalJSON() ([]byte, error) {
 	}
 	if o.PackagerMacro != nil {
 		toSerialize["packagerMacro"] = o.PackagerMacro
+	}
+	if o.BuildPoolType != nil {
+		toSerialize["buildPoolType"] = o.BuildPoolType
 	}
 	return json.Marshal(toSerialize)
 }

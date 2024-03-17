@@ -5,6 +5,15 @@ workspace(
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive", "http_jar")
 
+http_archive(
+    name = "bazel_skylib",
+    sha256 = "74d544d96f4a5bb630d465ca8bbcfe231e3594e5aae57e1edbf17a6eb3ca2506",
+    urls = [
+        "https://mirror.bazel.build/github.com/bazelbuild/bazel-skylib/releases/download/1.3.0/bazel-skylib-1.3.0.tar.gz",
+        "https://github.com/bazelbuild/bazel-skylib/releases/download/1.3.0/bazel-skylib-1.3.0.tar.gz",
+    ],
+)
+
 # --start python--
 load("//wrksp:python_download.bzl", "python_download")
 
@@ -17,12 +26,9 @@ python_deps()
 
 http_archive(
     name = "com_google_protobuf",
-    sha256 = "3bd7828aa5af4b13b99c191e8b1e884ebfa9ad371b0ce264605d347f135d2568",
-    strip_prefix = "protobuf-3.19.4",
-    urls = [
-        "https://mirror.bazel.build/github.com/protocolbuffers/protobuf/archive/v3.19.4.tar.gz",
-        "https://github.com/protocolbuffers/protobuf/archive/v3.19.4.tar.gz",
-    ],
+    sha256 = "d19643d265b978383352b3143f04c0641eea75a75235c111cc01a1350173180e",
+    strip_prefix = "protobuf-25.3",
+    urls = ["https://github.com/protocolbuffers/protobuf/archive/v25.3.tar.gz"],
 )
 
 load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
@@ -31,80 +37,84 @@ protobuf_deps()
 
 http_archive(
     name = "io_bazel_rules_go",
-    sha256 = "d6b2513456fe2229811da7eb67a444be7785f5323c6708b38d851d2b51e54d83",
+    integrity = "sha256-fHbWI2so/2laoozzX5XeMXqUcv0fsUrHl8m/aE8Js3w=",
     urls = [
-        "https://mirror.bazel.build/github.com/bazelbuild/rules_go/releases/download/v0.30.0/rules_go-v0.30.0.zip",
-        "https://github.com/bazelbuild/rules_go/releases/download/v0.30.0/rules_go-v0.30.0.zip",
+        "https://mirror.bazel.build/github.com/bazelbuild/rules_go/releases/download/v0.44.2/rules_go-v0.44.2.zip",
+        "https://github.com/bazelbuild/rules_go/releases/download/v0.44.2/rules_go-v0.44.2.zip",
     ],
 )
 
 http_archive(
     name = "bazel_gazelle",
-    sha256 = "de69a09dc70417580aabf20a28619bb3ef60d038470c7cf8442fafcf627c21cb",
+    integrity = "sha256-MpOL2hbmcABjA1R5Bj2dJMYO2o15/Uc5Vj9Q0zHLMgk=",
     urls = [
-        "https://mirror.bazel.build/github.com/bazelbuild/bazel-gazelle/releases/download/v0.24.0/bazel-gazelle-v0.24.0.tar.gz",
-        "https://github.com/bazelbuild/bazel-gazelle/releases/download/v0.24.0/bazel-gazelle-v0.24.0.tar.gz",
+        "https://mirror.bazel.build/github.com/bazelbuild/bazel-gazelle/releases/download/v0.35.0/bazel-gazelle-v0.35.0.tar.gz",
+        "https://github.com/bazelbuild/bazel-gazelle/releases/download/v0.35.0/bazel-gazelle-v0.35.0.tar.gz",
     ],
 )
 
 load("@io_bazel_rules_go//go:deps.bzl", "go_register_toolchains", "go_rules_dependencies")
 load("@bazel_gazelle//:deps.bzl", "gazelle_dependencies", "go_repository")
+load("//:repositories.bzl", "go_repositories")
 
 go_rules_dependencies()
 
 go_register_toolchains(
     nogo = "@peridot//:nogo",
-    version = "1.18.10",
+    version = "1.20.5",
 )
+
+# gazelle:repository_macro repositories.bzl%go_repositories
+go_repositories()
 
 go_repository(
     name = "org_golang_google_grpc",
+    build_file_generation = "on",
     build_file_proto_mode = "disable",
     importpath = "google.golang.org/grpc",
-    sum = "h1:weqSxi/TMs1SqFRMHCtBgXRs8k3X39QIDEZ0pRcttUg=",
-    version = "v1.44.0",
+    sum = "h1:HQKZ/fa1bXkX1oFOvSjmZEUL8wLSaZTjCcLAlmZRtdk=",
+    version = "v1.62.0",
 )
 
 go_repository(
     name = "org_golang_x_net",
     importpath = "golang.org/x/net",
-    sum = "h1:O7DYs+zxREGLKzKoMQrtrEacpb0ZVXA5rIwylE2Xchk=",
-    version = "v0.0.0-20220127200216-cd36cc0744dd",
+    sum = "h1:AQyQV4dYCvJ7vGmJyKki9+PBdyvhkSd8EIx/qb0AYv4=",
+    version = "v0.21.0",
 )
 
 go_repository(
     name = "org_golang_x_text",
     importpath = "golang.org/x/text",
-    sum = "h1:g61tztE5qeGQ89tm6NTjjM9VPIm088od1l6aSorWRWg=",
-    version = "v0.3.0",
-)
-
-go_repository(
-    name = "com_github_ProtonMail_go_crypto",
-    importpath = "github.com/ProtonMail/go-crypto",
-    patch_args = ["-p1"],
-    patches = [
-        "//patches:0001-Key-ID-subpacket-should-not-be-hashed-or-critical-fo.patch",
-    ],
-    sum = "h1:J2FzIrXN82q5uyUraeJpLIm7U6PffRwje2ORho5yIik=",
-    version = "v0.0.0-20220113124808-70ae35bab23f",
+    sum = "h1:ScX5w1eTa3QqT8oi6+ziP7dTV1S2+ALU0bI+0zXKWiQ=",
+    version = "v0.14.0",
 )
 
 go_repository(
     name = "org_golang_x_oauth2",
-    build_directives = [
-        "gazelle:resolve go cloud.google.com/go/compute/metadata @com_google_cloud_go//compute/metadata",
-    ],
     importpath = "golang.org/x/oauth2",
-    sum = "h1:pkQiBZBvdos9qq4wBAHqlzuZHEXo07pqV06ef90u1WI=",
-    version = "v0.0.0-20210514164344-f6687ab2804c",
+    sum = "h1:6m3ZPmLEFdVxKKWnKq4VqZ60gutO35zm+zrAHVmHyDQ=",
+    version = "v0.17.0",
 )
 
 gazelle_dependencies()
 
-load("@io_bazel_rules_go//extras:embed_data_deps.bzl", "go_embed_data_dependencies")
+http_archive(
+    name = "googleapis",
+    sha256 = "9d1a930e767c93c825398b8f8692eca3fe353b9aaadedfbcf1fca2282c85df88",
+    strip_prefix = "googleapis-64926d52febbf298cb82a8f472ade4a3969ba922",
+    urls = [
+        "https://github.com/googleapis/googleapis/archive/64926d52febbf298cb82a8f472ade4a3969ba922.zip",
+    ],
+)
 
-go_embed_data_dependencies()
+load("@googleapis//:repository_rules.bzl", "switched_rules_by_language")
+
+switched_rules_by_language(
+    name = "com_google_googleapis_imports",
+    go = True,
+    grpc = True,
+)
 
 http_archive(
     name = "build_bazel_rules_nodejs",
@@ -146,28 +156,13 @@ load("//wrksp:openapitools_deps.bzl", "openapitools_deps")
 openapitools_deps()
 # --end openapitools--
 
-# --start grpc_gateway--
-http_archive(
-    name = "com_github_grpc_ecosystem_grpc_gateway_v2",
-    sha256 = "c405cd8f1fb54761933c20be2ad02cce4f9a498d7bdb92a5d3789704884b8360",
-    strip_prefix = "grpc-gateway-2.7.3",
-    urls = [
-        "https://github.com/grpc-ecosystem/grpc-gateway/archive/refs/tags/v2.7.3.tar.gz",
-    ],
-)
-
-load("@com_github_grpc_ecosystem_grpc_gateway_v2//:repositories.bzl", "go_repositories")
-
-go_repositories()
-# --end grpc_gateway--
-
 # --start protoc_gen_validate--
 http_archive(
     name = "com_envoyproxy_protoc_gen_validate",
-    sha256 = "4c692c62e16c168049bca2b2972b0a25222870cf53e61be30b50d761e58728bd",
-    strip_prefix = "protoc-gen-validate-0.6.7",
+    sha256 = "92e29c2150675ce954c965bcaa559ca944704b75711533cfe03ce541dcf5a1dd",
+    strip_prefix = "protoc-gen-validate-1.0.4",
     urls = [
-        "https://github.com/envoyproxy/protoc-gen-validate/archive/v0.6.7.tar.gz",
+        "https://github.com/bufbuild/protoc-gen-validate/archive/v1.0.4.tar.gz",
     ],
 )
 

@@ -2,6 +2,10 @@
 build --workspace_status_command=tools/status.sh
 run --workspace_status_command=tools/status.sh
 
+# C++
+build --cxxopt='-std=c++17'
+build --host_cxxopt='-std=c++17'
+
 # Just build tests when testing
 test --build_tests_only
 

@@ -71,7 +71,7 @@ func projectCatalogSyncMn(_ *cobra.Command, _ []string) {
 		}
 	}
 
-	body := peridotopenapi.InlineObject5{
+	body := peridotopenapi.ProjectServiceSyncCatalogBody{
 		ScmUrl: &scmURL,
 		Branch: &scmBranch,
 	}

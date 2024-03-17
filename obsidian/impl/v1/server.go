@@ -33,7 +33,7 @@ package obsidianimplv1
 import (
 	"context"
 	"fmt"
-	"github.com/ory/hydra-client-go/client"
+	"github.com/ory/hydra-client-go/v2"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"net/url"
@@ -49,7 +49,7 @@ type Server struct {
 
 	log   *logrus.Logger
 	db    obsidiandb.Access
-	hydra *client.OryHydra
+	hydra *client.APIClient
 }
 
 func NewServer(db obsidiandb.Access) (*Server, error) {
@@ -58,11 +58,11 @@ func NewServer(db obsidiandb.Access) (*Server, error) {
 		return nil, fmt.Errorf("could not parse hydra admin url, error: %s", err)
 	}
 
-	hydraSDK := client.NewHTTPClientWithConfig(nil, &client.TransportConfig{
-		Schemes:  []string{adminURL.Scheme},
-		Host:     adminURL.Host,
-		BasePath: adminURL.Path,
-	})
+	hydraSDKConfiguration := client.NewConfiguration()
+	hydraSDKConfiguration.Servers[0].URL = adminURL.String()
+	hydraSDKConfiguration.Host = adminURL.Host
+	hydraSDKConfiguration.Scheme = adminURL.Scheme
+	hydraSDK := client.NewAPIClient(hydraSDKConfiguration)
 
 	return &Server{
 		log:   logrus.New(),

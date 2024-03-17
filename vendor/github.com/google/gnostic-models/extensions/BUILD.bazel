@@ -1,0 +1,19 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "extensions",
+    srcs = [
+        "extension.pb.go",
+        "extensions.go",
+    ],
+    importmap = "peridot.resf.org/vendor/github.com/google/gnostic-models/extensions",
+    importpath = "github.com/google/gnostic-models/extensions",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_golang_protobuf//proto:go_default_library",
+        "@com_github_golang_protobuf//ptypes:go_default_library_gen",
+        "@org_golang_google_protobuf//reflect/protoreflect",
+        "@org_golang_google_protobuf//runtime/protoimpl",
+        "@org_golang_google_protobuf//types/known/anypb",
+    ],
+)

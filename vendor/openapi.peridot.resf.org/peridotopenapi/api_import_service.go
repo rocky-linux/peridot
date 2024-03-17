@@ -507,10 +507,10 @@ type ApiImportPackageRequest struct {
 	ctx _context.Context
 	ApiService ImportServiceApi
 	projectId string
-	body *ImportPackageRequestIsTheRequestMessageForImportServiceImportPackage
+	body *ImportServiceImportPackageBody
 }
 
-func (r ApiImportPackageRequest) Body(body ImportPackageRequestIsTheRequestMessageForImportServiceImportPackage) ApiImportPackageRequest {
+func (r ApiImportPackageRequest) Body(body ImportServiceImportPackageBody) ApiImportPackageRequest {
 	r.body = &body
 	return r
 }
@@ -629,10 +629,10 @@ type ApiImportPackageBatchRequest struct {
 	ctx _context.Context
 	ApiService ImportServiceApi
 	projectId string
-	body *InlineObject7
+	body *ImportServiceImportPackageBatchBody
 }
 
-func (r ApiImportPackageBatchRequest) Body(body InlineObject7) ApiImportPackageBatchRequest {
+func (r ApiImportPackageBatchRequest) Body(body ImportServiceImportPackageBatchBody) ApiImportPackageBatchRequest {
 	r.body = &body
 	return r
 }

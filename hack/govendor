@@ -45,6 +45,10 @@ bazel-bin/nofussvendor/nofussvendor_/nofussvendor
 # Vendor packages
 go mod vendor
 
+# Delete existing BUILD.bazel files
+find vendor -name BUILD.bazel -delete
+find vendor -name BUILD -delete
+
 # Disable proto for vendor
 cat <<EOF > vendor/BUILD.bazel
 # gazelle:proto disable
