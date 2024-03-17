@@ -32,6 +32,7 @@ package obsidianimplv1
 
 import (
 	"context"
+
 	"github.com/gogo/status"
 	client "github.com/ory/hydra-client-go/v2"
 	"peridot.resf.org/utils"
@@ -41,8 +42,9 @@ import (
 )
 
 const (
-	authError = "auth_error"
-	noUser    = "no_user"
+	authError  = "auth_error"
+	noUser     = "no_user"
+	badConsent = "bad_consent"
 )
 
 func (s *Server) ProcessLoginRequest(challenge string) (*obsidianpb.SessionStatusResponse, error) {
@@ -104,7 +106,6 @@ func (s *Server) AcceptConsentRequest(ctx context.Context, challenge string, con
 	consent, _, err := s.hydra.OAuth2API.AcceptOAuth2ConsentRequest(ctx).
 		ConsentChallenge(challenge).
 		AcceptOAuth2ConsentRequest(client.AcceptOAuth2ConsentRequest{
-			Context:                  ctx,
 			Remember:                 utils.Pointer[bool](true),
 			GrantScope:               consentReq.RequestedScope,
 			GrantAccessTokenAudience: consentReq.RequestedAccessTokenAudience,
@@ -120,6 +121,11 @@ func (s *Server) AcceptConsentRequest(ctx context.Context, challenge string, con
 				},
 			},
 		}).Execute()
+
+	if err != nil {
+		s.log.Error(err)
+		return nil, status.Error(codes.Internal, badConsent)
+	}
 
 	return &obsidianpb.SessionStatusResponse{
 		Valid:       true,
