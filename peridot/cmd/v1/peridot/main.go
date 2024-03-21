@@ -31,15 +31,19 @@
 package main
 
 import (
+	"log"
+	"strings"
+
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"log"
-	"strings"
 )
 
+var Version = "[unknown]"
+
 var root = &cobra.Command{
-	Use: "peridot",
+	Use:     "peridot",
+	Version: Version,
 }
 
 func init() {
