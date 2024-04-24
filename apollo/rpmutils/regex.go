@@ -31,8 +31,9 @@
 package rpmutils
 
 import (
-	"github.com/rocky-linux/srpmproc/pkg/rpmutils"
 	"regexp"
+
+	"github.com/rocky-linux/srpmproc/pkg/rpmutils"
 )
 
 var (
@@ -48,7 +49,7 @@ var (
 
 func NVR() *regexp.Regexp {
 	if nvr == nil {
-		nvr = regexp.MustCompile("^(\\S+)-([\\w~%.+^]+)-(\\w+(?:\\.[\\w~%+]+)+?)(?:\\.(\\w+))?(?:\\.rpm)?$")
+		nvr = regexp.MustCompile("^(\\S+)-([\\w~%.+^]+)-(\\w+(?:\\.[\\w~%+^]+)+?)(?:\\.(\\w+))?(?:\\.rpm)?$")
 	}
 	return nvr
 }
