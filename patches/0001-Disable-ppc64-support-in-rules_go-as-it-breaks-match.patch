@@ -1,0 +1,25 @@
+From 68951b80d26227794abd394a7f8ac684b49f33ad Mon Sep 17 00:00:00 2001
+From: Mustafa Gezen <mustafa@rockylinux.org>
+Date: Thu, 25 Apr 2024 12:59:59 +0200
+Subject: [PATCH] Disable ppc64 support in rules_go, as it breaks matching for
+ ppc64le
+
+---
+ go/private/platforms.bzl | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/go/private/platforms.bzl b/go/private/platforms.bzl
+index 664f7aed..ef5319a4 100644
+--- a/go/private/platforms.bzl
++++ b/go/private/platforms.bzl
+@@ -30,7 +30,6 @@ BAZEL_GOARCH_CONSTRAINTS = {
+     "amd64": "@platforms//cpu:x86_64",
+     "arm": "@platforms//cpu:armv7",
+     "arm64": "@platforms//cpu:aarch64",
+-    "ppc64": "@platforms//cpu:ppc",
+     "ppc64le": "@platforms//cpu:ppc",
+     "s390x": "@platforms//cpu:s390x",
+ }
+-- 
+2.39.3 (Apple Git-146)
+

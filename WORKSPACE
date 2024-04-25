@@ -37,10 +37,14 @@ protobuf_deps()
 
 http_archive(
     name = "io_bazel_rules_go",
-    integrity = "sha256-fHbWI2so/2laoozzX5XeMXqUcv0fsUrHl8m/aE8Js3w=",
+    patch_args = ["-p1"],
+    patches = [
+        "//patches:0001-Disable-ppc64-support-in-rules_go-as-it-breaks-match.patch",
+    ],
+    sha256 = "af47f30e9cbd70ae34e49866e201b3f77069abb111183f2c0297e7e74ba6bbc0",
     urls = [
-        "https://mirror.bazel.build/github.com/bazelbuild/rules_go/releases/download/v0.44.2/rules_go-v0.44.2.zip",
-        "https://github.com/bazelbuild/rules_go/releases/download/v0.44.2/rules_go-v0.44.2.zip",
+        "https://mirror.bazel.build/github.com/bazelbuild/rules_go/releases/download/v0.47.0/rules_go-v0.47.0.zip",
+        "https://github.com/bazelbuild/rules_go/releases/download/v0.47.0/rules_go-v0.47.0.zip",
     ],
 )
 
@@ -61,7 +65,7 @@ go_rules_dependencies()
 
 go_register_toolchains(
     nogo = "@peridot//:nogo",
-    version = "1.20.5",
+    version = "1.22.2",
 )
 
 # gazelle:repository_macro repositories.bzl%go_repositories
