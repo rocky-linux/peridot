@@ -92,7 +92,7 @@ func checkAuth(ctx context.Context, hydraSDK *client.APIClient, hydraAdmin *clie
 	if err != nil {
 		return ctx, err
 	}
-	if *userInfo.Sub == "" && hydraAdmin != nil {
+	if userInfo.GetSub() == "" && hydraAdmin != nil {
 		introspect, _, err := hydraAdmin.OAuth2API.IntrospectOAuth2Token(ctx).Token(authToken[1]).Execute()
 		if err != nil {
 			logrus.Errorf("error introspecting token: %s", err)
@@ -104,7 +104,7 @@ func checkAuth(ctx context.Context, hydraSDK *client.APIClient, hydraAdmin *clie
 		newEmail := fmt.Sprintf("%s@%s", *introspect.Sub, "serviceaccount.resf.org")
 		userInfo.Email = &newEmail
 	}
-	if *userInfo.Sub == "" {
+	if userInfo.GetSub() == "" {
 		return ctx, status.Errorf(codes.Unauthenticated, "invalid authorization token")
 	}
 
