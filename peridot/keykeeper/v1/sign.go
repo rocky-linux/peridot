@@ -246,9 +246,16 @@ func (s *Server) SignArtifactActivity(ctx context.Context, artifactId string, ke
 				return nil, fmt.Errorf("failed to create task artifact signature: %v", err)
 			}
 
+			// Get the size of the file
+			fi, err := f.Stat()
+			if err != nil {
+				return nil, err
+			}
+
 			return &keykeeperpb.SignedArtifact{
 				Path:       newObjectKey,
 				HashSha256: hash,
+				SignedSize: fi.Size(),
 			}, nil
 		}
 		verifySig := func() error {

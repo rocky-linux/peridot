@@ -66,6 +66,7 @@ import (
 	yumrepofspb "peridot.resf.org/peridot/yumrepofs/pb"
 	"peridot.resf.org/utils"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -1400,6 +1401,9 @@ func (c *Controller) makeRepoChanges(tx peridotdb.Access, req *UpdateRepoRequest
 
 					pkgPrimary.Packages[0].Location.Href = fmt.Sprintf("Packages/%s", newObjectKey)
 					pkgPrimary.Packages[0].Checksum.Value = signedArtifact.HashSha256
+					if signedArtifact.SignedSize > 0 {
+						pkgPrimary.Packages[0].Size.Package = strconv.FormatInt(signedArtifact.SignedSize, 10)
+					}
 
 					for _, pkg := range pkgFilelists.Packages {
 						pkg.PkgId = signedArtifact.HashSha256
