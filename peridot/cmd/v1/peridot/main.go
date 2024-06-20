@@ -31,11 +31,12 @@
 package main
 
 import (
+	"log"
+	"strings"
+
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"log"
-	"strings"
 )
 
 var root = &cobra.Command{
@@ -63,6 +64,14 @@ func init() {
 	project.AddCommand(projectList)
 	project.AddCommand(projectCreateHashedRepos)
 	project.AddCommand(projectCatalogSync)
+
+	project.AddCommand(repo)
+	repo.AddCommand(projectRepoList)
+	repo.AddCommand(projectRepoGet)
+
+	project.AddCommand(externalRepo)
+	externalRepo.AddCommand(externalRepoList)
+	//externalRepo.AddCommand(externalRepoGet)
 
 	root.AddCommand(impCmd)
 
