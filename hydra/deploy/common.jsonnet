@@ -5,7 +5,7 @@ local utils = import 'ci/utils.jsonnet';
 local tag = std.extVar('tag');
 
 local DSN = db.dsn('hydra');
-local authn = if kubernetes.prod() then 'https://id.build.resf.org' else 'http://obsidian.pdot.localhost:16000';
+local authn = if kubernetes.prod() then 'https://id.build.resf.org' else 'https://id-dev.internal.pdev.resf.localhost';
 
 {
   image: 'oryd/hydra',

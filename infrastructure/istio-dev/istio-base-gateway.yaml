@@ -13,6 +13,7 @@ spec:
         protocol: HTTP
       hosts:
         - "*.pdev.resf.localhost"
+        - "*.pdev.resf.local"
       tls:
         httpsRedirect: true
     - port:
@@ -21,6 +22,7 @@ spec:
         protocol: HTTPS
       hosts:
         - "*.pdev.resf.localhost"
+        - "*.pdev.resf.local"
       tls:
         mode: SIMPLE
         credentialName: default-cert
