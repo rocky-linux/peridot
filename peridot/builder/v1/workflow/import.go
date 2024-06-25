@@ -40,6 +40,15 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"io"
+	http2 "net/http"
+	"net/url"
+	"os"
+	"path/filepath"
+	"regexp"
+	"strings"
+	"time"
+
 	"github.com/go-git/go-billy/v5"
 	"github.com/go-git/go-billy/v5/memfs"
 	"github.com/go-git/go-billy/v5/osfs"
@@ -62,19 +71,11 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
-	"io"
-	http2 "net/http"
-	"net/url"
-	"os"
-	"path/filepath"
 	"peridot.resf.org/apollo/rpmutils"
 	"peridot.resf.org/peridot/db/models"
 	peridotpb "peridot.resf.org/peridot/pb"
 	"peridot.resf.org/peridot/rpmbuild"
 	"peridot.resf.org/utils"
-	"regexp"
-	"strings"
-	"time"
 )
 
 // This should probably reside somewhere else
@@ -1016,12 +1017,23 @@ func (c *Controller) srpmprocToImportRevisions(project *models.Project, pkg stri
 			moduleStream = true
 		}
 
-		version := res.BranchVersions[branch]
+		version, ok := res.BranchVersions[branch]
+
+		if !ok {
+			c.log.Errorf("unable to find branch %s in BranchVersions", branch)
+		}
+
+		if version == nil {
+			c.log.Errorf("version for branch %s is nil", branch)
+		}
 
 		// For now let's just include all module metadata in the release field.
 		// We might use it to match upstream versions in the Future.
 		// If it doesn't work out as expected, we can always resort back to replacing.
 		release := version.Release
+		if release == "" {
+			c.log.Errorf("release information missing for branch %s", branch)
+		}
 
 		section := OpenPatchRpms
 		if module {
