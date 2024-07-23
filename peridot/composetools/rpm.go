@@ -33,12 +33,14 @@ package composetools
 import (
 	"errors"
 	"fmt"
-	"github.com/gobwas/glob"
 	"path/filepath"
+	"regexp"
+	"strings"
+
+	"github.com/gobwas/glob"
 	"peridot.resf.org/apollo/rpmutils"
 	"peridot.resf.org/peridot/yummeta"
 	"peridot.resf.org/utils"
-	"strings"
 )
 
 var (
@@ -47,6 +49,7 @@ var (
 
 var (
 	debugSuffixes         = []string{"-debuginfo", "-debugsource", "-debuginfo-common"}
+	debugRegex            = regexp.MustCompile(`^(?:.*-debuginfo(?:-.*)?|.*-debuginfo-.*|.*-debugsource)$`)
 	soGlob                = glob.MustCompile("*.so.*")
 	gtk2EnginesGlob       = glob.MustCompile("/usr/lib*/gtk-2.0/*/engines")
 	gtk2ModulesGlob       = glob.MustCompile("/usr/lib*/gtk-2.0/*/modules")
@@ -70,12 +73,9 @@ func StripDebugSuffixes(name string) string {
 }
 
 func IsDebugPackage(name string) bool {
-	for _, suffix := range debugSuffixes {
-		if strings.HasSuffix(name, suffix) {
-			return true
-		}
+	if debugRegex.MatchString(name) {
+		return true
 	}
-
 	return false
 }
 
