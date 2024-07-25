@@ -62,6 +62,9 @@ func init() {
 	build.AddCommand(buildRpmImport)
 	build.AddCommand(buildPackage)
 
+	root.AddCommand(task)
+	task.AddCommand(taskLogs)
+
 	root.AddCommand(project)
 	project.AddCommand(projectInfo)
 	project.AddCommand(projectList)
