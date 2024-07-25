@@ -25,6 +25,16 @@ python_deps()
 # --end python--
 
 http_archive(
+    name = "rules_pkg",
+    urls = [
+        "https://github.com/bazelbuild/rules_pkg/releases/download/0.10.1/rules_pkg-0.10.1.tar.gz",
+    ],
+    sha256 = "d250924a2ecc5176808fc4c25d5cf5e9e79e6346d79d5ab1c493e289e722d1d0",
+)
+load("@rules_pkg//:deps.bzl", "rules_pkg_dependencies")
+rules_pkg_dependencies()
+
+http_archive(
     name = "com_google_protobuf",
     sha256 = "d19643d265b978383352b3143f04c0641eea75a75235c111cc01a1350173180e",
     strip_prefix = "protobuf-25.3",
