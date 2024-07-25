@@ -125,6 +125,7 @@ type Access interface {
 	GetPluginsForProject(projectId string) (models.Plugins, error)
 
 	GetExternalRepositoriesForProject(projectId string) (models.ExternalRepositories, error)
+	GetExternalRepository(projectId string, id string) (models.ExternalRepository, error)
 	DeleteExternalRepositoryForProject(projectId string, externalRepositoryId string) error
 	CreateExternalRepositoryForProject(projectId string, repoURL string, priority *int32, moduleHotfixes bool) (*models.ExternalRepository, error)
 	FindRepositoriesForPackage(projectId string, pkg string, internalOnly bool) (models.Repositories, error)
