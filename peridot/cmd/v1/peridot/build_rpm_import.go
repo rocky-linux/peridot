@@ -31,13 +31,16 @@
 package main
 
 import (
+	"crypto/sha256"
 	"encoding/base64"
-	"github.com/spf13/cobra"
-	"io/ioutil"
+	"encoding/hex"
 	"log"
-	"openapi.peridot.resf.org/peridotopenapi"
 	"os"
+	"strings"
 	"time"
+
+	"github.com/spf13/cobra"
+	"openapi.peridot.resf.org/peridotopenapi"
 )
 
 type LookasideUploadTask struct {
@@ -57,9 +60,11 @@ var buildRpmImport = &cobra.Command{
 }
 
 var buildRpmImportForceOverride bool
+var skipStep string
 
 func init() {
 	buildRpmImport.Flags().BoolVar(&buildRpmImportForceOverride, "force-override", true, "Force override even if version exists (default: true)")
+	buildRpmImport.Flags().StringVarP(&skipStep, "skip", "s", "", "which step to skip")
 }
 
 func isFile(path string) bool {
@@ -74,6 +79,20 @@ func buildRpmImportMn(_ *cobra.Command, args []string) {
 	// Ensure project id exists
 	projectId := mustGetProjectID()
 
+	var skipUpload = false
+	var skipImport = false
+
+	if skipStep != "" {
+		switch strings.ToLower(skipStep) {
+		case "upload":
+			skipUpload = true
+		case "import":
+			skipImport = true
+		default:
+			log.Fatalf("invalid skip step: %s", skipStep)
+		}
+	}
+
 	// Ensure all args are valid files
 	for _, arg := range args {
 		if !isFile(arg) {
@@ -85,16 +104,27 @@ func buildRpmImportMn(_ *cobra.Command, args []string) {
 	var blobs []string
 	projectCl := getClient(serviceProject).(peridotopenapi.ProjectServiceApi)
 	for _, arg := range args {
-		bts, err := ioutil.ReadFile(arg)
-		errFatal(err)
-		base64EncodedBytes := base64.StdEncoding.EncodeToString(bts)
 
-		res, _, err := projectCl.LookasideFileUpload(getContext()).Body(peridotopenapi.V1LookasideFileUploadRequest{
-			File: &base64EncodedBytes,
-		}).Execute()
+		bts, err := os.ReadFile(arg)
 		errFatal(err)
-		log.Printf("Uploaded %s to lookaside", arg)
-		blobs = append(blobs, res.GetDigest())
+
+		hash := sha256.Sum256(bts)
+		shasum := hex.EncodeToString(hash[:])
+
+		if !skipUpload {
+			base64EncodedBytes := base64.StdEncoding.EncodeToString(bts)
+			_, _, err := projectCl.LookasideFileUpload(getContext()).Body(peridotopenapi.V1LookasideFileUploadRequest{
+				File: &base64EncodedBytes,
+			}).Execute()
+			errFatal(err)
+			log.Printf("Uploaded %s to lookaside", arg)
+		}
+		log.Printf("Will upload %s to lookaside for %s", shasum, arg)
+		blobs = append(blobs, shasum)
+	}
+
+	if skipImport {
+		return
 	}
 
 	taskCl := getClient(serviceTask).(peridotopenapi.TaskServiceApi)
