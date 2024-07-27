@@ -1305,8 +1305,8 @@ def go_repositories():
     go_repository(
         name = "com_github_spf13_cobra",
         importpath = "github.com/spf13/cobra",
-        sum = "h1:xghbfqPkxzxP3C/f3n5DdpAbdKLj4ZE4BWQI362l53M=",
-        version = "v1.1.3",
+        sum = "h1:e5/vxKd/rZsfSJMUX1agtjeTDf+qv1/JdBF8gg5k9ZM=",
+        version = "v1.8.1",
     )
     go_repository(
         name = "com_github_spf13_jwalterweatherman",

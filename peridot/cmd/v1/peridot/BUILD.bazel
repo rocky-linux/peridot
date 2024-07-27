@@ -1,5 +1,4 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
-
 load(
     "@rules_pkg//pkg:mappings.bzl",
     "pkg_attributes",
@@ -18,10 +17,10 @@ go_library(
         "lookaside_upload.go",
         "main.go",
         "project.go",
-        "project_info.go",
-        "project_list.go",
         "project_catalog_sync.go",
         "project_create_hashed_repos.go",
+        "project_info.go",
+        "project_list.go",
         "task.go",
         "task_logs.go",
         "utils.go",
@@ -29,16 +28,16 @@ go_library(
     data = [
         "//peridot/proto/v1:client_go",
     ],
+    importpath = "peridot.resf.org/peridot/cmd/v1/peridot",
+    visibility = ["//visibility:private"],
     x_defs = {
         "Version": "{STABLE_BUILD_TAG}",
     },
-    importpath = "peridot.resf.org/peridot/cmd/v1/peridot",
-    visibility = ["//visibility:private"],
     deps = [
+        "//vendor/github.com/google/uuid",
         "//vendor/github.com/sirupsen/logrus",
         "//vendor/github.com/spf13/cobra",
         "//vendor/github.com/spf13/viper",
-        "//vendor/github.com/google/uuid",
         "//vendor/openapi.peridot.resf.org/peridotopenapi",
         "@org_golang_x_oauth2//:oauth2",
         "@org_golang_x_oauth2//clientcredentials",
@@ -52,24 +51,24 @@ go_binary(
 )
 
 pkg_files(
-  name = "peridot-files",
-  srcs = [":peridot"],
-  attributes = pkg_attributes(
-    user = "root",
-    group = "root",
-    mode = "0755",
-  ),
-  prefix = "/usr/bin"
+    name = "peridot-files",
+    srcs = [":peridot"],
+    attributes = pkg_attributes(
+        group = "root",
+        mode = "0755",
+        user = "root",
+    ),
+    prefix = "/usr/bin",
 )
 
 pkg_rpm(
     name = "peridot-cli",
     srcs = [":peridot-files"],
-    license = "MIT",
-    summary = "Peridot Command Line Interface",
-    version = "0.2.2",
-    release = "3",
     architecture = "x86_64",
     description = "A command line interface to interact with the Peridot build system",
+    license = "MIT",
+    release = "1",
     source_date_epoch = 0,
+    summary = "Peridot Command Line Interface",
+    version = "0.2.3",
 )

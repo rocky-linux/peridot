@@ -35,7 +35,9 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strconv"
+	"strings"
+
+	// "strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -55,12 +57,19 @@ var (
 	combined        bool
 	taskLogFileName string
 	attrs           int
+	succeeded       bool
+	cancelled       bool
+	failed          bool
 )
 
 func init() {
 	taskLogs.Flags().StringVarP(&architecture, "architecture", "a", "", "(inop) filter by architecture")
-	taskLogs.Flags().BoolVarP(&combined, "combined", "c", false, "dump all logs to one file")
 	taskLogs.Flags().StringVarP(&cwd, "cwd", "C", "", "change working directory for ouput")
+	taskLogs.Flags().BoolVarP(&combined, "combined", "c", false, "dump all logs to one file")
+	taskLogs.Flags().BoolVar(&succeeded, "succeeded", true, "only query successful tasks")
+	taskLogs.Flags().BoolVar(&cancelled, "cancelled", false, "only query cancelled tasks")
+	taskLogs.Flags().BoolVar(&failed, "failed", false, "only query failed tasks")
+	taskLogs.MarkFlagsMutuallyExclusive("cancelled", "failed", "succeeded")
 }
 
 func taskLogsMn(_ *cobra.Command, args []string) {
@@ -75,51 +84,24 @@ func taskLogsMn(_ *cobra.Command, args []string) {
 		buildId = buildIdOrPackageName
 	} else {
 		// argument is not a uuid, try to look up the most recent build for a package with said name
-		// projectCl := getClient(serviceProject).(peridotopenapi.ProjectServiceApi)
-		packageCl := getClient(servicePackage).(peridotopenapi.PackageServiceApi)
-		buildCl := getClient(serviceBuild).(peridotopenapi.BuildServiceApi)
-
-		_, _, err := packageCl.GetPackage(getContext(), projectId, "name", buildIdOrPackageName).Execute()
+		var status string
+		if failed {
+			status = string(peridotopenapi.FAILED)
+		}
+		if cancelled {
+			status = string(peridotopenapi.CANCELED)
+		}
+		buildId, err = getLatestBuildTaskIdForPackageName(projectId, buildIdOrPackageName, status)
 		if err != nil {
 			errFatal(err)
-		}
-		// var pkg peridotopenapi.V1Package = *res.Package
-		// pkgId := pkg.GetId()
-
-		// try to get the latest builds for the package
-		res, _, err := buildCl.ListBuilds(
-			getContext(),
-			projectId).FiltersStatus(string(peridotopenapi.SUCCEEDED)).FiltersPackageName(buildIdOrPackageName).Execute()
-		if err != nil {
-			errFatal(err)
-		}
-
-		// TODO(neil): why is Total a string?
-		total, err := strconv.Atoi(*res.Total)
-		if err != nil {
-			errFatal(err)
-		}
-
-		// TODO(neil): support pagination
-		if total > int(*res.Size) {
-			panic("result set larger than one page")
-		}
-
-		if total > 0 {
-			builds := *res.Builds
-
-			// for _, build := range builds {
-			// 	buildjson, _ := build.MarshalJSON()
-			// 	log.Printf("build: %s", buildjson)
-			// }
-
-			// after sorting, the first build is the latest
-			buildId = builds[0].GetTaskId()
 		}
 	}
 
 	if cwd != "" {
-		os.Chdir(cwd)
+		err := os.Chdir(cwd)
+		if err != nil {
+			errFatal(fmt.Errorf("Error during chdir: %w", err.Error()))
+		}
 	}
 
 	if combined {
@@ -138,53 +120,83 @@ func taskLogsMn(_ *cobra.Command, args []string) {
 
 	// Wait for build to finish
 	taskCl := getClient(serviceTask).(peridotopenapi.TaskServiceApi)
-	log.Printf("Checking if build %s is finished\n", buildId)
+	log.Printf("Checking if parent task %s is finished\n", buildId)
+
+	const (
+		retryInterval = 5 * time.Second
+		maxRetries    = 5
+	)
+	var retryCount = 0
 
 	for {
 		res, _, err := taskCl.GetTask(getContext(), projectId, buildId).Execute()
 		if err != nil {
 			log.Printf("Error getting task: %s", err.Error())
-			time.Sleep(5 * time.Second)
+			if retryCount < maxRetries {
+				retryCount++
+				time.Sleep(retryInterval)
+				continue
+			}
+			errFatal(fmt.Errorf("max retries reached"))
 		}
+
 		task := res.GetTask()
-		if task.GetDone() {
-			for _, t := range task.GetSubtasks() {
-				taskType, ok := t.GetTypeOk()
+		if !task.GetDone() {
+			log.Printf("task not done after %v retries: %v", retryCount, err.Error())
+			if retryCount < maxRetries {
+				retryCount++
+				time.Sleep(retryInterval)
+				continue
+			}
+			errFatal(fmt.Errorf("max retries reached"))
+		}
 
-				if !ok {
-					continue
-				}
+		for _, t := range task.GetSubtasks() {
+			taskType, ok := t.GetTypeOk()
 
-				switch *taskType {
-				case peridotopenapi.BUILD_ARCH:
-					// NOTE(neil): 2024-07-25 - ignore error as it tries to unsuccessfully unmarshall json from logs
-					_, resp, _ := taskCl.StreamTaskLogs(getContext(), projectId, t.GetId()).Execute()
+			if !ok {
+				continue
+			}
 
-					defer resp.Body.Close()
-					if resp != nil && resp.StatusCode == 200 {
-						// log.Printf("%v", resp.Status)
-						if !combined {
-							taskLogFileName = fmt.Sprintf("%s_%s-%s.log", buildId, t.GetId(), t.GetArch())
-							attrs = os.O_RDWR | os.O_CREATE | os.O_TRUNC
-						}
-						log.Printf("Writing logs for task (arch=%s,tid=%s) to %v", t.GetArch(), t.GetId(), taskLogFileName)
+			switch *taskType {
+			case peridotopenapi.BUILD_ARCH:
+				// NOTE(neil): 2024-07-25 - ignore error as it tries to unsuccessfully unmarshall json from logs
+				taskId := t.GetId()
+				taskArch := t.GetArch()
 
-						file, err := os.OpenFile(taskLogFileName, attrs, 0666)
-						if err != nil {
-							errFatal(err)
-						}
-						defer file.Close()
+				_, resp, _ := taskCl.StreamTaskLogs(getContext(), projectId, taskId).Execute()
 
-						_, err = file.ReadFrom(resp.Body)
-						if err != nil {
-							errFatal(err)
-						}
+				defer resp.Body.Close()
+				if resp != nil && resp.StatusCode == 200 {
+					// log.Printf("%v", resp.Status)
+					if !combined {
+						taskLogFileName = fmt.Sprintf("%s_%s-%s.log", buildId, taskId, taskArch)
+						attrs = os.O_RDWR | os.O_CREATE | os.O_TRUNC
+					}
+
+					status, ok := t.GetStatusOk()
+					if !ok {
+						errFatal(fmt.Errorf("unable to get status for task: %v", status))
+					}
+
+					statusString := string(*status.Ptr())
+					statusString = statusString[strings.LastIndex(statusString, "_")+1:]
+
+					log.Printf("Writing logs for task (arch=%s,tid=%s,status=%s) to %v", taskArch, taskId, statusString, taskLogFileName)
+
+					file, err := os.OpenFile(taskLogFileName, attrs, 0666)
+					if err != nil {
+						errFatal(err)
+					}
+					defer file.Close()
+
+					_, err = file.ReadFrom(resp.Body)
+					if err != nil {
+						errFatal(err)
 					}
 				}
 			}
-			break
 		}
-
-		time.Sleep(5 * time.Second)
+		break
 	}
 }

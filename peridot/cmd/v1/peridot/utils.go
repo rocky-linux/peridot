@@ -33,11 +33,15 @@ package main
 import (
 	"context"
 	"crypto/tls"
+	"encoding/json"
+	"errors"
 	"fmt"
-	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/clientcredentials"
 	"log"
 	"net/http"
+	"strconv"
+
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/clientcredentials"
 
 	"openapi.peridot.resf.org/peridotopenapi"
 )
@@ -123,4 +127,84 @@ func errFatal(err error) {
 	if err != nil {
 		log.Fatalf("an error occurred: %s", err.Error())
 	}
+}
+
+// getLatestBuildTaskIdForPackageName retrieves the latest build task ID for a given package name within a specified project.
+//
+// Parameters:
+// - projectId: The ID of the project where the package resides.
+// - name: The name of the package for which the latest build task ID is to be fetched.
+//
+// Returns:
+// - string: The task ID of the latest build for the specified package name.
+// - error: An error if the retrieval process fails.
+//
+// It accomplishes the following steps:
+// 1. Initializes clients for the package and build services.
+// 2. Verifies the existence of the package in the specified project.
+// 3. Lists the latest builds for the package name with an SUCCEEDED status.
+// 4. Converts the total number of results to an integer.
+// 5. Checks if the result set is larger than one page, handles pagination if needed.
+// 6. Returns the task ID of the latest build if available, or an error if not found.
+func getLatestBuildTaskIdForPackageName(projectId string, name string, status string) (string, error) {
+
+	if status == "" {
+		status = string(peridotopenapi.SUCCEEDED)
+	}
+
+	packageCl := getClient(servicePackage).(peridotopenapi.PackageServiceApi)
+	buildCl := getClient(serviceBuild).(peridotopenapi.BuildServiceApi)
+
+	_, _, err := packageCl.GetPackage(getContext(), projectId, "name", name).Execute()
+	if err != nil {
+		errFatal(err)
+	}
+
+	// try to get the latest builds for the package
+	listBuildsReq := buildCl.ListBuilds(getContext(), projectId)
+
+	listBuildsReq = listBuildsReq.FiltersPackageName(name)
+	listBuildsReq = listBuildsReq.FiltersStatus(status)
+
+	res, _, err := listBuildsReq.Execute()
+	if err != nil {
+		errFatal(err)
+	}
+
+	// TODO(neil): why is Total a string?
+	total, err := strconv.Atoi(*res.Total)
+	if err != nil {
+		errFatal(err)
+	}
+
+	// TODO(neil): support pagination?
+	if total > int(*res.Size) {
+		fmt.Errorf("result set larger than one page")
+	}
+
+	if len(*res.Builds) > 0 {
+		builds := *res.Builds
+		return builds[0].GetTaskId(), nil
+	}
+	return "", errors.New("unable to determine latest build task for package")
+}
+
+// PrettyPrintJSON takes a marshaled JSON byte array and prints it in a pretty format
+func PrettyPrintJSON(data []byte) error {
+	var prettyJSON map[string]interface{}
+
+	// Unmarshal the JSON data into a map
+	err := json.Unmarshal(data, &prettyJSON)
+	if err != nil {
+		return fmt.Errorf("error unmarshaling JSON: %w", err)
+	}
+
+	// Marshal the map back to JSON with indentation for pretty printing
+	formattedJSON, err := json.MarshalIndent(prettyJSON, "", "  ")
+	if err != nil {
+		return fmt.Errorf("error marshaling JSON: %w", err)
+	}
+
+	fmt.Println(string(formattedJSON))
+	return nil
 }
