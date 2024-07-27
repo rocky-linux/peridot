@@ -1,0 +1,27 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "tablewriter",
+    srcs = [
+        "csv.go",
+        "table.go",
+        "table_with_color.go",
+        "util.go",
+        "wrap.go",
+    ],
+    importmap = "peridot.resf.org/vendor/github.com/olekukonko/tablewriter",
+    importpath = "github.com/olekukonko/tablewriter",
+    visibility = ["//visibility:public"],
+    deps = ["//vendor/github.com/mattn/go-runewidth"],
+)
+
+go_test(
+    name = "tablewriter_test",
+    srcs = [
+        "table_test.go",
+        "wrap_test.go",
+    ],
+    data = glob(["testdata/**"]),
+    embed = [":tablewriter"],
+    deps = ["//vendor/github.com/mattn/go-runewidth"],
+)

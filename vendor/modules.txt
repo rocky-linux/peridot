@@ -1200,3 +1200,6 @@ sigs.k8s.io/yaml
 # peridot.resf.org/peridot/yumrepofs/pb => ./bazel-bin/peridot/proto/v1/yumrepofs/yumrepofspb_go_proto_/peridot.resf.org/peridot/yumrepofs/pb
 # peridot.resf.org/common => ./bazel-bin/proto/commonpb_go_proto_/peridot.resf.org/common
 # github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2/options => ./bazel-bin/protoc-gen-openapiv2/options/options_go_proto_/github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2/options
+# github.com/olekukonko/tablewriter v0.0.5
+## explicit; go 1.13
+github.com/olekukonko/tablewriter
