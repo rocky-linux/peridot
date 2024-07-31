@@ -1,0 +1,16 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "csv2table_lib",
+    srcs = ["csv2table.go"],
+    importmap = "peridot.resf.org/vendor/github.com/olekukonko/tablewriter/csv2table",
+    importpath = "github.com/olekukonko/tablewriter/csv2table",
+    visibility = ["//visibility:private"],
+    deps = ["//vendor/github.com/olekukonko/tablewriter"],
+)
+
+go_binary(
+    name = "csv2table",
+    embed = [":csv2table_lib"],
+    visibility = ["//visibility:public"],
+)

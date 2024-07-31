@@ -39,6 +39,8 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
+	"time"
 
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/clientcredentials"
@@ -207,4 +209,19 @@ func PrettyPrintJSON(data []byte) error {
 
 	fmt.Println(string(formattedJSON))
 	return nil
+}
+
+func formatTime(t time.Time) string {
+	return t.Format("2006-01-02 15:04:05")
+}
+
+func formatDuration(start, end time.Time) string {
+	duration := end.Sub(start)
+	return time.Time{}.Add(duration).Format("15:04:05")
+}
+
+func getLogLink(subtaskId string) string {
+	return fmt.Sprintf("https://%s/api/v1/projects/%s/tasks/%s/logs",
+		strings.Replace(endpoint(), "-api", "", 1),
+		mustGetProjectID(), subtaskId)
 }

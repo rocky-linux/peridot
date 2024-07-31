@@ -54,7 +54,10 @@ func init() {
 	root.PersistentFlags().String("client-secret", "", "Client secret for authentication")
 	root.PersistentFlags().String("project-id", "", "Peridot project ID")
 	root.PersistentFlags().Bool("debug", false, "Debug mode")
+
 	root.PersistentFlags().StringP("output", "o", "table", "Output format (table|json)")
+	root.PersistentFlags().Bool("no-color", false, "don't colorize output")
+	root.PersistentFlags().Bool("no-wait", false, "don't wait for completion")
 
 	root.AddCommand(lookaside)
 	lookaside.AddCommand(lookasideUpload)
@@ -65,6 +68,7 @@ func init() {
 
 	root.AddCommand(task)
 	task.AddCommand(taskLogs)
+	task.AddCommand(taskInfo)
 
 	root.AddCommand(project)
 	project.AddCommand(projectInfo)
@@ -124,4 +128,12 @@ func debug() bool {
 
 func output() string {
 	return viper.GetString("output")
+}
+
+func color() bool {
+	return !viper.GetBool("no-color")
+}
+
+func wait() bool {
+	return !viper.GetBool("no-wait")
 }

@@ -1069,6 +1069,12 @@ def go_repositories():
         version = "v1.3.1",
     )
     go_repository(
+        name = "com_github_olekukonko_tablewriter",
+        importpath = "github.com/olekukonko/tablewriter",
+        sum = "h1:P2Ga83D34wi1o9J6Wh1mRuqd4mF/x/lgBS7N7AbDhec=",
+        version = "v0.0.5",
+    )
+    go_repository(
         name = "com_github_oneofone_xxhash",
         importpath = "github.com/OneOfOne/xxhash",
         sum = "h1:KMrpdQIwFcEqXDklaen+P1axHaj9BSKzvpUUfnHldSE=",
