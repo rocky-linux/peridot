@@ -54,6 +54,7 @@ func init() {
 	root.PersistentFlags().String("client-secret", "", "Client secret for authentication")
 	root.PersistentFlags().String("project-id", "", "Peridot project ID")
 	root.PersistentFlags().Bool("debug", false, "Debug mode")
+	root.PersistentFlags().StringP("output", "o", "table", "Output format (table|json)")
 
 	root.AddCommand(lookaside)
 	lookaside.AddCommand(lookasideUpload)
@@ -61,6 +62,9 @@ func init() {
 	root.AddCommand(build)
 	build.AddCommand(buildRpmImport)
 	build.AddCommand(buildPackage)
+
+	root.AddCommand(task)
+	task.AddCommand(taskLogs)
 
 	root.AddCommand(project)
 	project.AddCommand(projectInfo)
@@ -116,4 +120,8 @@ func mustGetProjectID() string {
 
 func debug() bool {
 	return viper.GetBool("debug")
+}
+
+func output() string {
+	return viper.GetString("output")
 }

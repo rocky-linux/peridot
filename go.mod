@@ -31,7 +31,7 @@ require (
 	github.com/prometheus/client_golang v1.13.0
 	github.com/rocky-linux/srpmproc v0.4.3
 	github.com/sirupsen/logrus v1.8.1
-	github.com/spf13/cobra v1.1.3
+	github.com/spf13/cobra v1.8.1
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.7.1
 	github.com/vbauerster/mpb/v7 v7.0.2
@@ -98,7 +98,7 @@ require (
 	github.com/hashicorp/go-retryablehttp v0.6.8 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/imdario/mergo v0.3.11 // indirect
-	github.com/inconshreveable/mousetrap v1.0.0 // indirect
+	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
@@ -172,16 +172,16 @@ replace (
 
 // sync-replace-start
 replace (
-	peridot.resf.org/apollo/pb => ./bazel-bin/apollo/proto/v1/apollopb_go_proto_/peridot.resf.org/apollo/pb
 	bazel.build/protobuf => ./bazel-bin/build/bazel/protobuf/bazelbuild_go_proto_/bazel.build/protobuf
 	bazel.build/remote/execution/v2 => ./bazel-bin/build/bazel/remote/execution/v2/remoteexecution_go_proto_/bazel.build/remote/execution/v2
 	bazel.build/semver => ./bazel-bin/build/bazel/semver/semver_go_proto_/bazel.build/semver
+	github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2/options => ./bazel-bin/protoc-gen-openapiv2/options/options_go_proto_/github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2/options
+	peridot.resf.org/apollo/pb => ./bazel-bin/apollo/proto/v1/apollopb_go_proto_/peridot.resf.org/apollo/pb
+	peridot.resf.org/common => ./bazel-bin/proto/commonpb_go_proto_/peridot.resf.org/common
 	peridot.resf.org/obsidian/pb => ./bazel-bin/obsidian/proto/v1/obsidianpb_go_proto_/peridot.resf.org/obsidian/pb
-	peridot.resf.org/peridot/pb => ./bazel-bin/peridot/proto/v1/peridotpb_go_proto_/peridot.resf.org/peridot/pb
 	peridot.resf.org/peridot/admin/pb => ./bazel-bin/peridot/proto/v1/admin/adminpb_go_proto_/peridot.resf.org/peridot/admin/pb
 	peridot.resf.org/peridot/keykeeper/pb => ./bazel-bin/peridot/proto/v1/keykeeper/keykeeperpb_go_proto_/peridot.resf.org/peridot/keykeeper/pb
+	peridot.resf.org/peridot/pb => ./bazel-bin/peridot/proto/v1/peridotpb_go_proto_/peridot.resf.org/peridot/pb
 	peridot.resf.org/peridot/yumrepofs/pb => ./bazel-bin/peridot/proto/v1/yumrepofs/yumrepofspb_go_proto_/peridot.resf.org/peridot/yumrepofs/pb
-	peridot.resf.org/common => ./bazel-bin/proto/commonpb_go_proto_/peridot.resf.org/common
-	github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2/options => ./bazel-bin/protoc-gen-openapiv2/options/options_go_proto_/github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2/options
 )
 // sync-replace-end

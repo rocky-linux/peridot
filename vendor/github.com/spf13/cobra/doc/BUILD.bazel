@@ -1,0 +1,35 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "doc",
+    srcs = [
+        "man_docs.go",
+        "md_docs.go",
+        "rest_docs.go",
+        "util.go",
+        "yaml_docs.go",
+    ],
+    importmap = "peridot.resf.org/vendor/github.com/spf13/cobra/doc",
+    importpath = "github.com/spf13/cobra/doc",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/spf13/cobra",
+        "//vendor/github.com/spf13/pflag",
+        "//vendor/gopkg.in/yaml.v3:yaml_v3",
+        "@com_github_cpuguy83_go_md2man_v2//md2man",
+    ],
+)
+
+go_test(
+    name = "doc_test",
+    srcs = [
+        "cmd_test.go",
+        "man_docs_test.go",
+        "man_examples_test.go",
+        "md_docs_test.go",
+        "rest_docs_test.go",
+        "yaml_docs_test.go",
+    ],
+    embed = [":doc"],
+    deps = ["//vendor/github.com/spf13/cobra"],
+)
