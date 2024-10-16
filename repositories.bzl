@@ -171,9 +171,9 @@ def go_repositories():
     )
     go_repository(
         name = "com_github_cloudflare_circl",
+        importpath = "github.com/cloudflare/circl",
         patch_args = ["-p1"],
         patches = ["//patches:circl.patch"],
-        importpath = "github.com/cloudflare/circl",
         sum = "h1:QFrlgFYf2Qpi8bSpVPK1HBvWpx16v/1TZivyo7pGuBE=",
         version = "v1.3.9",
     )
@@ -1078,14 +1078,14 @@ def go_repositories():
     go_repository(
         name = "com_github_protonmail_go_mime",
         importpath = "github.com/ProtonMail/go-mime",
-        sum = "h1:CGq7OieOz3wyQJ1fO8S0eO9TCW1JyvLrf8fhzz1i8ko=",
-        version = "v0.0.0-20220302105931-303f85f7fe0f",
+        sum = "h1:tCbYj7/299ekTTXpdwKYF8eBlsYsDVoggDAuAjoK66k=",
+        version = "v0.0.0-20230322103455-7d82a3887f2f",
     )
     go_repository(
         name = "com_github_protonmail_gopenpgp_v2",
         importpath = "github.com/ProtonMail/gopenpgp/v2",
-        sum = "h1:V3xeelvXgJiZXZuPtSSE+uYbtPw4RmbmyPqXDAESPhg=",
-        version = "v2.4.7",
+        sum = "h1:STOY3vgES59gNgoOt2w0nyHBjKViB/qSg7NjbQWPJkA=",
+        version = "v2.7.5",
     )
     go_repository(
         name = "com_github_rivo_uniseg",
@@ -2285,8 +2285,8 @@ def go_repositories():
     go_repository(
         name = "org_golang_x_mobile",
         importpath = "golang.org/x/mobile",
-        sum = "h1:OVJ6QQUBAesB8CZijKDSsXX7xYVtUhrkY0gwMfbi4p4=",
-        version = "v0.0.0-20200801112145-973feb4309de",
+        sum = "h1:4+4C/Iv2U4fMZBiMCc98MG1In4gJY5YRhtpDNeDeHWs=",
+        version = "v0.0.0-20190719004257-d2bd2a29d028",
     )
     go_repository(
         name = "org_golang_x_mod",

@@ -8,7 +8,7 @@ require (
 	bazel.build/protobuf v0.0.0-00010101000000-000000000000
 	cirello.io/dynamolock v1.4.0
 	github.com/ProtonMail/go-crypto v1.0.0
-	github.com/ProtonMail/gopenpgp/v2 v2.4.7
+	github.com/ProtonMail/gopenpgp/v2 v2.7.5
 	github.com/authzed/authzed-go v0.3.0
 	github.com/authzed/grpcutil v0.0.0-20240123194739-2ea1e3d2d98b
 	github.com/aws/aws-sdk-go v1.54.19
@@ -65,7 +65,7 @@ require (
 	cloud.google.com/go/storage v1.43.0 // indirect
 	dario.cat/mergo v1.0.0 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
-	github.com/ProtonMail/go-mime v0.0.0-20220302105931-303f85f7fe0f // indirect
+	github.com/ProtonMail/go-mime v0.0.0-20230322103455-7d82a3887f2f // indirect
 	github.com/VividCortex/ewma v1.2.0 // indirect
 	github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
