@@ -2251,6 +2251,7 @@ def go_repositories():
     )
     go_repository(
         name = "org_golang_google_protobuf",
+        build_directives = ["gazelle:proto disable"],
         importpath = "google.golang.org/protobuf",
         sum = "h1:6xV6lTsCfpGD21XK49h7MhtcApnLqkfYgPcdHftf6hg=",
         version = "v1.34.2",
