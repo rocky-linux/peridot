@@ -10,8 +10,8 @@ go_library(
     importpath = "github.com/google/gnostic-models/extensions",
     visibility = ["//visibility:public"],
     deps = [
-        "@com_github_golang_protobuf//proto:go_default_library",
-        "@com_github_golang_protobuf//ptypes:go_default_library_gen",
+        "@com_github_golang_protobuf//proto",
+        "@com_github_golang_protobuf//ptypes",
         "@org_golang_google_protobuf//reflect/protoreflect",
         "@org_golang_google_protobuf//runtime/protoimpl",
         "@org_golang_google_protobuf//types/known/anypb",

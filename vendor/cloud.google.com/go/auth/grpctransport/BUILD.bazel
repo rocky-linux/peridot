@@ -18,7 +18,7 @@ go_library(
         "//vendor/cloud.google.com/go/auth/internal/transport",
         "//vendor/cloud.google.com/go/compute/metadata",
         "//vendor/go.opencensus.io/plugin/ocgrpc",
-        "@org_golang_google_grpc//:go_default_library",
+        "@org_golang_google_grpc//:grpc",
         "@org_golang_google_grpc//credentials",
         "@org_golang_google_grpc//credentials/google",
         "@org_golang_google_grpc//credentials/insecure",

@@ -58,6 +58,7 @@ go_library(
         "model_v1_list_projects_response.go",
         "model_v1_list_repositories_response.go",
         "model_v1_list_tasks_response.go",
+        "model_v1_lookaside_file_upload_request.go",
         "model_v1_lookaside_file_upload_response.go",
         "model_v1_package.go",
         "model_v1_package_filters.go",

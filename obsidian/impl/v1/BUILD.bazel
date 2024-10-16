@@ -21,7 +21,7 @@ go_library(
         "//vendor/github.com/gogo/status",
         "//vendor/github.com/ory/hydra-client-go/v2:hydra-client-go",
         "//vendor/github.com/sirupsen/logrus",
-        "@org_golang_google_grpc//:go_default_library",
+        "@org_golang_google_grpc//:grpc",
         "@org_golang_google_grpc//codes",
         "@org_golang_google_grpc//metadata",
         "@org_golang_google_grpc//status",

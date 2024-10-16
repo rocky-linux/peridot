@@ -14,6 +14,6 @@ go_library(
         "//vendor/k8s.io/kube-openapi/pkg/cached",
         "//vendor/k8s.io/kube-openapi/pkg/common",
         "//vendor/k8s.io/kube-openapi/pkg/spec3",
-        "@com_github_golang_protobuf//proto:go_default_library",
+        "@com_github_golang_protobuf//proto",
     ],
 )

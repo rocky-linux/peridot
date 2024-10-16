@@ -9,6 +9,6 @@ go_library(
     deps = [
         "//vendor/github.com/golang/mock/gomock",
         "//vendor/go.temporal.io/api/workflowservice/v1:workflowservice",
-        "@org_golang_google_grpc//:go_default_library",
+        "@org_golang_google_grpc//:grpc",
     ],
 )

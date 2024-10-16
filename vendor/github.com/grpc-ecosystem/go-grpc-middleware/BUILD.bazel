@@ -10,5 +10,5 @@ go_library(
     importmap = "peridot.resf.org/vendor/github.com/grpc-ecosystem/go-grpc-middleware",
     importpath = "github.com/grpc-ecosystem/go-grpc-middleware",
     visibility = ["//visibility:public"],
-    deps = ["@org_golang_google_grpc//:go_default_library"],
+    deps = ["@org_golang_google_grpc//:grpc"],
 )

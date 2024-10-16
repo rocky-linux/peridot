@@ -25,6 +25,6 @@ go_library(
         "//vendor/k8s.io/client-go/kubernetes/scheme",
         "//vendor/k8s.io/client-go/openapi",
         "//vendor/k8s.io/client-go/rest",
-        "@com_github_golang_protobuf//proto:go_default_library",
+        "@com_github_golang_protobuf//proto",
     ],
 )

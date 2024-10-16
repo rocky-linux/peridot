@@ -10,7 +10,7 @@ go_library(
         "//vendor/github.com/gogo/status",
         "//vendor/github.com/grpc-ecosystem/go-grpc-middleware/retry",
         "//vendor/github.com/grpc-ecosystem/go-grpc-middleware/util/backoffutils",
-        "@org_golang_google_grpc//:go_default_library",
+        "@org_golang_google_grpc//:grpc",
         "@org_golang_google_grpc//codes",
     ],
 )

@@ -20,7 +20,7 @@ go_library(
         "//vendor/github.com/google/s2a-go/internal/v2:internal",
         "//vendor/github.com/google/s2a-go/retry",
         "//vendor/github.com/google/s2a-go/stream",
-        "@com_github_golang_protobuf//proto:go_default_library",
+        "@com_github_golang_protobuf//proto",
         "@org_golang_google_grpc//credentials",
         "@org_golang_google_grpc//grpclog",
         "@org_golang_google_grpc//peer",

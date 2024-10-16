@@ -13,6 +13,6 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//vendor/github.com/authzed/grpcutil",
-        "@org_golang_google_grpc//:go_default_library",
+        "@org_golang_google_grpc//:grpc",
     ],
 )

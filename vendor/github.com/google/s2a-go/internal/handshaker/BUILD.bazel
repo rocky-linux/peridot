@@ -12,7 +12,7 @@ go_library(
         "//vendor/github.com/google/s2a-go/internal/proto/s2a_go_proto",
         "//vendor/github.com/google/s2a-go/internal/record",
         "//vendor/github.com/google/s2a-go/internal/tokenmanager",
-        "@org_golang_google_grpc//:go_default_library",
+        "@org_golang_google_grpc//:grpc",
         "@org_golang_google_grpc//codes",
         "@org_golang_google_grpc//credentials",
         "@org_golang_google_grpc//grpclog",

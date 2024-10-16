@@ -12,5 +12,5 @@ go_library(
     importmap = "peridot.resf.org/vendor/go.temporal.io/sdk/internal/common/metrics",
     importpath = "go.temporal.io/sdk/internal/common/metrics",
     visibility = ["//vendor/go.temporal.io/sdk:__subpackages__"],
-    deps = ["@org_golang_google_grpc//:go_default_library"],
+    deps = ["@org_golang_google_grpc//:grpc"],
 )

@@ -14,7 +14,7 @@ go_library(
     deps = [
         "//vendor/github.com/grpc-ecosystem/go-grpc-middleware/util/backoffutils",
         "//vendor/github.com/grpc-ecosystem/go-grpc-middleware/util/metautils",
-        "@org_golang_google_grpc//:go_default_library",
+        "@org_golang_google_grpc//:grpc",
         "@org_golang_google_grpc//codes",
         "@org_golang_google_grpc//metadata",
         "@org_golang_google_grpc//status",
