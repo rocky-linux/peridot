@@ -1,0 +1,20 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "guid",
+    srcs = [
+        "guid.go",
+        "guid_nonwindows.go",
+        "guid_windows.go",
+        "variant_string.go",
+    ],
+    importmap = "peridot.resf.org/vendor/github.com/Microsoft/go-winio/pkg/guid",
+    importpath = "github.com/Microsoft/go-winio/pkg/guid",
+    visibility = ["//visibility:public"],
+    deps = select({
+        "@io_bazel_rules_go//go/platform:windows": [
+            "//vendor/golang.org/x/sys/windows",
+        ],
+        "//conditions:default": [],
+    }),
+)

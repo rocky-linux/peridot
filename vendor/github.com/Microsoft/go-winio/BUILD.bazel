@@ -1,0 +1,31 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go-winio",
+    srcs = [
+        "backup.go",
+        "doc.go",
+        "ea.go",
+        "file.go",
+        "fileinfo.go",
+        "hvsock.go",
+        "pipe.go",
+        "privilege.go",
+        "reparse.go",
+        "sd.go",
+        "syscall.go",
+        "zsyscall_windows.go",
+    ],
+    importmap = "peridot.resf.org/vendor/github.com/Microsoft/go-winio",
+    importpath = "github.com/Microsoft/go-winio",
+    visibility = ["//visibility:public"],
+    deps = select({
+        "@io_bazel_rules_go//go/platform:windows": [
+            "//vendor/github.com/Microsoft/go-winio/internal/fs",
+            "//vendor/github.com/Microsoft/go-winio/internal/socket",
+            "//vendor/github.com/Microsoft/go-winio/pkg/guid",
+            "//vendor/golang.org/x/sys/windows",
+        ],
+        "//conditions:default": [],
+    }),
+)

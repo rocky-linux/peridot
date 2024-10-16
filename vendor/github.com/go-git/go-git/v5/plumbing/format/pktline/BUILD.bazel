@@ -4,9 +4,11 @@ go_library(
     name = "pktline",
     srcs = [
         "encoder.go",
+        "error.go",
         "scanner.go",
     ],
     importmap = "peridot.resf.org/vendor/github.com/go-git/go-git/v5/plumbing/format/pktline",
     importpath = "github.com/go-git/go-git/v5/plumbing/format/pktline",
     visibility = ["//visibility:public"],
+    deps = ["//vendor/github.com/go-git/go-git/v5/utils/trace"],
 )

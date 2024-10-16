@@ -13,4 +13,5 @@ go_library(
     importmap = "peridot.resf.org/vendor/github.com/go-git/go-git/v5/plumbing",
     importpath = "github.com/go-git/go-git/v5/plumbing",
     visibility = ["//visibility:public"],
+    deps = ["//vendor/github.com/go-git/go-git/v5/plumbing/hash"],
 )

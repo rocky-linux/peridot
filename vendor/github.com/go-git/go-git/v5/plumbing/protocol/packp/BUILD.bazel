@@ -8,6 +8,7 @@ go_library(
         "advrefs_encode.go",
         "common.go",
         "doc.go",
+        "gitproto.go",
         "report_status.go",
         "shallowupd.go",
         "srvresp.go",

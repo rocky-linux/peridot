@@ -38,8 +38,8 @@ func GetTagImportRegex(pd *data.ProcessData) *regexp.Regexp {
 // if we are ok with importing that reference.  We are looking for the traditional <prefix><version><suffix> pattern, like "c9s", and also the
 // modular "stream-<NAME>-<VERSION>-rhel-<VERSION> branch pattern as well
 func TaglessRefOk(tag string, pd *data.ProcessData) bool {
-	// First case is very easy: if we are "refs/heads/<prefix><version><suffix>" , then this is def. a branch we should import
-	if strings.HasPrefix(tag, fmt.Sprintf("refs/heads/%s%d%s", pd.ImportBranchPrefix, pd.Version, pd.BranchSuffix)) {
+	// First case is very easy: if we are exactly "refs/heads/<prefix><version><suffix>" , then this is def. a branch we should import
+	if tag == fmt.Sprintf("refs/heads/%s%d%s", pd.ImportBranchPrefix, pd.Version, pd.BranchSuffix) {
 		return true
 	}
 

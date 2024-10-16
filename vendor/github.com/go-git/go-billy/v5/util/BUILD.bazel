@@ -5,6 +5,7 @@ go_library(
     srcs = [
         "glob.go",
         "util.go",
+        "walk.go",
     ],
     importmap = "peridot.resf.org/vendor/github.com/go-git/go-billy/v5/util",
     importpath = "github.com/go-git/go-billy/v5/util",

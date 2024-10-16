@@ -51,7 +51,9 @@ go_library(
             "//vendor/golang.org/x/crypto/ssh/agent",
         ],
         "@io_bazel_rules_go//go/platform:windows": [
+            "//vendor/github.com/Microsoft/go-winio",
             "//vendor/golang.org/x/crypto/ssh/agent",
+            "//vendor/golang.org/x/sys/windows",
         ],
         "//conditions:default": [],
     }),

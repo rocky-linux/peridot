@@ -21,11 +21,9 @@
 package srpmproc
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
-	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -48,10 +46,16 @@ import (
 
 func cfgPatches(pd *data.ProcessData, md *data.ModeData, patchTree *git.Worktree, pushTree *git.Worktree) error {
 	// check CFG patches
-	_, err := patchTree.Filesystem.Stat("ROCKY/CFG")
+	// use PATCHES directory if it exists otherwise ROCKY/CFG
+	cfgdir := "PATCHES"
+	_, err := patchTree.Filesystem.Stat(cfgdir)
+	if err != nil {
+		cfgdir = "ROCKY/CFG"
+	}
+	_, err = patchTree.Filesystem.Stat(cfgdir)
 	if err == nil {
 		// iterate through patches
-		infos, err := patchTree.Filesystem.ReadDir("ROCKY/CFG")
+		infos, err := patchTree.Filesystem.ReadDir(cfgdir)
 		if err != nil {
 			return fmt.Errorf("could not walk patches: %v", err)
 		}
@@ -63,12 +67,12 @@ func cfgPatches(pd *data.ProcessData, md *data.ModeData, patchTree *git.Worktree
 			}
 
 			pd.Log.Printf("applying directive %s", info.Name())
-			filePath := filepath.Join("ROCKY/CFG", info.Name())
+			filePath := filepath.Join(cfgdir, info.Name())
 			directive, err := patchTree.Filesystem.Open(filePath)
 			if err != nil {
 				return fmt.Errorf("could not open directive file %s: %v", info.Name(), err)
 			}
-			directiveBytes, err := ioutil.ReadAll(directive)
+			directiveBytes, err := io.ReadAll(directive)
 			if err != nil {
 				return fmt.Errorf("could not read directive file: %v", err)
 			}
@@ -81,11 +85,7 @@ func cfgPatches(pd *data.ProcessData, md *data.ModeData, patchTree *git.Worktree
 
 			errs := directives.Apply(&cfg, pd, md, patchTree, pushTree)
 			if errs != nil {
-				err := json.NewEncoder(os.Stdout).Encode(errs)
-				if err != nil {
-					return err
-				}
-
+				fmt.Printf("errors: %v\n", errs)
 				return fmt.Errorf("directives could not be applied")
 			}
 		}
@@ -96,7 +96,12 @@ func cfgPatches(pd *data.ProcessData, md *data.ModeData, patchTree *git.Worktree
 
 func applyPatches(pd *data.ProcessData, md *data.ModeData, patchTree *git.Worktree, pushTree *git.Worktree) error {
 	// check if patches exist
-	_, err := patchTree.Filesystem.Stat("ROCKY")
+	cfgdir := "PATCHES"
+	_, err := patchTree.Filesystem.Stat(cfgdir)
+	if err != nil {
+		cfgdir = "ROCKY"
+	}
+	_, err = patchTree.Filesystem.Stat(cfgdir)
 	if err == nil {
 		err := cfgPatches(pd, md, patchTree, pushTree)
 		if err != nil {
@@ -315,7 +320,7 @@ func patchModuleYaml(pd *data.ProcessData, md *data.ModeData) error {
 		}
 	}
 
-	content, err := ioutil.ReadAll(f)
+	content, err := io.ReadAll(f)
 	if err != nil {
 		return fmt.Errorf("could not read modulemd file: %v", err)
 	}
@@ -395,6 +400,12 @@ func patchModuleYaml(pd *data.ProcessData, md *data.ModeData) error {
 			if err != nil {
 				return err
 			}
+		}
+
+		// If we got this far, we're good. This means the repos, branches, and commits exist.
+		// If this option is on, just use the branch name.
+		if pd.ModuleBranchNames {
+			tipHash = md.PushBranch
 		}
 
 		rpm.Ref = tipHash

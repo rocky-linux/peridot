@@ -6,4 +6,8 @@ go_library(
     importmap = "peridot.resf.org/vendor/github.com/subosito/gotenv",
     importpath = "github.com/subosito/gotenv",
     visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/golang.org/x/text/encoding/unicode",
+        "//vendor/golang.org/x/text/transform",
+    ],
 )

@@ -7,14 +7,15 @@ go_library(
         "config.go",
         "modules.go",
         "refspec.go",
+        "url.go",
     ],
     importmap = "peridot.resf.org/vendor/github.com/go-git/go-git/v5/config",
     importpath = "github.com/go-git/go-git/v5/config",
     visibility = ["//visibility:public"],
     deps = [
+        "//vendor/github.com/go-git/go-billy/v5/osfs",
         "//vendor/github.com/go-git/go-git/v5/internal/url",
         "//vendor/github.com/go-git/go-git/v5/plumbing",
         "//vendor/github.com/go-git/go-git/v5/plumbing/format/config",
-        "//vendor/github.com/mitchellh/go-homedir",
     ],
 )

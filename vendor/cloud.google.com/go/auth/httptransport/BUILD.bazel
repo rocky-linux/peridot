@@ -1,0 +1,24 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "httptransport",
+    srcs = [
+        "httptransport.go",
+        "trace.go",
+        "transport.go",
+    ],
+    importmap = "peridot.resf.org/vendor/cloud.google.com/go/auth/httptransport",
+    importpath = "cloud.google.com/go/auth/httptransport",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/cloud.google.com/go/auth",
+        "//vendor/cloud.google.com/go/auth/credentials",
+        "//vendor/cloud.google.com/go/auth/internal",
+        "//vendor/cloud.google.com/go/auth/internal/transport",
+        "//vendor/cloud.google.com/go/auth/internal/transport/cert",
+        "//vendor/go.opencensus.io/plugin/ochttp",
+        "//vendor/go.opencensus.io/trace",
+        "//vendor/go.opencensus.io/trace/propagation",
+        "@org_golang_x_net//http2",
+    ],
+)

@@ -1,0 +1,17 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "ed448",
+    srcs = [
+        "ed448.go",
+        "signapi.go",
+    ],
+    importmap = "peridot.resf.org/vendor/github.com/cloudflare/circl/sign/ed448",
+    importpath = "github.com/cloudflare/circl/sign/ed448",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/cloudflare/circl/ecc/goldilocks",
+        "//vendor/github.com/cloudflare/circl/internal/sha3",
+        "//vendor/github.com/cloudflare/circl/sign",
+    ],
+)

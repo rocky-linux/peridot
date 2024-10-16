@@ -1,0 +1,9 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "features",
+    srcs = ["bind_struct_default.go"],
+    importmap = "peridot.resf.org/vendor/github.com/spf13/viper/internal/features",
+    importpath = "github.com/spf13/viper/internal/features",
+    visibility = ["//vendor/github.com/spf13/viper:__subpackages__"],
+)

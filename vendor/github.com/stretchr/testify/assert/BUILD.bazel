@@ -4,8 +4,6 @@ go_library(
     name = "assert",
     srcs = [
         "assertion_compare.go",
-        "assertion_compare_can_convert.go",
-        "assertion_compare_legacy.go",
         "assertion_format.go",
         "assertion_forward.go",
         "assertion_order.go",

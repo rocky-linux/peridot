@@ -23,7 +23,7 @@ package directives
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 
 	"github.com/go-git/go-git/v5"
@@ -56,7 +56,7 @@ func replace(cfg *srpmprocpb.Cfg, pd *data.ProcessData, _ *data.ModeData, patchT
 				return errors.New(fmt.Sprintf("COULD_NOT_OPEN_REPLACING:%s", replacing.WithFile))
 			}
 
-			replacingBytes, err := ioutil.ReadAll(fPatch)
+			replacingBytes, err := io.ReadAll(fPatch)
 			if err != nil {
 				return errors.New(fmt.Sprintf("COULD_NOT_READ_REPLACING:%s", replacing.WithFile))
 			}

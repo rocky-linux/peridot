@@ -1394,11 +1394,11 @@ func (a *ProjectServiceApiService) ListRepositoriesExecute(r ApiListRepositories
 type ApiLookasideFileUploadRequest struct {
 	ctx _context.Context
 	ApiService ProjectServiceApi
-	body *V1LookasideFileUploadRequest
+	chunk *string
 }
 
-func (r ApiLookasideFileUploadRequest) Body(body V1LookasideFileUploadRequest) ApiLookasideFileUploadRequest {
-	r.body = &body
+func (r ApiLookasideFileUploadRequest) Chunk(chunk string) ApiLookasideFileUploadRequest {
+	r.chunk = &chunk
 	return r
 }
 
@@ -1442,8 +1442,8 @@ func (a *ProjectServiceApiService) LookasideFileUploadExecute(r ApiLookasideFile
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := _neturl.Values{}
 	localVarFormParams := _neturl.Values{}
-	if r.body == nil {
-		return localVarReturnValue, nil, reportError("body is required and must be specified")
+	if r.chunk == nil {
+		return localVarReturnValue, nil, reportError("chunk is required and must be specified")
 	}
 
 	// to determine the Content-Type header
@@ -1464,7 +1464,7 @@ func (a *ProjectServiceApiService) LookasideFileUploadExecute(r ApiLookasideFile
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	// body params
-	localVarPostBody = r.body
+	localVarPostBody = r.chunk
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
 	if err != nil {
 		return localVarReturnValue, nil, err

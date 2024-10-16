@@ -1,0 +1,9 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "buffer",
+    srcs = ["buffer.go"],
+    importmap = "peridot.resf.org/vendor/golang.org/x/exp/slog/internal/buffer",
+    importpath = "golang.org/x/exp/slog/internal/buffer",
+    visibility = ["//vendor/golang.org/x/exp/slog:__subpackages__"],
+)

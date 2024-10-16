@@ -1,0 +1,13 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "multierror",
+    srcs = [
+        "multierror_go119.go",
+        "multierror_go120.go",
+    ],
+    importmap = "peridot.resf.org/vendor/github.com/sourcegraph/conc/internal/multierror",
+    importpath = "github.com/sourcegraph/conc/internal/multierror",
+    visibility = ["//vendor/github.com/sourcegraph/conc:__subpackages__"],
+    deps = ["//vendor/go.uber.org/multierr"],
+)

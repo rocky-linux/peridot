@@ -7,7 +7,7 @@ go_library(
     importpath = "github.com/go-git/go-git/v5/plumbing/transport/git",
     visibility = ["//visibility:public"],
     deps = [
-        "//vendor/github.com/go-git/go-git/v5/plumbing/format/pktline",
+        "//vendor/github.com/go-git/go-git/v5/plumbing/protocol/packp",
         "//vendor/github.com/go-git/go-git/v5/plumbing/transport",
         "//vendor/github.com/go-git/go-git/v5/plumbing/transport/internal/common",
         "//vendor/github.com/go-git/go-git/v5/utils/ioutil",

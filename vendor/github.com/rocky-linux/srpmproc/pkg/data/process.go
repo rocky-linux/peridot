@@ -59,5 +59,6 @@ type ProcessData struct {
 	PackageVersion       string
 	PackageRelease       string
 	TaglessMode          bool
-	AltLookAside         bool
+	Cdn                  string
+	ModuleBranchNames    bool
 }

@@ -1,0 +1,27 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "slog-shim",
+    srcs = [
+        "attr.go",
+        "attr_120.go",
+        "handler.go",
+        "handler_120.go",
+        "json_handler.go",
+        "json_handler_120.go",
+        "level.go",
+        "level_120.go",
+        "logger.go",
+        "logger_120.go",
+        "record.go",
+        "record_120.go",
+        "text_handler.go",
+        "text_handler_120.go",
+        "value.go",
+        "value_120.go",
+    ],
+    importmap = "peridot.resf.org/vendor/github.com/sagikazarmark/slog-shim",
+    importpath = "github.com/sagikazarmark/slog-shim",
+    visibility = ["//visibility:public"],
+    deps = ["//vendor/golang.org/x/exp/slog"],
+)

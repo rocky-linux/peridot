@@ -1,0 +1,12 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "math",
+    srcs = [
+        "primes.go",
+        "wnaf.go",
+    ],
+    importmap = "peridot.resf.org/vendor/github.com/cloudflare/circl/math",
+    importpath = "github.com/cloudflare/circl/math",
+    visibility = ["//visibility:public"],
+)

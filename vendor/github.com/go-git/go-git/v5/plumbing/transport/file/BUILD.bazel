@@ -14,5 +14,6 @@ go_library(
         "//vendor/github.com/go-git/go-git/v5/plumbing/transport/internal/common",
         "//vendor/github.com/go-git/go-git/v5/plumbing/transport/server",
         "//vendor/github.com/go-git/go-git/v5/utils/ioutil",
+        "//vendor/golang.org/x/sys/execabs",
     ],
 )

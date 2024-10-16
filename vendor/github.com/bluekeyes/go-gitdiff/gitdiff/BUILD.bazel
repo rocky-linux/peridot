@@ -4,6 +4,8 @@ go_library(
     name = "gitdiff",
     srcs = [
         "apply.go",
+        "apply_binary.go",
+        "apply_text.go",
         "base85.go",
         "binary.go",
         "file_header.go",
@@ -11,6 +13,7 @@ go_library(
         "io.go",
         "parser.go",
         "patch_header.go",
+        "patch_identity.go",
         "text.go",
     ],
     importmap = "peridot.resf.org/vendor/github.com/bluekeyes/go-gitdiff/gitdiff",

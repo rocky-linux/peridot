@@ -12,6 +12,10 @@ import (
 // Parse parses a patch with changes to one or more files. Any content before
 // the first file is returned as the second value. If an error occurs while
 // parsing, it returns all files parsed before the error.
+//
+// Parse expects to receive a single patch. If the input may contain multiple
+// patches (for example, if it is an mbox file), callers should split it into
+// individual patches and call Parse on each one.
 func Parse(r io.Reader) ([]*File, string, error) {
 	p := newParser(r)
 

@@ -1,0 +1,25 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "goldilocks",
+    srcs = [
+        "constants.go",
+        "curve.go",
+        "isogeny.go",
+        "point.go",
+        "scalar.go",
+        "twist.go",
+        "twistPoint.go",
+        "twistTables.go",
+        "twist_basemult.go",
+    ],
+    importmap = "peridot.resf.org/vendor/github.com/cloudflare/circl/ecc/goldilocks",
+    importpath = "github.com/cloudflare/circl/ecc/goldilocks",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/cloudflare/circl/internal/conv",
+        "//vendor/github.com/cloudflare/circl/math",
+        "//vendor/github.com/cloudflare/circl/math/fp448",
+        "//vendor/github.com/cloudflare/circl/math/mlsbset",
+    ],
+)

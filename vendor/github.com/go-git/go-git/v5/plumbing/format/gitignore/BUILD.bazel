@@ -13,6 +13,7 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//vendor/github.com/go-git/go-billy/v5:go-billy",
+        "//vendor/github.com/go-git/go-git/v5/internal/path_util",
         "//vendor/github.com/go-git/go-git/v5/plumbing/format/config",
         "//vendor/github.com/go-git/go-git/v5/utils/ioutil",
     ],

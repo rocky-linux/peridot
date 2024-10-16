@@ -22,7 +22,7 @@ package file
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"path/filepath"
 )
@@ -65,7 +65,7 @@ func (f *File) Read(path string) ([]byte, error) {
 		return nil, err
 	}
 
-	body, err := ioutil.ReadAll(r)
+	body, err := io.ReadAll(r)
 	if err != nil {
 		return nil, err
 	}

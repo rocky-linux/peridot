@@ -1,0 +1,9 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "trace",
+    srcs = ["trace.go"],
+    importmap = "peridot.resf.org/vendor/github.com/go-git/go-git/v5/utils/trace",
+    importpath = "github.com/go-git/go-git/v5/utils/trace",
+    visibility = ["//visibility:public"],
+)
