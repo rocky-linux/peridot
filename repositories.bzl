@@ -171,6 +171,8 @@ def go_repositories():
     )
     go_repository(
         name = "com_github_cloudflare_circl",
+        patch_args = ["-p1"],
+        patches = ["//patches:circl.patch"],
         importpath = "github.com/cloudflare/circl",
         sum = "h1:QFrlgFYf2Qpi8bSpVPK1HBvWpx16v/1TZivyo7pGuBE=",
         version = "v1.3.9",
