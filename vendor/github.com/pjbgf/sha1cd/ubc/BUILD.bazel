@@ -1,0 +1,13 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "ubc",
+    srcs = [
+        "check.go",
+        "const.go",
+        "doc.go",
+    ],
+    importmap = "peridot.resf.org/vendor/github.com/pjbgf/sha1cd/ubc",
+    importpath = "github.com/pjbgf/sha1cd/ubc",
+    visibility = ["//visibility:public"],
+)

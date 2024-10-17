@@ -9,7 +9,7 @@ go_library(
     deps = [
         "//vendor/cloud.google.com/go/iam/apiv1/iampb",
         "@com_github_googleapis_gax_go_v2//:gax-go",
-        "@org_golang_google_grpc//:go_default_library",
+        "@org_golang_google_grpc//:grpc",
         "@org_golang_google_grpc//codes",
         "@org_golang_google_grpc//metadata",
     ],

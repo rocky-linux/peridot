@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"io"
 	"io/ioutil"
+	"log"
 	"mime"
 	"mime/multipart"
 	"net/http"
@@ -12,8 +13,6 @@ import (
 	"net/textproto"
 	"regexp"
 	"strings"
-
-	log "github.com/sirupsen/logrus"
 )
 
 // VisitAcceptor decidest what to do with part which is processed
@@ -181,7 +180,7 @@ func GetMultipartParts(r io.Reader, params map[string]string) (parts []io.Reader
 	headers = []textproto.MIMEHeader{}
 	var p *multipart.Part
 	for {
-		p, err = mr.NextPart()
+		p, err = mr.NextRawPart()
 		if err == io.EOF {
 			err = nil
 			break
@@ -275,7 +274,7 @@ func checkHeaders(headers []textproto.MIMEHeader) bool {
 func decodePart(partReader io.Reader, header textproto.MIMEHeader) (decodedPart io.Reader) {
 	decodedPart = DecodeContentEncoding(partReader, header.Get("Content-Transfer-Encoding"))
 	if decodedPart == nil {
-		log.Warnf("Unsupported Content-Transfer-Encoding '%v'", header.Get("Content-Transfer-Encoding"))
+		log.Printf("Unsupported Content-Transfer-Encoding '%v'", header.Get("Content-Transfer-Encoding"))
 		decodedPart = partReader
 	}
 	return
@@ -376,7 +375,7 @@ func (ptc *PlainTextCollector) Accept(partReader io.Reader, header textproto.MIM
 				if buffer, err := ioutil.ReadAll(decodedPart); err == nil {
 					buffer, err = DecodeCharset(buffer, mediaType, params)
 					if err != nil {
-						log.Warnln("Decode charset error:", err)
+						log.Println("Decode charset error:", err)
 						err = nil // Don't fail parsing on decoding errors, use original
 					}
 					ptc.plainTextContents.Write(buffer)
@@ -431,7 +430,7 @@ func (bc *BodyCollector) Accept(partReader io.Reader, header textproto.MIMEHeade
 				if buffer, err := ioutil.ReadAll(decodedPart); err == nil {
 					buffer, err = DecodeCharset(buffer, mediaType, params)
 					if err != nil {
-						log.Warnln("Decode charset error:", err)
+						log.Println("Decode charset error:", err)
 						err = nil // Don't fail parsing on decoding errors, use original
 					}
 					if mediaType == "text/html" {
@@ -500,7 +499,7 @@ func (ac *AttachmentsCollector) Accept(partReader io.Reader, header textproto.MI
 				if buffer, err := ioutil.ReadAll(decodedPart); err == nil {
 					buffer, err = DecodeCharset(buffer, mediaType, params)
 					if err != nil {
-						log.Warnln("Decode charset error:", err)
+						log.Println("Decode charset error:", err)
 						err = nil // Don't fail parsing on decoding errors, use original
 					}
 					headerBuf := new(bytes.Buffer)

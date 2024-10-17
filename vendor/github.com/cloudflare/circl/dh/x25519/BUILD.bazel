@@ -1,0 +1,27 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "x25519",
+    srcs = [
+        "curve.go",
+        "curve_amd64.go",
+        "curve_amd64.h",
+        "curve_amd64.s",
+        "curve_generic.go",
+        "curve_noasm.go",
+        "doc.go",
+        "key.go",
+        "table.go",
+    ],
+    importmap = "peridot.resf.org/vendor/github.com/cloudflare/circl/dh/x25519",
+    importpath = "github.com/cloudflare/circl/dh/x25519",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/cloudflare/circl/math/fp25519",
+    ] + select({
+        "@io_bazel_rules_go//go/platform:amd64": [
+            "//vendor/golang.org/x/sys/cpu",
+        ],
+        "//conditions:default": [],
+    }),
+)

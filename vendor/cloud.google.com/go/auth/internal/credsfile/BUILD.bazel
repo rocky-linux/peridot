@@ -1,0 +1,13 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "credsfile",
+    srcs = [
+        "credsfile.go",
+        "filetype.go",
+        "parse.go",
+    ],
+    importmap = "peridot.resf.org/vendor/cloud.google.com/go/auth/internal/credsfile",
+    importpath = "cloud.google.com/go/auth/internal/credsfile",
+    visibility = ["//vendor/cloud.google.com/go/auth:__subpackages__"],
+)

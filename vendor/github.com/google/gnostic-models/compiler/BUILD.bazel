@@ -17,7 +17,7 @@ go_library(
         "//vendor/github.com/google/gnostic-models/extensions",
         "//vendor/github.com/google/gnostic-models/jsonschema",
         "//vendor/gopkg.in/yaml.v3:yaml_v3",
-        "@com_github_golang_protobuf//proto:go_default_library",
+        "@com_github_golang_protobuf//proto",
         "@com_github_golang_protobuf//ptypes/any",
     ],
 )

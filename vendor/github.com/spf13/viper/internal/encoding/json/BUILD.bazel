@@ -1,0 +1,9 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "json",
+    srcs = ["codec.go"],
+    importmap = "peridot.resf.org/vendor/github.com/spf13/viper/internal/encoding/json",
+    importpath = "github.com/spf13/viper/internal/encoding/json",
+    visibility = ["//vendor/github.com/spf13/viper:__subpackages__"],
+)

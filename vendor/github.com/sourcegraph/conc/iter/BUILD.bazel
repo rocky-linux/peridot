@@ -1,0 +1,16 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "iter",
+    srcs = [
+        "iter.go",
+        "map.go",
+    ],
+    importmap = "peridot.resf.org/vendor/github.com/sourcegraph/conc/iter",
+    importpath = "github.com/sourcegraph/conc/iter",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/sourcegraph/conc",
+        "//vendor/github.com/sourcegraph/conc/internal/multierror",
+    ],
+)

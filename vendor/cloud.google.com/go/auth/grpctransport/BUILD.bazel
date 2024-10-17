@@ -1,0 +1,26 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "grpctransport",
+    srcs = [
+        "dial_socketopt.go",
+        "directpath.go",
+        "grpctransport.go",
+        "pool.go",
+    ],
+    importmap = "peridot.resf.org/vendor/cloud.google.com/go/auth/grpctransport",
+    importpath = "cloud.google.com/go/auth/grpctransport",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/cloud.google.com/go/auth",
+        "//vendor/cloud.google.com/go/auth/credentials",
+        "//vendor/cloud.google.com/go/auth/internal",
+        "//vendor/cloud.google.com/go/auth/internal/transport",
+        "//vendor/cloud.google.com/go/compute/metadata",
+        "//vendor/go.opencensus.io/plugin/ocgrpc",
+        "@org_golang_google_grpc//:grpc",
+        "@org_golang_google_grpc//credentials",
+        "@org_golang_google_grpc//credentials/google",
+        "@org_golang_google_grpc//credentials/insecure",
+    ],
+)

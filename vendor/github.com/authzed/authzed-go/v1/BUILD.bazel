@@ -9,6 +9,6 @@ go_library(
     deps = [
         "//vendor/github.com/authzed/authzed-go/proto/authzed/api/v1:api",
         "//vendor/github.com/jzelinskie/stringz",
-        "@org_golang_google_grpc//:go_default_library",
+        "@org_golang_google_grpc//:grpc",
     ],
 )

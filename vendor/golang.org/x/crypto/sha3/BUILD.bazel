@@ -1,0 +1,23 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "sha3",
+    srcs = [
+        "doc.go",
+        "hashes.go",
+        "hashes_noasm.go",
+        "keccakf.go",
+        "keccakf_amd64.go",
+        "keccakf_amd64.s",
+        "sha3.go",
+        "sha3_s390x.go",
+        "sha3_s390x.s",
+        "shake.go",
+        "shake_noasm.go",
+        "xor.go",
+    ],
+    importmap = "peridot.resf.org/vendor/golang.org/x/crypto/sha3",
+    importpath = "golang.org/x/crypto/sha3",
+    visibility = ["//visibility:public"],
+    deps = ["//vendor/golang.org/x/sys/cpu"],
+)

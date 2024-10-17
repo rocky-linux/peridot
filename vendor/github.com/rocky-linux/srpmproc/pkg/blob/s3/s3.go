@@ -22,7 +22,7 @@ package s3
 
 import (
 	"bytes"
-	"io/ioutil"
+	"io"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -99,7 +99,7 @@ func (s *S3) Read(path string) ([]byte, error) {
 		return nil, nil
 	}
 
-	body, err := ioutil.ReadAll(obj.Body)
+	body, err := io.ReadAll(obj.Body)
 	if err != nil {
 		return nil, err
 	}

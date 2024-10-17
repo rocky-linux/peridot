@@ -1,0 +1,26 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "slog",
+    srcs = [
+        "attr.go",
+        "doc.go",
+        "handler.go",
+        "json_handler.go",
+        "level.go",
+        "logger.go",
+        "record.go",
+        "text_handler.go",
+        "value.go",
+        "value_119.go",
+        "value_120.go",
+    ],
+    importmap = "peridot.resf.org/vendor/golang.org/x/exp/slog",
+    importpath = "golang.org/x/exp/slog",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/golang.org/x/exp/slices",
+        "//vendor/golang.org/x/exp/slog/internal",
+        "//vendor/golang.org/x/exp/slog/internal/buffer",
+    ],
+)

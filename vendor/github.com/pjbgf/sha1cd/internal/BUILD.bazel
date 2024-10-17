@@ -1,0 +1,9 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "internal",
+    srcs = ["const.go"],
+    importmap = "peridot.resf.org/vendor/github.com/pjbgf/sha1cd/internal",
+    importpath = "github.com/pjbgf/sha1cd/internal",
+    visibility = ["//vendor/github.com/pjbgf/sha1cd:__subpackages__"],
+)

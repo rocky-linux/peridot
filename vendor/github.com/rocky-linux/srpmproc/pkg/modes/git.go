@@ -21,12 +21,15 @@
 package modes
 
 import (
+	"bytes"
 	"fmt"
-	"io/ioutil"
+	"io"
+	"log"
 	"net/http"
 	"path/filepath"
 	"sort"
 	"strings"
+	"text/template"
 	"time"
 
 	"github.com/go-git/go-git/v5/plumbing/transport"
@@ -44,6 +47,15 @@ import (
 type remoteTarget struct {
 	remote string
 	when   time.Time
+}
+
+// Struct to define the possible template values ( {{.Value}} in CDN URL strings:
+type Lookaside struct {
+	Name     string
+	Branch   string
+	Hash     string
+	Hashtype string
+	Filename string
 }
 
 type remoteTargetSlice []remoteTarget
@@ -305,7 +317,7 @@ func (g *GitMode) WriteSource(pd *data.ProcessData, md *data.ModeData) error {
 		return nil
 	}
 
-	fileBytes, err := ioutil.ReadAll(metadataFile)
+	fileBytes, err := io.ReadAll(metadataFile)
 	if err != nil {
 		return fmt.Errorf("could not read metadata file: %v", err)
 	}
@@ -341,44 +353,66 @@ func (g *GitMode) WriteSource(pd *data.ProcessData, md *data.ModeData) error {
 			} else {
 
 				url := ""
-				// Alternate lookaside logic:  if enabled, we pull from a new URL pattern
-				if !pd.AltLookAside {
-					url = fmt.Sprintf("%s/%s/%s/%s", pd.CdnUrl, md.Name, branchName, hash)
-				} else {
-					// We first need the hash algorithm based on length of hash:
-					hashType := "sha512"
-					switch len(hash) {
-					case 128:
-						hashType = "sha512"
-					case 64:
-						hashType = "sha256"
-					case 40:
-						hashType = "sha1"
-					case 32:
-						hashType = "md5"
+
+				// We need to figure out the hashtype for templating purposes:
+				hashType := "sha512"
+				switch len(hash) {
+				case 128:
+					hashType = "sha512"
+				case 64:
+					hashType = "sha256"
+				case 40:
+					hashType = "sha1"
+				case 32:
+					hashType = "md5"
+				}
+
+				// need the name of the file without "SOURCES/":
+				fileName := strings.Split(path, "/")[1]
+
+				// Feed our template info to ProcessUrl and transform to the real values: ( {{.Name}}, {{.Branch}}, {{.Hash}}, {{.Hashtype}}, {{.Filename}} )
+				url, hasTemplate := ProcessUrl(pd.CdnUrl, md.Name, branchName, hash, hashType, fileName)
+
+				var req *http.Request
+				var resp *http.Response
+
+				// Download the --cdn-url given, but *only* if it contains template strings ( {{.Name}} , {{.Hash}} , etc. )
+				// Otherwise we need to fall back to the traditional cdn-url patterns
+				if hasTemplate {
+					pd.Log.Printf("downloading %s", url)
+
+					req, err := http.NewRequest("GET", url, nil)
+					if err != nil {
+						return fmt.Errorf("could not create new http request: %v", err)
 					}
+					req.Header.Set("Accept-Encoding", "*")
 
-					// need the name of the file without "SOURCES/":
-					fileName := strings.Split(path, "/")[1]
-
-					// Alt. lookaside url is of the form: <cdn> / <name> / <filename> / <hashtype> / <hash> / <filename>
-					url = fmt.Sprintf("%s/%s/%s/%s/%s/%s", pd.CdnUrl, md.Name, fileName, hashType, hash, fileName)
+					resp, err = client.Do(req)
+					if err != nil {
+						return fmt.Errorf("could not download dist-git file: %v", err)
+					}
 				}
 
-				pd.Log.Printf("downloading %s", url)
-
-				req, err := http.NewRequest("GET", url, nil)
-				if err != nil {
-					return fmt.Errorf("could not create new http request: %v", err)
+				// Default cdn-url:  If we don't have a templated download string, try the default <SITE>/<PKG>/<BRANCH>/<HASH> pattern:
+				if resp == nil || resp.StatusCode != http.StatusOK {
+					url = fmt.Sprintf("%s/%s/%s/%s", pd.CdnUrl, md.Name, branchName, hash)
+					pd.Log.Printf("Attempting default URL: %s", url)
+					req, err = http.NewRequest("GET", url, nil)
+					if err != nil {
+						return fmt.Errorf("could not create new http request: %v", err)
+					}
+					req.Header.Set("Accept-Encoding", "*")
+					resp, err = client.Do(req)
+					if err != nil {
+						return fmt.Errorf("could not download dist-git file: %v", err)
+					}
 				}
-				req.Header.Set("Accept-Encoding", "*")
 
-				resp, err := client.Do(req)
-				if err != nil {
-					return fmt.Errorf("could not download dist-git file: %v", err)
-				}
-				if resp.StatusCode != http.StatusOK {
+				// If the default URL fails, we have one more pattern to try.  The simple <SITE>/<HASH> pattern
+				// If this one fails, we are truly lost, and have to bail out w/ an error:
+				if resp == nil || resp.StatusCode != http.StatusOK {
 					url = fmt.Sprintf("%s/%s", pd.CdnUrl, hash)
+					pd.Log.Printf("Attempting 2nd fallback URL: %s", url)
 					req, err = http.NewRequest("GET", url, nil)
 					if err != nil {
 						return fmt.Errorf("could not create new http request: %v", err)
@@ -393,7 +427,7 @@ func (g *GitMode) WriteSource(pd *data.ProcessData, md *data.ModeData) error {
 					}
 				}
 
-				body, err = ioutil.ReadAll(resp.Body)
+				body, err = io.ReadAll(resp.Body)
 				if err != nil {
 					return fmt.Errorf("could not read the whole dist-git file: %v", err)
 				}
@@ -457,4 +491,30 @@ func (g *GitMode) ImportName(pd *data.ProcessData, md *data.ModeData) string {
 	}
 
 	return strings.Replace(strings.TrimPrefix(md.TagBranch, "refs/heads/"), "%", "_", -1)
+}
+
+// Given a cdnUrl string as input, return same string, but with substituted
+// template values ( {{.Name}} , {{.Hash}}, {{.Filename}}, etc. )
+func ProcessUrl(cdnUrl string, name string, branch string, hash string, hashtype string, filename string) (string, bool) {
+	tmpUrl := Lookaside{name, branch, hash, hashtype, filename}
+
+	// Return cdnUrl as-is if we don't have any templates ("{{ .Variable }}") to process:
+	if !(strings.Contains(cdnUrl, "{{") && strings.Contains(cdnUrl, "}}")) {
+		return cdnUrl, false
+	}
+
+	// If we run into trouble with our template parsing, we'll just return the cdnUrl, exactly as we found it
+	tmpl, err := template.New("").Parse(cdnUrl)
+	if err != nil {
+		return cdnUrl, false
+	}
+
+	var result bytes.Buffer
+	err = tmpl.Execute(&result, tmpUrl)
+	if err != nil {
+		log.Fatalf("ERROR: Could not process CDN URL template(s) from URL string: %s\n", cdnUrl)
+	}
+
+	return result.String(), true
+
 }

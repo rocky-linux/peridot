@@ -23,7 +23,7 @@ package directives
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"path/filepath"
 
@@ -55,7 +55,7 @@ func add(cfg *srpmprocpb.Cfg, pd *data.ProcessData, md *data.ModeData, patchTree
 				return errors.New(fmt.Sprintf("COULD_NOT_OPEN_FROM:%s", addType.File))
 			}
 
-			replacingBytes, err = ioutil.ReadAll(fPatch)
+			replacingBytes, err = io.ReadAll(fPatch)
 			if err != nil {
 				return errors.New(fmt.Sprintf("COULD_NOT_READ_FROM:%s", addType.File))
 			}

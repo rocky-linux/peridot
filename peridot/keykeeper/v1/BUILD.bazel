@@ -34,7 +34,7 @@ go_library(
         "@com_github_grpc_ecosystem_grpc_gateway_v2//runtime:go_default_library",
         "@com_github_protonmail_go_crypto//openpgp",
         "@org_golang_google_genproto_googleapis_rpc//errdetails",
-        "@org_golang_google_grpc//:go_default_library",
+        "@org_golang_google_grpc//:grpc",
         "@org_golang_google_grpc//codes",
         "@org_golang_google_grpc//status",
         "@org_golang_google_protobuf//types/known/anypb",

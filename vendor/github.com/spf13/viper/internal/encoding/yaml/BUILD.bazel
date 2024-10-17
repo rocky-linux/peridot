@@ -1,0 +1,10 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "yaml",
+    srcs = ["codec.go"],
+    importmap = "peridot.resf.org/vendor/github.com/spf13/viper/internal/encoding/yaml",
+    importpath = "github.com/spf13/viper/internal/encoding/yaml",
+    visibility = ["//vendor/github.com/spf13/viper:__subpackages__"],
+    deps = ["//vendor/gopkg.in/yaml.v3:yaml_v3"],
+)

@@ -1,0 +1,24 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "ed25519",
+    srcs = [
+        "ed25519.go",
+        "modular.go",
+        "mult.go",
+        "point.go",
+        "pubkey.go",
+        "pubkey112.go",
+        "signapi.go",
+        "tables.go",
+    ],
+    importmap = "peridot.resf.org/vendor/github.com/cloudflare/circl/sign/ed25519",
+    importpath = "github.com/cloudflare/circl/sign/ed25519",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/cloudflare/circl/internal/conv",
+        "//vendor/github.com/cloudflare/circl/math",
+        "//vendor/github.com/cloudflare/circl/math/fp25519",
+        "//vendor/github.com/cloudflare/circl/sign",
+    ],
+)

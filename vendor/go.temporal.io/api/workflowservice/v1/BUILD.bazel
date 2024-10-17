@@ -26,7 +26,7 @@ go_library(
         "//vendor/go.temporal.io/api/taskqueue/v1:taskqueue",
         "//vendor/go.temporal.io/api/version/v1:version",
         "//vendor/go.temporal.io/api/workflow/v1:workflow",
-        "@org_golang_google_grpc//:go_default_library",
+        "@org_golang_google_grpc//:grpc",
         "@org_golang_google_grpc//codes",
         "@org_golang_google_grpc//status",
     ],

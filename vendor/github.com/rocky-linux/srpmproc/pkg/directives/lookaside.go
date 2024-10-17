@@ -27,7 +27,7 @@ import (
 	"crypto/sha256"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"path/filepath"
 	"time"
@@ -66,7 +66,7 @@ func lookaside(cfg *srpmprocpb.Cfg, _ *data.ProcessData, md *data.ModeData, patc
 				return errors.New(fmt.Sprintf("COULD_NOT_OPEN_FILE:%s", path))
 			}
 
-			bts, err := ioutil.ReadAll(f)
+			bts, err := io.ReadAll(f)
 			if err != nil {
 				return errors.New(fmt.Sprintf("COULD_NOT_READ_FILE:%s", path))
 			}

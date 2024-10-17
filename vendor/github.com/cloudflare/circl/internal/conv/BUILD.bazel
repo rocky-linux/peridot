@@ -1,0 +1,9 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "conv",
+    srcs = ["conv.go"],
+    importmap = "peridot.resf.org/vendor/github.com/cloudflare/circl/internal/conv",
+    importpath = "github.com/cloudflare/circl/internal/conv",
+    visibility = ["//vendor/github.com/cloudflare/circl:__subpackages__"],
+)

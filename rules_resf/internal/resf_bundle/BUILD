@@ -1,7 +1,7 @@
-package(default_visibility = ["//rules_resf/internal:__subpackages__"])
-
 load("@build_bazel_rules_nodejs//:index.bzl", "nodejs_binary")
 load(":resf_bundle.bzl", "WEBPACK_DATA")
+
+package(default_visibility = ["//rules_resf/internal:__subpackages__"])
 
 exports_files([
     "assembler.js",

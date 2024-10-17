@@ -1,7 +1,6 @@
 package gomime
 
 import (
-	"bytes"
 	"fmt"
 	"io"
 	"mime"
@@ -11,9 +10,9 @@ import (
 	"unicode/utf8"
 
 	"encoding/base64"
+
 	"golang.org/x/text/encoding"
 	"golang.org/x/text/encoding/htmlindex"
-	"golang.org/x/text/transform"
 )
 
 var wordDec = &mime.WordDecoder{
@@ -189,21 +188,13 @@ func DecodeCharset(original []byte, mediaType string, contentTypeParams map[stri
 		}
 		err = fmt.Errorf("non-utf8 content without charset specification")
 	}
-
 	if err != nil {
 		return original, err
 	}
-
-	utf8 := make([]byte, len(original))
-	nDst, nSrc, err := decoder.Transform(utf8, original, false)
-	for err == transform.ErrShortDst {
-		utf8 = make([]byte, (nDst/nSrc+1)*len(original))
-		nDst, nSrc, err = decoder.Transform(utf8, original, false)
-	}
+	utf8, err := decoder.Bytes(original)
 	if err != nil {
 		return original, err
 	}
-	utf8 = bytes.Trim(utf8, "\x00")
 
 	return utf8, nil
 }

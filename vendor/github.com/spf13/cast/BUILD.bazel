@@ -5,6 +5,7 @@ go_library(
     srcs = [
         "cast.go",
         "caste.go",
+        "timeformattype_string.go",
     ],
     importmap = "peridot.resf.org/vendor/github.com/spf13/cast",
     importpath = "github.com/spf13/cast",

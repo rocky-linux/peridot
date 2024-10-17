@@ -72,7 +72,7 @@ go_library(
         "//vendor/go.temporal.io/sdk/log",
         "//vendor/go.uber.org/atomic",
         "//vendor/golang.org/x/time/rate",
-        "@org_golang_google_grpc//:go_default_library",
+        "@org_golang_google_grpc//:grpc",
         "@org_golang_google_grpc//backoff",
         "@org_golang_google_grpc//credentials",
         "@org_golang_google_grpc//health/grpc_health_v1",

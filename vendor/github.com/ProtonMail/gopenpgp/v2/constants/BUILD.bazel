@@ -5,6 +5,7 @@ go_library(
     srcs = [
         "armor.go",
         "cipher.go",
+        "context.go",
         "version.go",
     ],
     importmap = "peridot.resf.org/vendor/github.com/ProtonMail/gopenpgp/v2/constants",

@@ -1,0 +1,13 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "hash",
+    srcs = [
+        "hash.go",
+        "hash_sha1.go",
+    ],
+    importmap = "peridot.resf.org/vendor/github.com/go-git/go-git/v5/plumbing/hash",
+    importpath = "github.com/go-git/go-git/v5/plumbing/hash",
+    visibility = ["//visibility:public"],
+    deps = ["//vendor/github.com/pjbgf/sha1cd"],
+)

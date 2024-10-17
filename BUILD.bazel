@@ -1,6 +1,6 @@
 load("@bazel_gazelle//:def.bzl", "gazelle")
-load("@io_bazel_rules_go//proto:compiler.bzl", "go_proto_compiler")
 load("@io_bazel_rules_go//go:def.bzl", "nogo")
+load("@io_bazel_rules_go//proto:compiler.bzl", "go_proto_compiler")
 
 exports_files([
     "BUILD",

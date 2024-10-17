@@ -11,10 +11,10 @@ go_library(
         "lookaside_upload.go",
         "main.go",
         "project.go",
-        "project_info.go",
-        "project_list.go",
         "project_catalog_sync.go",
         "project_create_hashed_repos.go",
+        "project_info.go",
+        "project_list.go",
         "utils.go",
     ],
     data = [

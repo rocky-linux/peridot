@@ -23,7 +23,7 @@ package directives
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"math"
 	"os"
 	"path/filepath"
@@ -107,7 +107,7 @@ func sourcePatchOperationAfterLoop(req *sourcePatchOperationAfterLoopRequest) (b
 				*req.newLines = append(*req.newLines, fmt.Sprintf("%s:%s%s", field, spaces, file.Name))
 
 				if req.expectedField == "Patch" && file.AddToPrep {
-					val := fmt.Sprintf("%%patch%d", fieldNum)
+					val := fmt.Sprintf("%%patch -P%d", fieldNum)
 					if file.NPath > 0 {
 						val = fmt.Sprintf("%s -p%d", val, file.NPath)
 					}
@@ -215,7 +215,7 @@ func specChange(cfg *srpmprocpb.Cfg, pd *data.ProcessData, md *data.ModeData, _ 
 		return errors.New("COULD_NOT_READ_SPEC_FILE")
 	}
 
-	specBts, err := ioutil.ReadAll(specFile)
+	specBts, err := io.ReadAll(specFile)
 	if err != nil {
 		return errors.New("COULD_NOT_READ_ALL_BYTES")
 	}

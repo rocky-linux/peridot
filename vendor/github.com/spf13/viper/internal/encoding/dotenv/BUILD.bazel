@@ -1,0 +1,16 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "dotenv",
+    srcs = [
+        "codec.go",
+        "map_utils.go",
+    ],
+    importmap = "peridot.resf.org/vendor/github.com/spf13/viper/internal/encoding/dotenv",
+    importpath = "github.com/spf13/viper/internal/encoding/dotenv",
+    visibility = ["//vendor/github.com/spf13/viper:__subpackages__"],
+    deps = [
+        "//vendor/github.com/spf13/cast",
+        "//vendor/github.com/subosito/gotenv",
+    ],
+)

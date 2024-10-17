@@ -1,8 +1,8 @@
-load("@rules_proto//proto:defs.bzl", "proto_library")
+load("@com_github_grpc_ecosystem_grpc_gateway_v2//protoc-gen-openapiv2:defs.bzl", "protoc_gen_openapiv2")
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 load("@io_bazel_rules_go//proto:def.bzl", "go_proto_library")
-load("@com_github_grpc_ecosystem_grpc_gateway_v2//protoc-gen-openapiv2:defs.bzl", "protoc_gen_openapiv2")
 load("@openapi_tools_generator_bazel//:defs.bzl", "openapi_generator")
+load("@rules_proto//proto:defs.bzl", "proto_library")
 
 proto_library(
     name = "obsidianpb_proto",
