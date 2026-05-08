@@ -45,8 +45,7 @@ helm repo add bitnami https://charts.bitnami.com/bitnami
 # and places a PersisentVolumeClaim for this.
 # Ensure that the cluster provides PersistentVolumes:
 
-if kubectl get PersistentVolume -o json
-   | jq -e '.items | .[].status | select(.phase == "Bound")' ; then
+if kubectl get PersistentVolume -o json | jq -e '.items | .[].status | select(.phase == "Bound")' ; then
     echo "Ok found at least one PersistentVolume"
 else
     echo "The postgresql helm chart has a PersistentVolumeClaim (PVC)."
@@ -81,4 +80,4 @@ helm upgrade --install localstack localstack-repo/localstack
 helm install --set auth.rootUser=AKIAIOSFODNN7EXAMPLE,auth.rootPassword=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY minio bitnami/minio
 
 # Install Temporal
-helm install temporal infrastructure/dev-helm/temporal --timeout 15m -f infrastructure/dev-helm/temporal.values.yaml
+helm install --dependency-update temporal infrastructure/dev-helm/temporal --timeout 15m -f infrastructure/dev-helm/temporal.values.yaml
