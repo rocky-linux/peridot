@@ -31,16 +31,17 @@
 package main
 
 import (
-	bazelbuild "bazel.build/protobuf"
 	"bytes"
 	"fmt"
-	"github.com/sirupsen/logrus"
-	"google.golang.org/protobuf/proto"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sort"
 	"strings"
+
+	bazelbuild "bazel.build/protobuf"
+	"github.com/sirupsen/logrus"
+	"google.golang.org/protobuf/proto"
 )
 
 func callBazel(args ...string) []byte {
@@ -78,7 +79,7 @@ func main() {
 		logrus.Fatal(err)
 	}
 
-	goModContent, err := ioutil.ReadFile("go.mod")
+	goModContent, err := os.ReadFile("go.mod")
 	if err != nil {
 		logrus.Fatalf("could not read go.mod: %v", err)
 	}
@@ -120,7 +121,7 @@ func main() {
 				}
 
 				modContent := []byte(fmt.Sprintf("module %s", importpath))
-				if err := ioutil.WriteFile(filepath.Join(modDir, "go.mod"), modContent, 0644); err != nil {
+				if err := os.WriteFile(filepath.Join(modDir, "go.mod"), modContent, 0644); err != nil {
 					logrus.Fatalf("could not write go.mod file: %v", err)
 				}
 
@@ -130,7 +131,7 @@ func main() {
 				  }*/
 
 				/*dummyContent := []byte("// this file is generated for mock purposes. do not check in please\npackage dummy")
-				  if err := ioutil.WriteFile(filepath.Join(dummyDir, "dummy.go"), dummyContent, 0644); err != nil {
+				  if err := os.WriteFile(filepath.Join(dummyDir, "dummy.go"), dummyContent, 0644); err != nil {
 				      logrus.Fatalf("could not write dummy.go file: %v", err)
 				  }*/
 
@@ -147,6 +148,7 @@ func main() {
 	for _, line := range strings.Split(stringGoMod, "\n") {
 		trimmedLine := strings.TrimSpace(line)
 		if trimmedLine == "// sync-replace-end" {
+			sort.Strings(replaceList)
 			newContent = append(newContent, strings.Join(replaceList, "\n"))
 			newContent = append(newContent, ")")
 			inSyncReplaceStart = false
@@ -160,7 +162,7 @@ func main() {
 		}
 	}
 
-	if err := ioutil.WriteFile(filepath.Join(searchDirectory, "go.mod"), []byte(strings.Join(newContent, "\n")), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(searchDirectory, "go.mod"), []byte(strings.Join(newContent, "\n")), 0644); err != nil {
 		logrus.Fatalf("could not write end file go.mod: %v", err)
 	}
 

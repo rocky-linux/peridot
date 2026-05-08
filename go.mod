@@ -179,16 +179,16 @@ replace (
 
 // sync-replace-start
 replace (
-	peridot.resf.org/apollo/pb => ./bazel-bin/apollo/proto/v1/apollopb_go_proto_/peridot.resf.org/apollo/pb
 	bazel.build/protobuf => ./bazel-bin/build/bazel/protobuf/bazelbuild_go_proto_/bazel.build/protobuf
 	bazel.build/remote/execution/v2 => ./bazel-bin/build/bazel/remote/execution/v2/remoteexecution_go_proto_/bazel.build/remote/execution/v2
 	bazel.build/semver => ./bazel-bin/build/bazel/semver/semver_go_proto_/bazel.build/semver
+	github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2/options => ./bazel-bin/protoc-gen-openapiv2/options/options_go_proto_/github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2/options
+	peridot.resf.org/apollo/pb => ./bazel-bin/apollo/proto/v1/apollopb_go_proto_/peridot.resf.org/apollo/pb
+	peridot.resf.org/common => ./bazel-bin/proto/commonpb_go_proto_/peridot.resf.org/common
 	peridot.resf.org/obsidian/pb => ./bazel-bin/obsidian/proto/v1/obsidianpb_go_proto_/peridot.resf.org/obsidian/pb
-	peridot.resf.org/peridot/pb => ./bazel-bin/peridot/proto/v1/peridotpb_go_proto_/peridot.resf.org/peridot/pb
 	peridot.resf.org/peridot/admin/pb => ./bazel-bin/peridot/proto/v1/admin/adminpb_go_proto_/peridot.resf.org/peridot/admin/pb
 	peridot.resf.org/peridot/keykeeper/pb => ./bazel-bin/peridot/proto/v1/keykeeper/keykeeperpb_go_proto_/peridot.resf.org/peridot/keykeeper/pb
+	peridot.resf.org/peridot/pb => ./bazel-bin/peridot/proto/v1/peridotpb_go_proto_/peridot.resf.org/peridot/pb
 	peridot.resf.org/peridot/yumrepofs/pb => ./bazel-bin/peridot/proto/v1/yumrepofs/yumrepofspb_go_proto_/peridot.resf.org/peridot/yumrepofs/pb
-	peridot.resf.org/common => ./bazel-bin/proto/commonpb_go_proto_/peridot.resf.org/common
-	github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2/options => ./bazel-bin/protoc-gen-openapiv2/options/options_go_proto_/github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2/options
 )
 // sync-replace-end
