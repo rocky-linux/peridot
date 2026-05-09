@@ -1,5 +1,6 @@
 pkg/dep
-**/*.bazel_ignore
+.bazelignore
+.bazel_ignore
 node_modules
 ci_output
 vendor/github.com/grpc-ecosystem/grpc-gateway

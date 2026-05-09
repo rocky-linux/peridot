@@ -15,14 +15,22 @@ http_archive(
 )
 
 # --start python--
-load("//wrksp:python_download.bzl", "python_download")
-
-python_download()
-
-load("//wrksp:python_deps.bzl", "python_deps")
-
-python_deps()
 # --end python--
+
+# Start rules_pkg (for pkg_tar in rules_resf/internal/container:container.bzl)
+http_archive(
+    name = "rules_pkg",
+    sha256 = "d20c951960ed77cb7b341c2a59488534e494d5ad1d30c4818c736d57772a9fef",
+    urls = [
+        "https://mirror.bazel.build/github.com/bazelbuild/rules_pkg/releases/download/1.0.1/rules_pkg-1.0.1.tar.gz",
+        "https://github.com/bazelbuild/rules_pkg/releases/download/1.0.1/rules_pkg-1.0.1.tar.gz",
+    ],
+)
+
+load("@rules_pkg//:deps.bzl", "rules_pkg_dependencies")
+
+rules_pkg_dependencies()
+# End rules_pkg
 
 http_archive(
     name = "com_google_protobuf",
