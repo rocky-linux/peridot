@@ -109,7 +109,7 @@ local manifestYamlStream = function (value, indent_array_in_object=false, c_docu
       image: image,
       tag: tag,
     };
-    local istio_mode = if helm_mode then false else if utils.local_image then false else true;
+    local istio_mode = true; #if helm_mode then false else if utils.local_image then false else true;
 
     {
       [nssa]: (if helm_mode then '{{ if not .Values.serviceAccountName }}\n' else '') + manifestYamlStream([
@@ -248,7 +248,7 @@ local manifestYamlStream = function (value, indent_array_in_object=false, c_docu
               'prometheus.io/port': '7332',
             }),
             volumes: (if std.objectHas(info, 'volumes') then info.volumes(metadata) else []),
-            ports: std.map(function(x) x { expose: null, external: null }, ports),
+            ports: [utils.filterObjectFields(port, ['expose']) for port in ports],
             health: if std.objectHas(info, 'health') then info.health,
             env: env + (if dbname != '' && info.backend then ([dbPassEnv]) else []) + [
               {
@@ -258,7 +258,7 @@ local manifestYamlStream = function (value, indent_array_in_object=false, c_docu
             ] + [
               if std.objectHas(srv, 'expose') && srv.expose then (if helm_mode then {
                 name: '%s_PUBLIC_URL' % [std.asciiUpper(std.strReplace(std.strReplace(srv.name, stage, ''), '-', '_'))],
-                value: 'https://{{ .Values.%s.ingressHost }}!!' % [srv.portName],
+                value: 'https://{{ .Values.%s.ingressHost }}!!' % [srv.name],
               } else {
                 name: '%s_PUBLIC_URL' % [std.asciiUpper(std.strReplace(std.strReplace(srv.name, stage, ''), '-', '_'))],
                 value: 'https://%s' % mappings.get(srv.name, user),
@@ -298,7 +298,7 @@ local manifestYamlStream = function (value, indent_array_in_object=false, c_docu
                 'konghq.com/protocols': (if helm_mode then '{{ .Values.kongProtocols | default !"%ss!" }}' else '%ss') % std.strReplace(std.strReplace(std.strReplace(srv.name, metadata.name, ''), stage, ''), '-', ''),
               }
             },
-            host=if helm_mode then '{{ .Values.%s.ingressHost }}' % srv.portName else mappings.get(srv.name, user),
+            host=if helm_mode then '{{ .Values.%s.ingressHost }}' % srv.name else mappings.get(srv.name, user),
             port=srv.port,
             srvName=srv.name + '-service',
           ) else null for srv in services]) +

@@ -91,7 +91,7 @@ export default async function (opts) {
         opts.issuerBaseURL.endsWith('.localhost/')) &&
       process.env['RESF_ENV']
     ) {
-      const kong = 'kong-proxy.kong.svc.cluster.local';
+      const kong = 'istio-ingressgateway.istio-system.svc.cluster.local';
       const urlObject = new URL(opts.issuerBaseURL);
       console.warn(`Forcing ${urlObject.hostname} to resolve to ${kong}`);
       const lookup = async () => {

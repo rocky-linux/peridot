@@ -18,4 +18,23 @@ local stage_no_dash = std.strReplace(stage, '-', '');
   stage: stage,
   user: user,
   stage_no_dash: stage_no_dash,
+
+  // Function to filter an object by excluding specified fields.
+  // Parameters:
+  // - inputObject: The object to be filtered.
+  // - fieldsToIgnore: List of fields to be ignored from the input object.
+  filterObjectFields(inputObject, fieldsToIgnore)::
+    // Iterating over the fields in the input object and creating a new object
+    // without the fields specified in `fieldsToIgnore`.
+    std.foldl(function(filteredObject, currentField)
+      // If current field is in `fieldsToIgnore`, return the filtered object as is.
+      // Otherwise, add the current field to the filtered object.
+      (
+        if std.member(fieldsToIgnore, currentField) then
+          filteredObject
+        else
+          filteredObject + { [currentField]: inputObject[currentField] }
+      ),
+      // Starting with an empty object and iterating over each field in the input object.
+      std.objectFields(inputObject), {}),
 }

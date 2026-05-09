@@ -49,7 +49,7 @@ export function hydraPublicUrl() {
       if (process.env['HYDRA_PUBLIC_URL']) {
         return process.env['HYDRA_PUBLIC_URL'];
       }
-      return 'https://hdr-dev.internal.rdev.ciq.localhost';
+      return 'https://hdr-dev.internal.pdev.resf.localhost';
     }
     const svc = svcNameHttp('hydra-public');
     return endpointHttp(svc, NS('hydra-public'), ':4444');
@@ -59,7 +59,7 @@ export function hydraPublicUrl() {
 function hydraAdminUrl() {
   return envOverridable('hydra_admin', 'http', () => {
     if (!process.env['RESF_ENV']) {
-      return 'https://hdr-admin-dev.internal.rdev.ciq.localhost';
+      return 'https://hdr-admin-dev.internal.pdev.resf.localhost';
     }
     const svc = svcNameHttp('hydra-admin');
     return endpointHttp(svc, NS('hydra-admin'), ':4445');

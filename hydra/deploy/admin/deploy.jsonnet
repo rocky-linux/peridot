@@ -36,6 +36,7 @@ resfdeploy.new({
       name: 'http',
       containerPort: 4445,
       protocol: 'TCP',
+      expose: true,
     },
   ],
   health: {

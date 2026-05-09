@@ -40,7 +40,7 @@ import {
 } from '../../../common/frontend_server/upstream.mjs';
 
 export default async function run(webpackConfig) {
-  const devFrontendUrl = 'http://obsidian.pdot.localhost:16000';
+  const devFrontendUrl = 'https://id-dev.internal.pdev.resf.localhost';
   const envPublicUrl = process.env['OBSIDIAN_FRONTEND_HTTP_PUBLIC_URL'];
   const frontendUrl = process.env['RESF_NS'] ? envPublicUrl : devFrontendUrl;
 

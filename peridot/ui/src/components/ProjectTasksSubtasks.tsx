@@ -48,6 +48,17 @@ import {
   translateTaskTypeToText,
 } from './ProjectTasks';
 
+
+function formatDuration(ms) {
+  const seconds = Math.floor((ms / 1000) % 60);
+  const minutes = Math.floor((ms / (1000 * 60)) % 60);
+  const hours = Math.floor((ms / (1000 * 60 * 60)) % 24);
+
+  return [hours, minutes, seconds]
+    .map(val => (val < 10 ? `0${val}` : val)) // Adding leading zeros if necessary
+    .join(':');
+}
+
 export interface ProjectTasksSubtasksProps {
   subtasks: V1Subtask[];
 }
@@ -79,7 +90,7 @@ export const ProjectTasksSubtasks = (props: ProjectTasksSubtasksProps) => {
                   (new Date(subtask.finishedAt) as any) -
                   (new Date(subtask.createdAt) as any);
                 subtaskDuration = (
-                  <>{new Date(difference - 3600000).toLocaleTimeString()}</>
+                  <>{formatDuration(difference)}</>
                 );
               }
 
